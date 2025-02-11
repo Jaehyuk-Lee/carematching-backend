@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: carematching
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: 'true'
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
+        use_sql_comments: 'true'
+        temp:
+          use_jdbc_metadata_defaults: 'true'
+        format_sql: 'true'
+        show_sql: 'true'
+    hibernate:
+      ddl-auto: update
+    show-sql: 'false'
+  datasource:
+    driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  devtools:
+    restart:
+      enabled: 'true'
+mybatis:
+  type-aliases-package: com.sesac.carematching
+  mapper-locations: classpath:mapper/**/*.xml
+logging:
+  level:
+    jdbc:
+      audit: DEBUG
+      sqlonly: DEBUG
+      resultset: DEBUG
+      resultsettable: DEBUG
+
+server:
+  port: 8080

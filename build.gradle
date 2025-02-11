@@ -41,7 +41,7 @@ dependencies {
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation 'org.springframework.security:spring-security-test'
+//	testImplementation 'org.springframework.security:spring-security-test'
 
 	// spring data jdbc, oracle, log4jdbc
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -49,19 +49,15 @@ dependencies {
 	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4:1.16'
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 
-	// thymeleaf
-	// implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	// implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
-
 	// spring security
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+//	implementation 'org.springframework.boot:spring-boot-starter-security'
+//	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
 	// OAuth2
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+//	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
 	// mark down
-	// implementation 'org.commonmark:commonmark:0.21.0'
+	implementation 'org.commonmark:commonmark:0.21.0'
 
 	// mybatis
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
