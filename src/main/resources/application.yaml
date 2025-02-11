@@ -36,5 +36,11 @@ logging:
       resultset: DEBUG
       resultsettable: DEBUG
 
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 server:
   port: 8080
