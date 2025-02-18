@@ -1,6 +1,8 @@
 spring:
   application:
     name: carematching
+  config:
+    import: optional:file:.env[.properties]
   mvc:
     hiddenmethod:
       filter:
@@ -8,7 +10,7 @@ spring:
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.OracleDialect
+        dialect: org.hibernate.dialect.MariaDBDialect
         use_sql_comments: 'true'
         temp:
           use_jdbc_metadata_defaults: 'true'
@@ -19,7 +21,7 @@ spring:
     show-sql: 'false'
   datasource:
     driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url: ${DB_URL}
+    url: jdbc:log4jdbc:mariadb://${DB_IP}:3306/${DB_NAME}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   devtools:
