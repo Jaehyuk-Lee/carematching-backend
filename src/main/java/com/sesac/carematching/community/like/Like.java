@@ -15,7 +15,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "COMMUNITY_LIKE")
+@Table(name = "community_like")
 public class Like {
     @Id
     @Column(name = "CLNO", nullable = false)

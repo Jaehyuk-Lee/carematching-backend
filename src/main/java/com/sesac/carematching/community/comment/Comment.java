@@ -17,9 +17,10 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "COMMUNITY_COMMENT")
+@Table(name = "community_comment")
 public class Comment {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CCNO", nullable = false)
     private Integer id;
 

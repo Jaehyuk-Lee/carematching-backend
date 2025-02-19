@@ -1,9 +1,6 @@
 package com.sesac.carematching.user.role;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,9 +8,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "ROLE")
+@Table(name = "role")
 public class Role {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "RNO", nullable = false)
     private Integer id;
 

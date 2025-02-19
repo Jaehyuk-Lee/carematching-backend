@@ -41,28 +41,31 @@ public class Caregiver {
     private Byte workDays;
 
     @NotNull
-    @Lob
+    @Enumerated(EnumType.STRING)
     @Column(name = "WORK_TIME", nullable = false)
-    private String workTime;
+    private WorkTime workTime;
 
-    @Lob
-    @Column(name = "WORK_FORM")
-    private String workForm;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "WORK_FORM", nullable = false)
+    private WorkForm workForm;
 
-    @Lob
-    @Column(name = "EMPLOYMENT_TYPE")
-    private String employmentType;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "EMPLOYMENT_TYPE", nullable = false)
+    private EmploymentType employmentType;
 
     @Column(name = "SALARY")
     private Integer salary;
 
     @NotNull
-    @Lob
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATUS", nullable = false)
-    private String status;
+    private Status status;
 
+    @NotNull
     @CreatedDate
-    @Column(name = "CREATED_AT")
+    @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
 }

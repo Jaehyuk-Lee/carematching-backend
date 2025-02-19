@@ -1,13 +1,13 @@
 package com.sesac.carematching.notification;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.sesac.carematching.user.User;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.Instant;
@@ -15,22 +15,27 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "NOTIFICATION")
+@Table(name = "notification")
 public class Notification {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "NNO", nullable = false)
     private Integer id;
 
     @NotNull
-    @Column(name = "UNO", nullable = false)
-    private Integer uno;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "UNO", nullable = false)
+    private User uno;
 
+    @NotNull
     @ColumnDefault("0")
-    @Column(name = "IS_READ")
-    private Boolean isRead;
+    @Column(name = "IS_READ", nullable = false)
+    private Boolean isRead = false;
 
+    @NotNull
     @CreatedDate
-    @Column(name = "CREATED_AT")
+    @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
 }

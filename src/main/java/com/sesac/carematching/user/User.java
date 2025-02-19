@@ -7,8 +7,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.Instant;
@@ -16,9 +14,10 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "USER")
+@Table(name = "user")
 public class User {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "UNO", nullable = false)
     private Integer id;
 

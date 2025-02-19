@@ -18,7 +18,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "COMMUNITY_POST")
+@Table(name = "community_post")
 public class Post {
     @Id
     @Column(name = "CPNO", nullable = false)
