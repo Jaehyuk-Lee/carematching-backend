@@ -27,13 +27,13 @@ public class Message {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "CRNO", nullable = false)
-    private Room crno;
+    private Room room;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "UNO", nullable = false)
-    private User uno;
+    private User user;
 
     @Size(max = 500)
     @NotNull

@@ -28,13 +28,13 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "UNO", nullable = false)
-    private User uno;
+    private User user;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "CPCNO", nullable = false)
-    private Category cpcno;
+    private Category category;
 
     @Size(max = 50)
     @NotNull

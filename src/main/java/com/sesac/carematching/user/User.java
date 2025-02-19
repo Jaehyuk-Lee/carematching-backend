@@ -24,7 +24,7 @@ public class User {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "RNO", nullable = false)
-    private Role rno;
+    private Role role;
 
     @Size(max = 50)
     @NotNull

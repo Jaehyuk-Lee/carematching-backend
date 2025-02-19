@@ -25,13 +25,13 @@ public class Like {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "UNO", nullable = false)
-    private User uno;
+    private User user;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "PNO", nullable = false)
-    private Post pno;
+    private Post post;
 
     @NotNull
     @CreatedDate

@@ -25,13 +25,13 @@ public class Room {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "REQUESTER_UNO", nullable = false)
-    private User requesterUno;
+    private User requester;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "RECEIVER_UNO", nullable = false)
-    private Caregiver receiverUno;
+    private Caregiver caregiver;
 
     @NotNull
     @CreatedDate

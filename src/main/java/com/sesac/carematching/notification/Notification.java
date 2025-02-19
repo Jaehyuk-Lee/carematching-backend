@@ -26,7 +26,7 @@ public class Notification {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "UNO", nullable = false)
-    private User uno;
+    private User user;
 
     @NotNull
     @ColumnDefault("0")
