@@ -24,7 +24,6 @@ public class User {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "RNO", nullable = false)
     private Role rno;
 
