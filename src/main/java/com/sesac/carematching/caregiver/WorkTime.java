@@ -1,4 +1,4 @@
-package com.sesac.carematching.carematch.request;
+package com.sesac.carematching.caregiver;
 
 public enum WorkTime {
     MORNING, AFTERNOON, FULLTIME

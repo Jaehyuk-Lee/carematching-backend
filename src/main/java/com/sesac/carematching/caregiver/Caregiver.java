@@ -1,4 +1,4 @@
-package com.sesac.carematching.carematch.request;
+package com.sesac.carematching.caregiver;
 
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
@@ -10,28 +10,22 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "CAREMATCH_REQUEST")
-public class Request {
+@Table(name = "caregiver")
+public class Caregiver {
     @Id
-    @Column(name = "CMRNO", nullable = false)
+    @Column(name = "UNO", nullable = false)
     private Integer id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @MapsId
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "UNO", nullable = false)
-    private User uno;
-
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "TYPE", nullable = false)
-    private Type type;
+    private User user;
 
     @Size(max = 255)
     @NotNull
@@ -47,25 +41,25 @@ public class Request {
     private Byte workDays;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
+    @Lob
     @Column(name = "WORK_TIME", nullable = false)
-    private WorkTime workTime;
+    private String workTime;
 
-    @Enumerated(EnumType.STRING)
+    @Lob
     @Column(name = "WORK_FORM")
-    private WorkForm workForm;
+    private String workForm;
 
-    @Enumerated(EnumType.STRING)
+    @Lob
     @Column(name = "EMPLOYMENT_TYPE")
-    private EmploymentType employmentType;
+    private String employmentType;
 
-    @Column(name = "SALARY", precision = 10, scale = 2)
-    private BigDecimal salary;
+    @Column(name = "SALARY")
+    private Integer salary;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
+    @Lob
     @Column(name = "STATUS", nullable = false)
-    private Status status;
+    private String status;
 
     @CreatedDate
     @Column(name = "CREATED_AT")
