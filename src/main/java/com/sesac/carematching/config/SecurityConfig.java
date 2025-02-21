@@ -1,68 +1,59 @@
 package com.sesac.carematching.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sesac.carematching.user.UserSecurityService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.savedrequest.SavedRequest;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.List;
+
+@RequiredArgsConstructor
 @Configuration
 public class SecurityConfig {
+
+    private final UserSecurityService userSecurityService;
+    private final ObjectMapper objectMapper;
+    private final LoginSuccessHandler loginSuccessHandler;
+    private final LoginFailureHandler loginFailureHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf
-//                .ignoringRequestMatchers(new AntPathRequestMatcher("/h2-console/**"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/board/like"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/users/myPage/verify-password"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/users/change-nickname"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/users/change-password"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/api/scrap/**"))
-            )
-            .securityMatcher("/users/**", "/board/**", "/reply/**", "/api/**", "/oauth2/**", "/login/**", "/scrap/**")
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/users/signup", "/users/check-username", "/users/check-nickname", "/users/login", "/users/check-auth",  // 로그인 및 회원가입 페이지, 권한 확인은 누구나 접근 가능
-                    "/board/infolist", "/board/generallist", "/board/qnalist", "/board/menu", // 게시판 목록 누구나 접근 가능
-                    "/map/**", "/api/**", "/oauth2/**", "/login/**")
-                .permitAll()
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/users/login")
-                .loginProcessingUrl("/users/login")
-                .successHandler((request, response, authentication) -> {
-                    // 로그인 성공 시 이전 요청한 페이지로 이동
-                    var savedRequest = (SavedRequest) request.getSession()
-                        .getAttribute("SPRING_SECURITY_SAVED_REQUEST");
-                    if (savedRequest != null) {
-                        response.sendRedirect(savedRequest.getRedirectUrl());
-                    } else {
-                        response.sendRedirect("/map");
-                    }
-                })
-                .failureUrl("/users/login?error=true") // 실패 시 로그인 페이지로 리다이렉트
-                .permitAll()
-            )
+            .cors(c -> {
+                CorsConfigurationSource source = request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(List.of("http://localhost:3000"));
+                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    config.setAllowedHeaders(List.of("*"));
+                    config.setAllowCredentials(true);
+                    config.setMaxAge(3600L);
+                    return config;
+                };
+                c.configurationSource(source);
+            })
+            .httpBasic(Customizer.withDefaults())
+            .csrf(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable);
 
-            .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/users/logout"))
-                .logoutSuccessUrl("/map")
-                .invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .permitAll()
-            )
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(
-                    (request, response, authException) -> response.sendRedirect("/users/login")
-                )
-            );
+        http.authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/user/login", "/api/user/signup", "/api/**").permitAll()
+            .anyRequest().authenticated());
+
+        http.addFilterBefore(jsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -73,7 +64,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() {
+        JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter = new JsonUsernamePasswordAuthenticationFilter(objectMapper, loginSuccessHandler, loginFailureHandler);
+        jsonUsernamePasswordAuthenticationFilter.setAuthenticationManager(authenticationManager());
+        return jsonUsernamePasswordAuthenticationFilter;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+
+        provider.setPasswordEncoder(passwordEncoder());
+        provider.setUserDetailsService(userSecurityService);
+
+        return new ProviderManager(provider);
     }
 }
