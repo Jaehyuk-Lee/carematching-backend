@@ -4,7 +4,9 @@ import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -16,6 +18,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "caregiver")
+@NoArgsConstructor
 public class Caregiver {
     @Id
     @Column(name = "UNO", nullable = false)
@@ -63,9 +66,18 @@ public class Caregiver {
     @Column(name = "STATUS", nullable = false)
     private Status status;
 
-    @NotNull
-    @CreatedDate
-    @Column(name = "CREATED_AT", nullable = false)
-    private Instant createdAt;
-
+    @Builder
+    public Caregiver(User user, String loc, String servNeeded, Byte workDays, WorkTime workTime, WorkForm workForm,
+                     EmploymentType employmentType, Integer salary, Status status) {
+        this.user = user;
+        this.id = user.getId();
+        this.loc = loc;
+        this.servNeeded = servNeeded;
+        this.workDays = workDays;
+        this.workTime = workTime;
+        this.workForm = workForm;
+        this.employmentType = employmentType;
+        this.salary = salary;
+        this.status = status;
+    }
 }

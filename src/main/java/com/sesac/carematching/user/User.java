@@ -1,5 +1,6 @@
 package com.sesac.carematching.user;
 
+import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.user.role.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +23,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "UNO", nullable = false)
     private Integer id;
+
+//    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, optional = true)
+//    private Caregiver caregiver;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
