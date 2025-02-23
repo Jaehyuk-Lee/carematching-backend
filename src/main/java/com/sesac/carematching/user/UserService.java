@@ -68,7 +68,11 @@ public class UserService {
 
     // 회원 탈퇴
     @Transactional
-    public void deleteUser(String username){
-        userRepository.deleteByUsername(username);
+    public void deleteUser(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 연관된 데이터들은 JPA 엔티티에서 @OnDelete(action = OnDeleteAction.CASCADE) 설정으로 자동 삭제됨
+        userRepository.delete(user);
     }
 }
