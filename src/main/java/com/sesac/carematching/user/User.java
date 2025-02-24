@@ -26,6 +26,9 @@ public class User {
     @Column(name = "UNO", nullable = false)
     private Integer id;
 
+//    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, optional = true)
+//    private Caregiver caregiver;
+
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "RNO", nullable = false)
