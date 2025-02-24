@@ -47,10 +47,10 @@ public class JsonUsernamePasswordAuthenticationFilter extends AbstractAuthentica
             throw new AuthenticationServiceException("Authentication Content-Type not supported: " + request.getContentType());
         }
 
-        LoginDto loginDto = objectMapper.readValue(StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8), LoginDto.class);
+        LoginDTO loginDTO = objectMapper.readValue(StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8), LoginDTO.class);
 
-        String username = loginDto.getUsername();
-        String password = loginDto.getPassword();
+        String username = loginDTO.getUsername();
+        String password = loginDTO.getPassword();
 
         if (username == null || password == null) {
             throw new AuthenticationServiceException("DATA IS MISS");
@@ -67,7 +67,7 @@ public class JsonUsernamePasswordAuthenticationFilter extends AbstractAuthentica
     }
 
     @Data
-    private static class LoginDto {
+    private static class LoginDTO {
         String username;
         String password;
     }
