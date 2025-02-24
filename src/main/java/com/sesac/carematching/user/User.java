@@ -1,10 +1,12 @@
 package com.sesac.carematching.user;
 
+import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.user.role.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
@@ -16,6 +18,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor
 @Table(name = "user")
 public class User {
     @Id
@@ -38,6 +41,11 @@ public class User {
     @Column(name = "PASSWORD", nullable = false)
     private String password;
 
+    @Size(max = 50)
+    @NotNull
+    @Column(name = "NICKNAME", nullable = false, length = 50)
+    private String nickname;
+
     @Size(max = 12)
     @Column(name = "PHONE", length = 12)
     private String phone;
@@ -55,5 +63,15 @@ public class User {
     @CreatedDate
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
+
+    @OneToOne(mappedBy = "user")
+    private Caregiver caregiver;
+
+    public User(String username, String password, String nickname, Role role) {
+        this.username = username;
+        this.password = password;
+        this.nickname = nickname;
+        this.role = role;
+    }
 
 }

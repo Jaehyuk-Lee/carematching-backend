@@ -16,7 +16,6 @@ public class Role {
     private Integer id;
 
     @Size(max = 30)
-    @Column(name = "RNAME", length = 30)
+    @Column(name = "RNAME", length = 30, unique = true)
     private String rname;
-
 }
