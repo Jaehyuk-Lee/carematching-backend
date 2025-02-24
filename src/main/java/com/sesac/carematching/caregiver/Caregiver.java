@@ -21,10 +21,11 @@ import java.time.Instant;
 @NoArgsConstructor
 public class Caregiver {
     @Id
-    @Column(name = "UNO", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "CNO", nullable = false)
     private Integer id;
 
-    @MapsId
+    @NotNull
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "UNO", nullable = false)
@@ -70,7 +71,6 @@ public class Caregiver {
     public Caregiver(User user, String loc, String servNeeded, Byte workDays, WorkTime workTime, WorkForm workForm,
                      EmploymentType employmentType, Integer salary, Status status) {
         this.user = user;
-        this.id = user.getId();
         this.loc = loc;
         this.servNeeded = servNeeded;
         this.workDays = workDays;

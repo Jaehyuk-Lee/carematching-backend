@@ -32,7 +32,7 @@ public class CaregiverService {
         caregiverRepository.deleteById(id);
     }
 
-    //    @Transactional
+    @Transactional
     public Caregiver update(Integer id, UpdateCaregiverRequest request) {
         Caregiver caregiver = findById(id);
         caregiver.setLoc(request.getLoc());
