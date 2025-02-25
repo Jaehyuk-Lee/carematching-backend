@@ -10,24 +10,25 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/caregivers")
 public class CaregiverController {
     private CaregiverService caregiverService;
 
-    @GetMapping("/caregivers/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<CaregiverResponse> findCaregiver(@PathVariable Integer id) {
         Caregiver caregiver = caregiverService.findById(id);
         return ResponseEntity.ok()
             .body(new CaregiverResponse(caregiver));
     }
 
-    @DeleteMapping("/caregivers/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteCaregiver(@PathVariable Integer id) {
         caregiverService.delete(id);
         return ResponseEntity.ok()
             .build();
     }
 
-    @PutMapping("/caregivers/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<Caregiver> updateCaregiver(@PathVariable Integer id,
                                                  @RequestBody UpdateCaregiverRequest request) {
         Caregiver updatedCaregiver = caregiverService.update(id, request);
@@ -35,7 +36,7 @@ public class CaregiverController {
             .body(updatedCaregiver);
     }
 
-    @PostMapping("/caregivers")
+    @PostMapping("/add")
     public ResponseEntity<Caregiver> addCaregiver(@RequestBody AddCaregiverRequest request) {
         Caregiver savedCaregiver = caregiverService.save(request);
         return ResponseEntity.status(HttpStatus.CREATED)
