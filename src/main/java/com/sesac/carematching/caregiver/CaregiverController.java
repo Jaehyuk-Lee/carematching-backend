@@ -40,17 +40,17 @@ public class CaregiverController {
     }
 
     @PostMapping("/update/{id}")
-    public ResponseEntity<Caregiver> updateCaregiver(@PathVariable Integer id,
+    public ResponseEntity<CaregiverResponse> updateCaregiver(@PathVariable Integer id,
                                                  @RequestBody UpdateCaregiverRequest request) {
         Caregiver updatedCaregiver = caregiverService.update(id, request);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(updatedCaregiver);
+            .body(new CaregiverResponse(updatedCaregiver));
     }
 
     @PostMapping("/add")
-    public ResponseEntity<Caregiver> addCaregiver(@RequestBody AddCaregiverRequest request) {
+    public ResponseEntity<CaregiverResponse> addCaregiver(@RequestBody AddCaregiverRequest request) {
         Caregiver savedCaregiver = caregiverService.save(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(savedCaregiver);
+            .body(new CaregiverResponse(savedCaregiver));
     }
 }
