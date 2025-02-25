@@ -10,6 +10,7 @@ import lombok.Setter;
 public class AddCaregiverRequest {
     private User user;
     private String loc;
+    private String realName;
     private String servNeeded;
     private Byte workDays;
     private WorkTime workTime;
@@ -22,6 +23,7 @@ public class AddCaregiverRequest {
         return Caregiver.builder()
             .user(user)
             .loc(loc)
+            .realName(realName)
             .servNeeded(servNeeded)
             .workDays(workDays)
             .workTime(workTime)

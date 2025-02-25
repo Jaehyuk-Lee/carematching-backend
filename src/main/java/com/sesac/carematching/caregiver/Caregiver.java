@@ -33,6 +33,11 @@ public class Caregiver {
 
     @Size(max = 255)
     @NotNull
+    @Column(name = "realName", nullable = false)
+    private String realName;
+
+    @Size(max = 255)
+    @NotNull
     @Column(name = "LOC", nullable = false)
     private String loc;
 
@@ -68,10 +73,11 @@ public class Caregiver {
     private Status status;
 
     @Builder
-    public Caregiver(User user, String loc, String servNeeded, Byte workDays, WorkTime workTime, WorkForm workForm,
-                     EmploymentType employmentType, Integer salary, Status status) {
+    public Caregiver(User user, String loc, String realName, String servNeeded, Byte workDays, WorkTime workTime,
+                     WorkForm workForm, EmploymentType employmentType, Integer salary, Status status) {
         this.user = user;
         this.loc = loc;
+        this.realName = realName;
         this.servNeeded = servNeeded;
         this.workDays = workDays;
         this.workTime = workTime;

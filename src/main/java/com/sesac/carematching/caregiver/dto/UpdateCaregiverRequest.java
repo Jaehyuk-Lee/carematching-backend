@@ -8,6 +8,7 @@ import lombok.Setter;
 @Getter
 public class UpdateCaregiverRequest {
     private String loc;
+    private String realName;
     private String servNeeded;
     private Byte workDays;
     private WorkTime workTime;
@@ -19,6 +20,7 @@ public class UpdateCaregiverRequest {
     public Caregiver toEntity() {
         return Caregiver.builder()
             .loc(loc)
+            .realName(realName)
             .servNeeded(servNeeded)
             .workDays(workDays)
             .workTime(workTime)

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/caregivers")
 public class CaregiverController {
-    private CaregiverService caregiverService;
+    private final CaregiverService caregiverService;
 
     @GetMapping("/get/{id}")
     public ResponseEntity<CaregiverResponse> findCaregiver(@PathVariable Integer id) {

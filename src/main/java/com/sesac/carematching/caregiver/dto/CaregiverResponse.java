@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 public class CaregiverResponse {
     private String loc;
+    private String realName;
     private String servNeeded;
     private Byte workDays;
     private WorkTime workTime;
@@ -15,6 +16,7 @@ public class CaregiverResponse {
 
     public CaregiverResponse(Caregiver caregiver) {
         this.loc = caregiver.getLoc();
+        this.realName = caregiver.getRealName();
         this.servNeeded = caregiver.getServNeeded();
         this.workDays = caregiver.getWorkDays();
         this.workTime = caregiver.getWorkTime();
