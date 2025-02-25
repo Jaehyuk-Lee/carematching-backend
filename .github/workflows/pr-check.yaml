@@ -42,23 +42,3 @@ jobs:
           file: ./deployment/Dockerfile
           push: false # PR 체크에서는 이미지를 푸시하지 않음
           tags: ${{ github.repository }}:pr-${{ github.event.pull_request.number }}
-
-      - name: Comment PR
-        uses: actions/github-script@v7
-        if: always()
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Build Test 🏗️\`${{ job.status }}\`
-
-            - Java Build ✅
-            - Docker Build ✅
-
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
