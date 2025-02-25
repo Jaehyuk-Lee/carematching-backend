@@ -16,8 +16,8 @@ import java.util.List;
 public class CaregiverController {
     private final CaregiverService caregiverService;
 
-    @GetMapping("/get")
-    public ResponseEntity<List<CaregiverResponse>> CaregiverList(@PathVariable Integer id) {
+    @GetMapping
+    public ResponseEntity<List<CaregiverResponse>> CaregiverList() {
         List<CaregiverResponse> caregivers = caregiverService.findAll()
             .stream()
             .map(CaregiverResponse::new)
@@ -26,20 +26,20 @@ public class CaregiverController {
             .body(caregivers);
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<CaregiverResponse> findCaregiver(@PathVariable Integer id) {
         Caregiver caregiver = caregiverService.findById(id);
         return ResponseEntity.ok(new CaregiverResponse(caregiver));
     }
 
-    @DeleteMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public ResponseEntity<Void> deleteCaregiver(@PathVariable Integer id) {
         caregiverService.delete(id);
         return ResponseEntity.ok()
             .build();
     }
 
-    @PutMapping("/update/{id}")
+    @PostMapping("/update/{id}")
     public ResponseEntity<Caregiver> updateCaregiver(@PathVariable Integer id,
                                                  @RequestBody UpdateCaregiverRequest request) {
         Caregiver updatedCaregiver = caregiverService.update(id, request);

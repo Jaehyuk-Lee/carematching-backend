@@ -29,7 +29,7 @@ class CaregiverServiceTest {
         AddCaregiverRequest request = new AddCaregiverRequest();
         request.setLoc("지역");
         request.setSalary(1000);
-        request.setWorkDays((byte) 1111100);
+        request.setWorkDays("월화수목금");
         request.setStatus(Status.CLOSE);
         request.setEmploymentType(EmploymentType.CONTRACT);
         request.setWorkForm(WorkForm.LIVE_IN);

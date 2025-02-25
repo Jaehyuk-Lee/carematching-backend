@@ -47,7 +47,7 @@ public class Caregiver {
 
     @NotNull
     @Column(name = "WORK_DAYS", nullable = false)
-    private Byte workDays;
+    private String workDays;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -73,7 +73,7 @@ public class Caregiver {
     private Status status;
 
     @Builder
-    public Caregiver(User user, String loc, String realName, String servNeeded, Byte workDays, WorkTime workTime,
+    public Caregiver(User user, String loc, String realName, String servNeeded, String workDays, WorkTime workTime,
                      WorkForm workForm, EmploymentType employmentType, Integer salary, Status status) {
         this.user = user;
         this.loc = loc;

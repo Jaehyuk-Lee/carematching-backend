@@ -12,7 +12,7 @@ public class AddCaregiverRequest {
     private String loc;
     private String realName;
     private String servNeeded;
-    private Byte workDays;
+    private String workDays;
     private WorkTime workTime;
     private WorkForm workForm;
     private EmploymentType employmentType;
