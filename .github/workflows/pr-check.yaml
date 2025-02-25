@@ -39,6 +39,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./deployment/Dockerfile
           push: false # PR 체크에서는 이미지를 푸시하지 않음
           tags: ${{ github.repository }}:pr-${{ github.event.pull_request.number }}
 
