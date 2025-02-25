@@ -8,17 +8,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/caregivers")
 public class CaregiverController {
     private final CaregiverService caregiverService;
 
+    @GetMapping("/get")
+    public ResponseEntity<List<CaregiverResponse>> CaregiverList(@PathVariable Integer id) {
+        List<CaregiverResponse> caregivers = caregiverService.findAll()
+            .stream()
+            .map(CaregiverResponse::new)
+            .toList();
+        return ResponseEntity.ok()
+            .body(caregivers);
+    }
+
     @GetMapping("/get/{id}")
     public ResponseEntity<CaregiverResponse> findCaregiver(@PathVariable Integer id) {
         Caregiver caregiver = caregiverService.findById(id);
-        return ResponseEntity.ok()
-            .body(new CaregiverResponse(caregiver));
+        return ResponseEntity.ok(new CaregiverResponse(caregiver));
     }
 
     @DeleteMapping("/delete/{id}")

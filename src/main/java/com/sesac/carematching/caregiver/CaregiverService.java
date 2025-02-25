@@ -1,12 +1,15 @@
 package com.sesac.carematching.caregiver;
 
 import com.sesac.carematching.caregiver.dto.AddCaregiverRequest;
+import com.sesac.carematching.caregiver.dto.CaregiverResponse;
 import com.sesac.carematching.caregiver.dto.UpdateCaregiverRequest;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -44,5 +47,9 @@ public class CaregiverService {
         caregiver.setSalary(request.getSalary());
         caregiver.setStatus(request.getStatus());
         return caregiverRepository.save(caregiver);
+    }
+
+    public List<Caregiver> findAll() {
+        return caregiverRepository.findAll();
     }
 }
