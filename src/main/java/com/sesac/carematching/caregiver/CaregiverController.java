@@ -30,7 +30,8 @@ public class CaregiverController {
     @GetMapping("/{id}")
     public ResponseEntity<CaregiverResponse> findCaregiver(@PathVariable Integer id) {
         Caregiver caregiver = caregiverService.findById(id);
-        return ResponseEntity.ok(new CaregiverResponse(caregiver));
+        return ResponseEntity.ok()
+            .body(new CaregiverResponse(caregiver));
     }
 
     @PostMapping("/delete/{id}")
