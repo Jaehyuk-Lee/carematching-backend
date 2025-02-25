@@ -1,5 +1,6 @@
 package com.sesac.carematching.caregiver;
 
+import com.sesac.carematching.caregiver.dto.CaregiverListResponse;
 import com.sesac.carematching.caregiver.dto.CaregiverResponse;
 import com.sesac.carematching.caregiver.dto.UpdateCaregiverRequest;
 import com.sesac.carematching.caregiver.dto.AddCaregiverRequest;
@@ -17,10 +18,10 @@ public class CaregiverController {
     private final CaregiverService caregiverService;
 
     @GetMapping
-    public ResponseEntity<List<CaregiverResponse>> CaregiverList() {
-        List<CaregiverResponse> caregivers = caregiverService.findAll()
+    public ResponseEntity<List<CaregiverListResponse>> CaregiverList() {
+        List<CaregiverListResponse> caregivers = caregiverService.findAll()
             .stream()
-            .map(CaregiverResponse::new)
+            .map(CaregiverListResponse::new)
             .toList();
         return ResponseEntity.ok()
             .body(caregivers);
