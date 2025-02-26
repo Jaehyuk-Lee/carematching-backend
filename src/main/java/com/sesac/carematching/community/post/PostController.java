@@ -92,4 +92,24 @@ public class PostController {
 
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * (1) 내가 작성한 게시글 조회 (최신순)
+     */
+    @GetMapping("/my-posts")
+    public ResponseEntity<Page<MyPostListResponse>> getMyPosts(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        // 현재 로그인 사용자 정보
+        User user = userService.getUserInfo(username);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MyPostListResponse> myPosts = postService.getMyPosts(user, pageable);
+
+        return ResponseEntity.ok(myPosts);
+    }
 }

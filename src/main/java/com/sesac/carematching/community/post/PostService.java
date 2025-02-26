@@ -155,6 +155,42 @@ public class PostService {
         );
     }
 
+    /**
+     * [내가 작성한 게시글] 조회 (최신순)
+     * page, size 로 페이징
+     */
+    public Page<MyPostListResponse> getMyPosts(User user, Pageable pageable) {
+        // 1) DB에서 user가 작성한 Post 목록을 최신순으로 조회
+        Page<Post> postPage = postRepository.findByUser(
+            user,
+            PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+            )
+        );
+
+        // 2) Post -> MyPostListResponse 로 매핑
+        return postPage.map(post -> {
+            Category category = post.getCategory();
+
+            int viewCount = viewcountRepository.countByPost(post);
+            int likeCount = likeRepository.countByPost(post);
+            int commentCount = commentRepository.countByPost(post);
+
+            String relativeTime = getRelativeTime(post.getCreatedAt());
+
+            return new MyPostListResponse(
+                post,
+                category,
+                relativeTime,
+                viewCount,
+                likeCount,
+                commentCount
+            );
+        });
+    }
+
     // "x분 전", "x시간 전", "x일 전"
     private String getRelativeTime(Instant createdAt) {
         Duration duration = Duration.between(createdAt, Instant.now());
@@ -168,8 +204,14 @@ public class PostService {
             return minutes + "분 전";
         } else if (hours < 24) {
             return hours + "시간 전";
-        } else {
+        } else if (hours < 48) {
+            return "어제";
+        } else if (days < 30) {
             return days + "일 전";
+        } else if (days < 360) {
+            return days/30 + "개월 전";
+        } else {
+            return days/360 + "년 전";
         }
     }
 

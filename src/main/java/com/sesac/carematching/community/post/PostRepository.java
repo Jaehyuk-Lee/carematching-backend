@@ -11,6 +11,9 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     // 작성글 개수
     int countByUser(User user);
 
+    // 내가 작성한 글 페이지 조회
+    Page<Post> findByUser(User user, Pageable pageable);
+
     // 특정 카테고리에 속한 게시글 페이징
     Page<Post> findByCategory(Category category, Pageable pageable);
 
