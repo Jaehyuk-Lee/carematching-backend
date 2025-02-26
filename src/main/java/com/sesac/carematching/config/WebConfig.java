@@ -14,8 +14,7 @@ public class WebConfig implements WebMvcConfigurer {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**") // 모든 API 엔드포인트에 대해 CORS 설정
-                        .allowedOrigins("http://localhost:3000",
-                            "http://internal-carematching-backend-alb-1372095799.ap-northeast-2.elb.amazonaws.com") // 허용할 출처
+                        .allowedOrigins("http://internal-carematching-backend-alb-1372095799.ap-northeast-2.elb.amazonaws.com") // 허용할 출처
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 허용할 HTTP 메소드
                         .allowedHeaders("*") // 허용할 헤더
                         .allowCredentials(true); // 자격 증명 허용
