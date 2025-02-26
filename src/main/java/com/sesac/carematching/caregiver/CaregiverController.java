@@ -19,7 +19,7 @@ public class CaregiverController {
 
     @GetMapping
     public ResponseEntity<List<CaregiverListResponse>> CaregiverList() {
-        List<CaregiverListResponse> caregivers = caregiverService.findAll()
+        List<CaregiverListResponse> caregivers = caregiverService.findALlOpen()
             .stream()
             .map(CaregiverListResponse::new)
             .toList();

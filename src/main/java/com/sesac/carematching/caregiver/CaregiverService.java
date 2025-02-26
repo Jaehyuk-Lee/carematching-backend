@@ -1,7 +1,6 @@
 package com.sesac.carematching.caregiver;
 
 import com.sesac.carematching.caregiver.dto.AddCaregiverRequest;
-import com.sesac.carematching.caregiver.dto.CaregiverResponse;
 import com.sesac.carematching.caregiver.dto.UpdateCaregiverRequest;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.EntityNotFoundException;
@@ -49,7 +48,7 @@ public class CaregiverService {
         return caregiverRepository.save(caregiver);
     }
 
-    public List<Caregiver> findAll() {
-        return caregiverRepository.findAll();
+    public List<Caregiver> findALlOpen() {
+        return caregiverRepository.findByStatus(Status.OPEN);
     }
 }
