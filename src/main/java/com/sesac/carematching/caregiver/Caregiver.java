@@ -33,7 +33,7 @@ public class Caregiver {
 
     @Size(max = 255)
     @NotNull
-    @Column(name = "realName", nullable = false)
+    @Column(name = "REAL_NAME", nullable = false)
     private String realName;
 
     @Size(max = 255)
