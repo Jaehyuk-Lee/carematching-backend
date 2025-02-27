@@ -22,7 +22,6 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> join(@RequestBody UserSignupDTO user) {
@@ -50,19 +49,6 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<User> getUserPage() {
-        System.out.println("일반 인증 성공");
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        // 유저 정보
-        User user = userService.getUserInfo(username);
-
-        return ResponseEntity.ok(user);
-    }
-
     private String extractUsernameFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -80,7 +66,7 @@ public class UserController {
     }
 
     private void checkAdminPrivileges(HttpServletRequest request) {
-        User requestedUser = userRepository.findByUsername(extractUsernameFromToken(request)).orElse(null);
+        User requestedUser = userService.getUserInfo(extractUsernameFromToken(request));
         if (requestedUser == null || !requestedUser.getRole().getRname().equals("ROLE_ADMIN")) {
             throw new IllegalArgumentException("관리자 전용 기능입니다.");
         }
