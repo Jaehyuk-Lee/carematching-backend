@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import util.TokenAuth;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private TokenAuth tokenAuth;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> join(@RequestBody UserSignupDTO user) {
@@ -59,26 +61,10 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    private String extractUsernameFromToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("인증 토큰이 필요합니다.");
-        }
-
-        String token = authHeader.substring(7);
-        String username = jwtUtil.extractUsername(token);
-
-        if (username == null) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
-        }
-
-        return username;
-    }
-
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
         try {
-            String username = extractUsernameFromToken(request);
+            String username = tokenAuth.extractUsernameFromToken(request);
             userService.deleteUser(username);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
@@ -92,7 +78,7 @@ public class UserController {
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody UserUpdateDTO userUpdateDTO, HttpServletRequest request) {
         try {
-            String username = extractUsernameFromToken(request);
+            String username = tokenAuth.extractUsernameFromToken(request);
             userService.updateUser(username, userUpdateDTO);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
