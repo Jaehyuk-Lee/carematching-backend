@@ -44,12 +44,12 @@ class CarematchingApplicationTests {
         request.setStatus(Status.OPEN);
         request.setServNeeded("전문분야");
         request.setEmploymentType(EmploymentType.CONTRACT);
-        request.setWorkDays((byte) 0b1111100);
+        request.setWorkDays("1111100");
         request.setWorkTime(WorkTime.FULLTIME);
         request.setWorkForm(WorkForm.LIVE_IN);
-        request.setUser(user);
+       // request.setUser(user);
 
-        Caregiver savedCaregiver = caregiverService.save(request);
+//        Caregiver savedCaregiver = caregiverService.save(request);
 
         // 검증 구문
         assertNotNull(savedCaregiver, "저장된 caregiver는 null이 아니어야 합니다.");

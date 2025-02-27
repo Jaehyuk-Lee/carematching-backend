@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 @Getter
 public class AddCaregiverRequest {
-    private User user;
     @NotBlank(message = "사는 지역은 필수 입력 사항입니다.")
     private String loc;
     @NotBlank(message = "실명은 필수 입력 사항입니다.")
@@ -26,20 +25,6 @@ public class AddCaregiverRequest {
     private EmploymentType employmentType;
     @NotBlank(message = "봉급은 필수 입력 사항입니다.")
     private Integer salary;
+    @NotBlank(message = "이대로 오픈할 지 선택하세요.")
     private Status status;
-
-    public Caregiver toEntity() {
-        return Caregiver.builder()
-            .user(user)
-            .loc(loc)
-            .realName(realName)
-            .servNeeded(servNeeded)
-            .workDays(workDays)
-            .workTime(workTime)
-            .workForm(workForm)
-            .employmentType(employmentType)
-            .salary(salary)
-            .status(status)
-            .build();
-    }
 }

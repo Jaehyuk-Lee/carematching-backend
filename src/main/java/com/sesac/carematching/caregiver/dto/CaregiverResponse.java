@@ -13,6 +13,7 @@ public class CaregiverResponse {
     private WorkForm workForm;
     private EmploymentType employmentType;
     private Integer salary;
+    private Status status;
 
     public CaregiverResponse(Caregiver caregiver) {
         this.loc = caregiver.getLoc();
@@ -23,5 +24,6 @@ public class CaregiverResponse {
         this.workForm = caregiver.getWorkForm();
         this.employmentType = caregiver.getEmploymentType();
         this.salary = caregiver.getSalary();
+        this.status = caregiver.getStatus();
     }
 }

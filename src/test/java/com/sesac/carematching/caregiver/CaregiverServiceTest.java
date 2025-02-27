@@ -34,10 +34,10 @@ class CaregiverServiceTest {
         request.setEmploymentType(EmploymentType.CONTRACT);
         request.setWorkForm(WorkForm.LIVE_IN);
         request.setWorkTime(WorkTime.FULLTIME);
-        request.setUser(user);
+        String username = "이지윤";
 
         // When
-        Caregiver savedCaregiver = caregiverService.save(request);
+        Caregiver savedCaregiver = caregiverService.save(username, request);
 
         // Then
 //        assertNotNull(savedCaregiver.getId()); // 자동 생성된 ID 확인

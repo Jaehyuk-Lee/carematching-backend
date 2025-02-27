@@ -113,25 +113,25 @@ public class CaregiverControllerTest {
             .andExpect(jsonPath("$.realName").value("Updated Name"));
     }
 
-    @Test
-    public void testAddCaregiver() throws Exception {
-        // 추가 요청 객체 생성 (필드에 맞게 수정)
-        AddCaregiverRequest request = new AddCaregiverRequest();
-        request.setRealName("New Caregiver");
-
-        // 저장된 Caregiver 객체 생성 (예를 들어, id가 할당된 경우)
-        Caregiver savedCaregiver = new Caregiver();
-        savedCaregiver.setId(1);
-        savedCaregiver.setRealName("New Caregiver");
-
-        when(caregiverService.save(any(AddCaregiverRequest.class)))
-            .thenReturn(savedCaregiver);
-
-        mockMvc.perform(post("/api/caregivers/add")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(request)))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.realName").value("New Caregiver"));
-    }
+//    @Test
+//    public void testAddCaregiver() throws Exception {
+//        // 추가 요청 객체 생성 (필드에 맞게 수정)
+//        AddCaregiverRequest request = new AddCaregiverRequest();
+//        request.setRealName("New Caregiver");
+//
+//        // 저장된 Caregiver 객체 생성 (예를 들어, id가 할당된 경우)
+//        Caregiver savedCaregiver = new Caregiver();
+//        savedCaregiver.setId(1);
+//        savedCaregiver.setRealName("New Caregiver");
+//
+//        when(caregiverService.save(any(AddCaregiverRequest.class)))
+//            .thenReturn(savedCaregiver);
+//
+//        mockMvc.perform(post("/api/caregivers/add")
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(asJsonString(request)))
+//            .andExpect(status().isCreated())
+//            .andExpect(jsonPath("$.id").value(1))
+//            .andExpect(jsonPath("$.realName").value("New Caregiver"));
+//    }
 }

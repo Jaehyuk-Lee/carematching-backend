@@ -25,18 +25,4 @@ public class UpdateCaregiverRequest {
     @NotBlank(message = "봉급은 필수 입력 사항입니다.")
     private Integer salary;
     private Status status;
-
-    public Caregiver toEntity() {
-        return Caregiver.builder()
-            .loc(loc)
-            .realName(realName)
-            .servNeeded(servNeeded)
-            .workDays(workDays)
-            .workTime(workTime)
-            .workForm(workForm)
-            .employmentType(employmentType)
-            .salary(salary)
-            .status(status)
-            .build();
-    }
 }
