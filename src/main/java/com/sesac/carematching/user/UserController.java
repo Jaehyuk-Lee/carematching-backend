@@ -51,24 +51,8 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    private String extractUsernameFromToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("인증 토큰이 필요합니다.");
-        }
-
-        String token = authHeader.substring(7);
-        String username = jwtUtil.extractUsername(token);
-
-        if (username == null) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
-        }
-
-        return username;
-    }
-
     private void checkAdminPrivileges(HttpServletRequest request) {
-        User requestedUser = userService.getUserInfo(extractUsernameFromToken(request));
+        User requestedUser = userService.getUserInfo(tokenAuth.extractUsernameFromToken(request));
         if (requestedUser == null || !requestedUser.getRole().getRname().equals("ROLE_ADMIN")) {
             throw new IllegalArgumentException("관리자 전용 기능입니다.");
         }
