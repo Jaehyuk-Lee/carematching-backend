@@ -5,6 +5,7 @@ import com.sesac.carematching.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
@@ -28,4 +29,35 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
             Category category2, String contentKeyword,
             Pageable pageable
     );
+
+    /**
+     * (A) 특정 카테고리에서 좋아요 10개 이상인 게시글
+     *     -> createdAt DESC로 정렬 + 페이징
+     *
+     * JOIN p.likes l : Post와 Like를 조인
+     * GROUP BY p     : 각 게시글별로 그룹화
+     * HAVING COUNT(l) >= 10 : 좋아요 개수가 10개 이상인 경우
+     * ORDER BY p.createdAt DESC : 최신순
+     */
+    @Query("""
+           SELECT p FROM Post p
+           JOIN p.likes l
+           WHERE p.category = :category
+           GROUP BY p
+           HAVING COUNT(l) >= 10
+           ORDER BY p.createdAt DESC
+           """)
+    Page<Post> findPopularPostsByCategory(Category category, Pageable pageable);
+
+    /**
+     * (B) 전체 카테고리에서 좋아요 10개 이상인 게시글
+     */
+    @Query("""
+           SELECT p FROM Post p
+           JOIN p.likes l
+           GROUP BY p
+           HAVING COUNT(l) >= 10
+           ORDER BY p.createdAt DESC
+           """)
+    Page<Post> findPopularPostsAll(Pageable pageable);
 }
