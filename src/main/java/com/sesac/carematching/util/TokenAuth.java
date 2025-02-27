@@ -1,10 +1,12 @@
-package util;
+package com.sesac.carematching.util;
 
 import com.sesac.carematching.config.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
+@Component
 public class TokenAuth {
     private final JwtUtil jwtUtil;
 
