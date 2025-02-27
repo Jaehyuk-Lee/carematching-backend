@@ -34,7 +34,8 @@ public class CaregiverService {
             .orElseThrow(() -> new EntityNotFoundException("Caregiver not found with id: " + id));
     }
 
-    public Caregiver findByUser(User user) {
+    public Caregiver findByUser(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(()->new IllegalArgumentException("User is null"));
         return caregiverRepository.findByUser(user)
             .orElseThrow(() -> new EntityNotFoundException("Caregiver not found with username: " + user.getUsername()));
     }

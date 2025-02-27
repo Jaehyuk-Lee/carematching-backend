@@ -20,7 +20,6 @@ import java.util.List;
 public class CaregiverController {
     private final CaregiverService caregiverService;
     private final RoleService roleService;
-    private final UserRepository userRepository;
 
     @GetMapping
     public ResponseEntity<List<CaregiverListResponse>> CaregiverList() {
@@ -41,8 +40,7 @@ public class CaregiverController {
 
     @GetMapping("/user/{username}")
     public ResponseEntity<CaregiverResponse> findCaregiverByUser(@PathVariable String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(()->new IllegalArgumentException("User is null"));
-        Caregiver caregiver = caregiverService.findByUser(user);
+        Caregiver caregiver = caregiverService.findByUser(username);
         return ResponseEntity.ok()
             .body(new CaregiverResponse(caregiver));
     }
