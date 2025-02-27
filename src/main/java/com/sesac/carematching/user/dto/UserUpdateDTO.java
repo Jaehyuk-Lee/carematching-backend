@@ -1,4 +1,4 @@
-package com.sesac.carematching.user;
+package com.sesac.carematching.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -21,4 +21,7 @@ public class UserUpdateDTO {
 
     @Size(max = 12, message = "전화번호는 최대 12자까지 가능합니다.")
     private String phoneNumber;
+
+    @Size(max = 12, message = "자격증 정보는 최대 30자까지 입력 가능합니다.")
+    private String certno;
 }

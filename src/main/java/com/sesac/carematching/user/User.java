@@ -55,7 +55,7 @@ public class User {
     private String certno;
 
     @NotNull
-    @ColumnDefault("0")
+    @ColumnDefault("1")
     @Column(name = "PENDING", nullable = false)
     private Boolean pending = false;
 

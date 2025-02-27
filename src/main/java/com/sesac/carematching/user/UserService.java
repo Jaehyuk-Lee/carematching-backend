@@ -1,10 +1,16 @@
 package com.sesac.carematching.user;
 
+import com.sesac.carematching.user.dto.UserCertListDTO;
+import com.sesac.carematching.user.dto.UserSignupDTO;
+import com.sesac.carematching.user.dto.UserUpdateDTO;
+import com.sesac.carematching.user.dto.UsernameDTO;
 import com.sesac.carematching.user.role.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -101,6 +107,32 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         }
 
+        if (dto.getCertno() != null && !dto.getCertno().isEmpty()) {
+            user.setCertno(dto.getCertno());
+        }
+
         userRepository.save(user);
     }
+
+    @Transactional
+    public List<UserCertListDTO> getCertList() {
+        return userRepository.findCert();
+    }
+
+    @Transactional
+    public int updatePending(UsernameDTO usernameDTO, boolean pending) {
+        User user = userRepository.findByUsername(usernameDTO.getUsername())
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        user.setPending(pending);
+
+        User savedUser = userRepository.save(user);
+
+        if (savedUser != null) {
+            return 0; // 성공
+        } else {
+            return 1; // 실패
+        }
+    }
+
 }

@@ -1,6 +1,9 @@
 package com.sesac.carematching.user;
 
 import com.sesac.carematching.config.JwtUtil;
+import com.sesac.carematching.user.dto.UserSignupDTO;
+import com.sesac.carematching.user.dto.UserUpdateDTO;
+import com.sesac.carematching.user.dto.UsernameDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -101,6 +104,21 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("회원 정보 수정 중 오류가 발생했습니다.");
         }
+    }
+
+    @PostMapping("/admin/cert")
+    public ResponseEntity<?> createAdminCert(HttpServletRequest request) {
+        return ResponseEntity.ok(userService.getCertList());
+    }
+
+    @PostMapping("/admin/cert/approve")
+    public ResponseEntity<?> createAdminCertApprove(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
+        return ResponseEntity.ok(userService.updatePending(usernameDTO, false));
+    }
+
+    @PostMapping("/admin/cert/revoke")
+    public ResponseEntity<?> createAdminCertRevoke(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
+        return ResponseEntity.ok(userService.updatePending(usernameDTO, true));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
