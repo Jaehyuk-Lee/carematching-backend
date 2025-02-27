@@ -50,7 +50,7 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable);
 
         http.authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/user/login", "/api/user/signup", "/api/**").permitAll()
+            .requestMatchers("/api/user/login", "/api/user/signup", "/api/health", "/api/**").permitAll()
             .anyRequest().authenticated());
 
         http.addFilterBefore(jsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
