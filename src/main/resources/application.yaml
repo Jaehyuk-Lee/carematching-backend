@@ -46,3 +46,7 @@ springdoc:
 
 server:
   port: 8080
+
+jwt:
+  secret: ${JWT_SECRET_KEY}
+  expiration-time: ${JWT_EXPIRATION_TIME:172800000}  # 기본값 48시간(48 * 60 * 60 * 1000)

@@ -1,20 +1,17 @@
 package com.sesac.carematching.user;
 
 import com.sesac.carematching.config.JwtUtil;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import util.TokenAuth;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.springframework.http.HttpStatus;
-import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +20,7 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private TokenAuth tokenAuth;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> join(@RequestBody UserSignupDTO user) {
@@ -63,28 +61,38 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    // 회원 탈퇴
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
-        // JWT 토큰에서 사용자 정보 추출
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 토큰이 필요합니다.");
-        }
-
-        String token = authHeader.substring(7);
-        String username = jwtUtil.extractUsername(token);
-
-        if (username == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
-        }
-
         try {
+            String username = tokenAuth.extractUsernameFromToken(request);
             userService.deleteUser(username);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("회원 탈퇴 처리 중 오류가 발생했습니다.");
         }
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<?> updateUser(@RequestBody UserUpdateDTO userUpdateDTO, HttpServletRequest request) {
+        try {
+            String username = tokenAuth.extractUsernameFromToken(request);
+            userService.updateUser(username, userUpdateDTO);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("회원 정보 수정 중 오류가 발생했습니다.");
+        }
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 }
