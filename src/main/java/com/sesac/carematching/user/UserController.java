@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import util.TokenAuth;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private TokenAuth tokenAuth;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> join(@RequestBody UserSignupDTO user) {
@@ -75,7 +77,7 @@ public class UserController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
         try {
-            String username = extractUsernameFromToken(request);
+            String username = tokenAuth.extractUsernameFromToken(request);
             userService.deleteUser(username);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
@@ -89,7 +91,7 @@ public class UserController {
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody UserUpdateDTO userUpdateDTO, HttpServletRequest request) {
         try {
-            String username = extractUsernameFromToken(request);
+            String username = tokenAuth.extractUsernameFromToken(request);
             userService.updateUser(username, userUpdateDTO);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
