@@ -17,14 +17,10 @@ public class AddCaregiverRequest {
     private String servNeeded;
     @NotBlank(message = "근무 요일은 필수 입력 사항입니다.")
     private String workDays;
-    @NotBlank(message = "근무 시간은 필수 입력 사항입니다.")
     private WorkTime workTime;
-    @NotBlank(message = "근무 형태는 필수 입력 사항입니다.")
     private WorkForm workForm;
-    @NotBlank(message = "고용 형태는 필수 입력 사항입니다.")
     private EmploymentType employmentType;
     @NotBlank(message = "봉급은 필수 입력 사항입니다.")
     private Integer salary;
-    @NotBlank(message = "이대로 오픈할 지 선택하세요.")
     private Status status;
 }
