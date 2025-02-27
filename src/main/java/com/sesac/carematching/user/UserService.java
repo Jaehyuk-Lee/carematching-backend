@@ -126,13 +126,9 @@ public class UserService {
 
         user.setPending(pending);
 
-        User savedUser = userRepository.save(user);
+        userRepository.save(user);
 
-        if (savedUser != null) {
-            return 0; // 성공
-        } else {
-            return 1; // 실패
-        }
+        return 0;
     }
 
 }
