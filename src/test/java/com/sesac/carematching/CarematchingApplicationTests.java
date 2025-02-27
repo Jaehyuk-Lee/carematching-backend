@@ -1,15 +1,12 @@
 package com.sesac.carematching;
 
 import com.sesac.carematching.caregiver.*;
-import com.sesac.carematching.caregiver.dto.AddCaregiverRequest;
-import com.sesac.carematching.caregiver.dto.UpdateCaregiverRequest;
+import com.sesac.carematching.caregiver.dto.AddCaregiverDto;
+import com.sesac.carematching.caregiver.dto.UpdateCaregiverDto;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
-import com.sesac.carematching.user.UserService;
 import com.sesac.carematching.user.role.Role;
 import com.sesac.carematching.user.role.RoleService;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,7 +35,7 @@ class CarematchingApplicationTests {
         user.setUsername("유저");
         userRepository.save(user);
 
-        AddCaregiverRequest request = new AddCaregiverRequest();
+        AddCaregiverDto request = new AddCaregiverDto();
         request.setLoc("지역");
         request.setSalary(10000);
         request.setStatus(Status.OPEN);
@@ -68,7 +65,7 @@ class CarematchingApplicationTests {
 
     @Test
     void updateTest() {
-        UpdateCaregiverRequest request = new UpdateCaregiverRequest();
+        UpdateCaregiverDto request = new UpdateCaregiverDto();
         request.setLoc("지역2");
         request.setSalary(20000);
         request.setStatus(Status.CLOSE);

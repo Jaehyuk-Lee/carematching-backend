@@ -1,15 +1,13 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.caregiver.dto.AddCaregiverRequest;
-import com.sesac.carematching.caregiver.dto.UpdateCaregiverRequest;
+import com.sesac.carematching.caregiver.dto.AddCaregiverDto;
+import com.sesac.carematching.caregiver.dto.UpdateCaregiverDto;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
@@ -20,13 +18,12 @@ public class CaregiverService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Caregiver save(@RequestHeader String username, // 🔥 헤더에서 username 받기
-                          @RequestBody AddCaregiverRequest request) {
+    public Caregiver save(String username, AddCaregiverDto dto) {
         User user = userRepository.findByUsername(username).orElseThrow(()-> new IllegalArgumentException("User must not be null"));
         if (user == null || user.getId() == null) {
             throw new IllegalArgumentException("User and User ID must not be null");
         }
-        return caregiverRepository.save(toEntity(request, user));
+        return caregiverRepository.save(toEntity(dto, user));
     }
 
     public Caregiver findById(Integer id) {
@@ -34,10 +31,10 @@ public class CaregiverService {
             .orElseThrow(() -> new EntityNotFoundException("Caregiver not found with id: " + id));
     }
 
-    public Caregiver findByUser(String username) {
+    public Caregiver findByUsername(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(()->new IllegalArgumentException("User is null"));
-        return caregiverRepository.findByUser(user)
-            .orElseThrow(() -> new EntityNotFoundException("Caregiver not found with username: " + user.getUsername()));
+        return  caregiverRepository.findByUser(user)
+            .orElse(null);
     }
 
     public void delete(Integer id) {
@@ -45,21 +42,21 @@ public class CaregiverService {
     }
 
     @Transactional
-    public Caregiver update(Integer id, UpdateCaregiverRequest request) {
+    public Caregiver update(Integer id, UpdateCaregiverDto dto) {
         Caregiver caregiver = findById(id);
-        caregiver.setLoc(request.getLoc());
-        caregiver.setServNeeded(request.getServNeeded());
-        caregiver.setWorkDays(request.getWorkDays());
-        caregiver.setWorkTime(request.getWorkTime());
-        caregiver.setWorkForm(request.getWorkForm());
-        caregiver.setEmploymentType(request.getEmploymentType());
-        caregiver.setSalary(request.getSalary());
-        caregiver.setStatus(request.getStatus());
+        caregiver.setLoc(dto.getLoc());
+        caregiver.setServNeeded(dto.getServNeeded());
+        caregiver.setWorkDays(dto.getWorkDays());
+        caregiver.setWorkTime(dto.getWorkTime());
+        caregiver.setWorkForm(dto.getWorkForm());
+        caregiver.setEmploymentType(dto.getEmploymentType());
+        caregiver.setSalary(dto.getSalary());
+        caregiver.setStatus(dto.getStatus());
         return caregiverRepository.save(caregiver);
     }
 
-    public List<Caregiver> findALlOpen() {
-        return caregiverRepository.findByStatus(Status.OPEN);
+    public List<Caregiver> findALlOpenCaregiver() {
+        return caregiverRepository.findByStatusAndRoleName(Status.OPEN, "ROLE_USER_CAREGIVER");
     }
 
     public boolean isCaregiverRegistered(String username) {
@@ -71,18 +68,18 @@ public class CaregiverService {
         return caregiverRepository.existsByUser(user);
     }
 
-    private Caregiver toEntity(AddCaregiverRequest request, User user) {
+    private Caregiver toEntity(AddCaregiverDto dto, User user) {
         return Caregiver.builder()
             .user(user)
-            .loc(request.getLoc())
-            .realName(request.getRealName())
-            .servNeeded(request.getServNeeded())
-            .workDays(request.getWorkDays())
-            .workTime(request.getWorkTime())
-            .workForm(request.getWorkForm())
-            .employmentType(request.getEmploymentType())
-            .salary(request.getSalary())
-            .status(request.getStatus())
+            .loc(dto.getLoc())
+            .realName(dto.getRealName())
+            .servNeeded(dto.getServNeeded())
+            .workDays(dto.getWorkDays())
+            .workTime(dto.getWorkTime())
+            .workForm(dto.getWorkForm())
+            .employmentType(dto.getEmploymentType())
+            .salary(dto.getSalary())
+            .status(dto.getStatus())
             .build();
     }
 }

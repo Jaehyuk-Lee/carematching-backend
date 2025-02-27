@@ -1,16 +1,16 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.caregiver.dto.CaregiverListResponse;
-import com.sesac.carematching.caregiver.dto.CaregiverResponse;
-import com.sesac.carematching.caregiver.dto.UpdateCaregiverRequest;
-import com.sesac.carematching.caregiver.dto.AddCaregiverRequest;
-import com.sesac.carematching.user.User;
-import com.sesac.carematching.user.UserRepository;
+import com.sesac.carematching.caregiver.dto.CaregiverListDto;
+import com.sesac.carematching.caregiver.dto.CaregiverDetailDto;
+import com.sesac.carematching.caregiver.dto.UpdateCaregiverDto;
+import com.sesac.carematching.caregiver.dto.AddCaregiverDto;
 import com.sesac.carematching.user.role.RoleService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.sesac.carematching.util.TokenAuth;
 
 import java.util.List;
 
@@ -20,29 +20,31 @@ import java.util.List;
 public class CaregiverController {
     private final CaregiverService caregiverService;
     private final RoleService roleService;
+    private final TokenAuth tokenAuth;
 
     @GetMapping
-    public ResponseEntity<List<CaregiverListResponse>> CaregiverList() {
-        List<CaregiverListResponse> caregivers = caregiverService.findALlOpen()
+    public ResponseEntity<List<CaregiverListDto>> CaregiverList() {
+        List<CaregiverListDto> caregivers = caregiverService.findALlOpenCaregiver()
             .stream()
-            .map(CaregiverListResponse::new)
+            .map(CaregiverListDto::new)
             .toList();
         return ResponseEntity.ok()
             .body(caregivers);
     }
 
-    @GetMapping("/caregiver/{id}")
-    public ResponseEntity<CaregiverResponse> findCaregiverById(@PathVariable Integer id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<CaregiverDetailDto> findCaregiverById(@PathVariable Integer id) {
         Caregiver caregiver = caregiverService.findById(id);
         return ResponseEntity.ok()
-            .body(new CaregiverResponse(caregiver));
+            .body(new CaregiverDetailDto(caregiver));
     }
 
-    @GetMapping("/user/{username}")
-    public ResponseEntity<CaregiverResponse> findCaregiverByUser(@PathVariable String username) {
-        Caregiver caregiver = caregiverService.findByUser(username);
+    @GetMapping("/user")
+    public ResponseEntity<CaregiverDetailDto> findCaregiverByUser(HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        Caregiver caregiver = caregiverService.findByUsername(username);
         return ResponseEntity.ok()
-            .body(new CaregiverResponse(caregiver));
+            .body(new CaregiverDetailDto(caregiver));
     }
 
     @PostMapping("/delete/{id}")
@@ -53,24 +55,26 @@ public class CaregiverController {
     }
 
     @PostMapping("/update/{id}")
-    public ResponseEntity<CaregiverResponse> updateCaregiver(@PathVariable Integer id,
-                                                 @RequestBody UpdateCaregiverRequest request) {
-        Caregiver updatedCaregiver = caregiverService.update(id, request);
+    public ResponseEntity<CaregiverDetailDto> updateCaregiver(@PathVariable Integer id,
+                                                              @RequestBody UpdateCaregiverDto dto) {
+        Caregiver updatedCaregiver = caregiverService.update(id, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new CaregiverResponse(updatedCaregiver));
+            .body(new CaregiverDetailDto(updatedCaregiver));
     }
 
     @PostMapping("/add")
-    public ResponseEntity<CaregiverResponse> addCaregiver(@RequestHeader String username,
-                                                          @RequestBody AddCaregiverRequest request) {
-        roleService.changeRoleToCaregiver(username);
-        Caregiver savedCaregiver = caregiverService.save(username, request);
+    public ResponseEntity<CaregiverDetailDto> addCaregiver(@RequestBody AddCaregiverDto dto,
+                                                           HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        Caregiver savedCaregiver = caregiverService.save(username, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new CaregiverResponse(savedCaregiver));
+            .body(new CaregiverDetailDto(savedCaregiver));
     }
 
     @GetMapping("/check")
-    public ResponseEntity<Boolean> checkCaregiver(@RequestHeader String username) {
+    public ResponseEntity<Boolean> checkCaregiver(HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
         boolean isRegistered = caregiverService.isCaregiverRegistered(username);
         return ResponseEntity.ok(isRegistered);
-    }}
+    }
+}

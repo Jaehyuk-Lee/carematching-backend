@@ -1,8 +1,6 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.caregiver.dto.AddCaregiverRequest;
-import com.sesac.carematching.caregiver.dto.UpdateCaregiverRequest;
-import com.sesac.carematching.caregiver.CaregiverService;
+import com.sesac.carematching.caregiver.dto.UpdateCaregiverDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sesac.carematching.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -14,7 +12,6 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -94,7 +91,7 @@ public class CaregiverControllerTest {
     public void testUpdateCaregiver() throws Exception {
         Integer id = 1;
         // 업데이트 요청 객체 생성 (필드에 맞게 수정)
-        UpdateCaregiverRequest request = new UpdateCaregiverRequest();
+        UpdateCaregiverDto request = new UpdateCaregiverDto();
         request.setRealName("Updated Name");
 
         // 업데이트된 Caregiver 객체 생성
@@ -102,7 +99,7 @@ public class CaregiverControllerTest {
         updatedCaregiver.setId(id);
         updatedCaregiver.setRealName("Updated Name");
 
-        when(caregiverService.update(eq(id), any(UpdateCaregiverRequest.class)))
+        when(caregiverService.update(eq(id), any(UpdateCaregiverDto.class)))
             .thenReturn(updatedCaregiver);
 
         mockMvc.perform(put("/api/caregivers/update/{id}", id)
