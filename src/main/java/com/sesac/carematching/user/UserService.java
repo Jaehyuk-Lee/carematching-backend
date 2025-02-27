@@ -4,6 +4,7 @@ import com.sesac.carematching.user.dto.UserCertListDTO;
 import com.sesac.carematching.user.dto.UserSignupDTO;
 import com.sesac.carematching.user.dto.UserUpdateDTO;
 import com.sesac.carematching.user.dto.UsernameDTO;
+import com.sesac.carematching.user.role.Role;
 import com.sesac.carematching.user.role.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -125,6 +126,10 @@ public class UserService {
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         user.setPending(pending);
+        if (pending)
+            user.setRole(roleService.findRoleByName("ROLE_USER"));
+        else
+            user.setRole(roleService.findRoleByName("ROLE_USER_CAREGIVER"));
 
         userRepository.save(user);
 
