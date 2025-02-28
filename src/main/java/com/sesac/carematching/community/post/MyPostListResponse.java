@@ -8,6 +8,7 @@ public class MyPostListResponse {
     private Integer id;
     private String title;
     private String content;
+    private String image;
     private String category;
     private String relativeTime;    // "몇 시간 전", "몇 일 전" 등
     private int viewCount;
@@ -18,6 +19,7 @@ public class MyPostListResponse {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();
+        this.image = post.getImage();
         this.category = category.getName();
         this.relativeTime = relativeTime;
         this.viewCount = viewCount;

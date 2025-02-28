@@ -40,24 +40,14 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
      * ORDER BY p.createdAt DESC : 최신순
      */
     @Query("""
-           SELECT p FROM Post p
-           JOIN p.likes l
-           WHERE p.category = :category
-           GROUP BY p
-           HAVING COUNT(l) >= 10
-           ORDER BY p.createdAt DESC
-           """)
+       SELECT p
+       FROM Post p
+       JOIN p.likes l
+       WHERE p.category = :category
+       GROUP BY p
+       HAVING COUNT(l) >= 10
+       ORDER BY MAX(l.createdAt) DESC
+       """)
     Page<Post> findPopularPostsByCategory(Category category, Pageable pageable);
 
-    /**
-     * (B) 전체 카테고리에서 좋아요 10개 이상인 게시글
-     */
-    @Query("""
-           SELECT p FROM Post p
-           JOIN p.likes l
-           GROUP BY p
-           HAVING COUNT(l) >= 10
-           ORDER BY p.createdAt DESC
-           """)
-    Page<Post> findPopularPostsAll(Pageable pageable);
 }

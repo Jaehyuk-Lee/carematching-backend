@@ -73,23 +73,9 @@ public class PostService {
         // 접근 권한 체크
         checkAccessRole(access, user);
 
-        Page<Post> postPage;
-        if ("ALL".equalsIgnoreCase(access)) {
-            // 전체 카테고리라고 해서 "요양사"/"수급자"까지 합치는 게 아니라
-            // 그냥 "ALL" 이라는 카테고리 자체가 있다면 그 카테고리로 조회하셨다면 이전과 다를 수 있음.
-            // 하지만 문제에서 "ALL"이면 정말 '전체' 취급해야 한다면:
-            //   -> findPopularPostsAll(...)
-            postPage = postRepository.findPopularPostsAll(pageable);
-
-        } else {
-            // CAREGIVER or USER
-            Category category = categoryRepository.findByAccess(access)
-                .orElseThrow(() -> new IllegalArgumentException("해당 access 카테고리가 존재하지 않습니다."));
-            postPage = postRepository.findPopularPostsByCategory(category, pageable);
-        }
-
-        // 이제 postPage에는 "좋아요 10개 이상"인 게시글만 있고
-        // 최신순 + 페이징이 DB에서 이미 수행됨
+        Category category = categoryRepository.findByAccess(access)
+            .orElseThrow(() -> new IllegalArgumentException("해당 access 카테고리가 존재하지 않습니다."));
+        Page<Post> postPage = postRepository.findPopularPostsByCategory(category, pageable);
 
         // 페이지 안의 각 Post를 DTO로 변환
         return postPage.map(post -> {
