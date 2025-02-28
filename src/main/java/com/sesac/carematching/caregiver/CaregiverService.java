@@ -1,7 +1,6 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.caregiver.dto.AddCaregiverDto;
-import com.sesac.carematching.caregiver.dto.UpdateCaregiverDto;
+import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,7 +17,7 @@ public class CaregiverService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Caregiver save(String username, AddCaregiverDto dto) {
+    public Caregiver save(String username, BuildCaregiverDto dto) {
         User user = userRepository.findByUsername(username).orElseThrow(()-> new IllegalArgumentException("User must not be null"));
         if (user == null || user.getId() == null) {
             throw new IllegalArgumentException("User and User ID must not be null");
@@ -37,13 +36,13 @@ public class CaregiverService {
             .orElse(null);
     }
 
-    public void delete(Integer id) {
-        caregiverRepository.deleteById(id);
-    }
+//    public void delete(Integer id) {
+//        caregiverRepository.deleteById(id);
+//    }
 
     @Transactional
-    public Caregiver update(Integer id, UpdateCaregiverDto dto) {
-        Caregiver caregiver = findById(id);
+    public Caregiver update(String username, BuildCaregiverDto dto) {
+        Caregiver caregiver = findByUsername(username);
         caregiver.setLoc(dto.getLoc());
         caregiver.setServNeeded(dto.getServNeeded());
         caregiver.setWorkDays(dto.getWorkDays());
@@ -68,7 +67,7 @@ public class CaregiverService {
         return caregiverRepository.existsByUser(user);
     }
 
-    private Caregiver toEntity(AddCaregiverDto dto, User user) {
+    private Caregiver toEntity(BuildCaregiverDto dto, User user) {
         return Caregiver.builder()
             .user(user)
             .loc(dto.getLoc())

@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class AddCaregiverDto {
+public class BuildCaregiverDto {
     @NotBlank(message = "사는 지역은 필수 입력 사항입니다.")
     private String loc;
     @NotBlank(message = "실명은 필수 입력 사항입니다.")

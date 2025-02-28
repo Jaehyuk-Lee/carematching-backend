@@ -1,6 +1,6 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.caregiver.dto.AddCaregiverDto;
+import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import lombok.extern.log4j.Log4j2;
@@ -26,7 +26,7 @@ class CaregiverServiceTest {
 //        User user = new User();
 //        userRepository.save(user);
 
-        AddCaregiverDto request = new AddCaregiverDto();
+        BuildCaregiverDto request = new BuildCaregiverDto();
         request.setLoc("지역");
         request.setSalary(1000);
         request.setWorkDays("월화수목금");

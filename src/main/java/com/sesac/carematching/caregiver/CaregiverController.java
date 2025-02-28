@@ -2,8 +2,7 @@ package com.sesac.carematching.caregiver;
 
 import com.sesac.carematching.caregiver.dto.CaregiverListDto;
 import com.sesac.carematching.caregiver.dto.CaregiverDetailDto;
-import com.sesac.carematching.caregiver.dto.UpdateCaregiverDto;
-import com.sesac.carematching.caregiver.dto.AddCaregiverDto;
+import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
 import com.sesac.carematching.user.role.RoleService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -47,28 +46,25 @@ public class CaregiverController {
             .body(new CaregiverDetailDto(caregiver));
     }
 
-    @PostMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteCaregiver(@PathVariable Integer id) {
-        caregiverService.delete(id);
-        return ResponseEntity.ok()
-            .build();
-    }
+//    @PostMapping("/delete/{id}")
+//    public ResponseEntity<Void> deleteCaregiver(@PathVariable Integer id) {
+//        caregiverService.delete(id);
+//        return ResponseEntity.ok()
+//            .build();
+//    }
 
-    @PostMapping("/update/{id}")
-    public ResponseEntity<CaregiverDetailDto> updateCaregiver(@PathVariable Integer id,
-                                                              @RequestBody UpdateCaregiverDto dto) {
-        Caregiver updatedCaregiver = caregiverService.update(id, dto);
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new CaregiverDetailDto(updatedCaregiver));
-    }
-
-    @PostMapping("/add")
-    public ResponseEntity<CaregiverDetailDto> addCaregiver(@RequestBody AddCaregiverDto dto,
-                                                           HttpServletRequest request) {
+    @PostMapping("/build")
+    public ResponseEntity<CaregiverDetailDto> buildCaregiver(HttpServletRequest request,
+                                                              @RequestBody BuildCaregiverDto dto) {
         String username = tokenAuth.extractUsernameFromToken(request);
-        Caregiver savedCaregiver = caregiverService.save(username, dto);
+        Caregiver caregiver = caregiverService.findByUsername(username);
+        if (caregiver != null) {
+            caregiver = caregiverService.update(username, dto);
+        } else {
+            caregiver = caregiverService.save(username, dto);
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new CaregiverDetailDto(savedCaregiver));
+            .body(new CaregiverDetailDto(caregiver));
     }
 
     @GetMapping("/check")

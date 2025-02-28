@@ -1,6 +1,6 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.caregiver.dto.UpdateCaregiverDto;
+import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sesac.carematching.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -79,19 +79,10 @@ public class CaregiverControllerTest {
     }
 
     @Test
-    public void testDeleteCaregiver() throws Exception {
-        Integer id = 3;
-        doNothing().when(caregiverService).delete(id);
-
-        mockMvc.perform(delete("/api/caregivers/delete/{id}", id))
-            .andExpect(status().isOk());
-    }
-
-    @Test
     public void testUpdateCaregiver() throws Exception {
         Integer id = 1;
         // 업데이트 요청 객체 생성 (필드에 맞게 수정)
-        UpdateCaregiverDto request = new UpdateCaregiverDto();
+        BuildCaregiverDto request = new BuildCaregiverDto();
         request.setRealName("Updated Name");
 
         // 업데이트된 Caregiver 객체 생성
@@ -99,8 +90,8 @@ public class CaregiverControllerTest {
         updatedCaregiver.setId(id);
         updatedCaregiver.setRealName("Updated Name");
 
-        when(caregiverService.update(eq(id), any(UpdateCaregiverDto.class)))
-            .thenReturn(updatedCaregiver);
+//        when(caregiverService.update(eq(id), any(UpdateCaregiverDto.class)))
+//            .thenReturn(updatedCaregiver);
 
         mockMvc.perform(put("/api/caregivers/update/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
