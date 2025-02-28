@@ -2,13 +2,13 @@ package com.sesac.carematching.community.post;
 
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
+import com.sesac.carematching.util.TokenAuth;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -18,14 +18,15 @@ public class PostController {
 
     private final PostService postService;
     private final UserService userService;
+    private final TokenAuth tokenAuth;
 
     /**
      * 현재 로그인한 사용자의 프로필 이미지, 닉네임, 작성글 수, 댓글 수, 좋아요 수 조회
      */
     @GetMapping("/user-info")
-    public ResponseEntity<CommunityUserResponse> getUserInfo() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+    public ResponseEntity<CommunityUserResponse> getUserInfo(HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        System.out.println("username = " + username);
         CommunityUserResponse userInfo = postService.getUserInfo(username);
         return ResponseEntity.ok(userInfo);
     }
@@ -37,12 +38,12 @@ public class PostController {
      */
     @GetMapping("/posts")
     public ResponseEntity<Page<CommunityPostListResponse>> getPosts(
+        HttpServletRequest request,
         @RequestParam String access,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+        String username = tokenAuth.extractUsernameFromToken(request);
         User user = userService.getUserInfo(username);
 
         Pageable pageable = PageRequest.of(page, size);
@@ -57,12 +58,12 @@ public class PostController {
      */
     @GetMapping("/popular-posts")
     public ResponseEntity<Page<CommunityPostListResponse>> getPopularPosts(
+        HttpServletRequest request,
         @RequestParam String access,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+        String username = tokenAuth.extractUsernameFromToken(request);
         User user = userService.getUserInfo(username);
 
         Pageable pageable = PageRequest.of(page, size);
@@ -78,13 +79,13 @@ public class PostController {
      */
     @GetMapping("/search")
     public ResponseEntity<Page<CommunityPostListResponse>> searchPosts(
+        HttpServletRequest request,
         @RequestParam String access,
         @RequestParam String keyword,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+        String username = tokenAuth.extractUsernameFromToken(request);
         User user = userService.getUserInfo(username);
 
         Pageable pageable = PageRequest.of(page, size);
@@ -98,11 +99,11 @@ public class PostController {
      */
     @GetMapping("/my-posts")
     public ResponseEntity<Page<MyPostListResponse>> getMyPosts(
+        HttpServletRequest request,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+        String username = tokenAuth.extractUsernameFromToken(request);
 
         // 현재 로그인 사용자 정보
         User user = userService.getUserInfo(username);
