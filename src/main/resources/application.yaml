@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: dev
   application:
     name: carematching
   config:
@@ -30,13 +32,6 @@ spring:
 mybatis:
   type-aliases-package: com.sesac.carematching
   mapper-locations: classpath:mapper/**/*.xml
-logging:
-  level:
-    jdbc:
-      audit: DEBUG
-      sqlonly: DEBUG
-      resultset: DEBUG
-      resultsettable: DEBUG
 
 springdoc:
   api-docs:
