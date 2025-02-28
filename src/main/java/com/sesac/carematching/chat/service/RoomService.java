@@ -11,5 +11,6 @@ public interface RoomService {
 
     RoomResponse getRoom(Integer roomId);
 
+    List<RoomResponse> getUserRooms(Integer id);
 }
 

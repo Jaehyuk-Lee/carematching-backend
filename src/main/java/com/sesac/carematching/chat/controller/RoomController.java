@@ -42,6 +42,24 @@ public class RoomController {
         RoomResponse roomResponse = roomService.createRoom(roomRequest);
         return ResponseEntity.ok(roomResponse);
     }
+    @GetMapping
+    public ResponseEntity<List<RoomResponse>> getUserRooms(HttpServletRequest request) {
+        // 1. JWT 토큰에서 사용자 이름(username) 추출
+        String username = tokenAuth.extractUsernameFromToken(request);
+        System.out.println("🔍 [DEBUG] 추출된 사용자 이름: " + username);
+
+        // 2. username을 사용하여 User ID 조회
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        System.out.println("🔍 [DEBUG] 사용자 ID: " + user.getId());
+
+        // 3. 참여 중인 채팅방 목록 조회
+        List<RoomResponse> rooms = roomService.getUserRooms(user.getId());
+
+        return ResponseEntity.ok(rooms);
+    }
+
 
 
     @GetMapping("/{roomId}")

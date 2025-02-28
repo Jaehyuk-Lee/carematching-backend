@@ -79,6 +79,25 @@ public class RoomServiceImpl implements RoomService {
         );
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoomResponse> getUserRooms(Integer userId) {
+        // 1. User가 참여 중인 채팅방을 모두 조회
+        List<Room> rooms = roomRepository.findByRequesterIdOrCaregiverId(userId, userId);
+
+        // 2. Room을 RoomResponse로 변환하여 반환
+        return rooms.stream()
+            .map(room -> new RoomResponse(
+                room.getId(),
+                room.getRequester().getId(),
+                room.getCaregiver().getId(),
+                room.getCreatedAt(),
+                List.of() // 메시지는 빈 리스트로 전달
+            ))
+            .collect(Collectors.toList());
+    }
+
+
     /**
      * Message 엔티티를 MessageResponse DTO로 변환
      */
