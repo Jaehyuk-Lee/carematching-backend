@@ -20,7 +20,7 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
-    private TokenAuth tokenAuth;
+    private final TokenAuth tokenAuth;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> join(@RequestBody UserSignupDTO user) {
