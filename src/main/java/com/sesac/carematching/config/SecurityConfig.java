@@ -34,10 +34,6 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable);
 
-        http.authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/user/login", "/api/user/signup", "/api/health", "/api/**").permitAll()
-            .anyRequest().authenticated());
-
         http.addFilterBefore(jsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         http.sessionManagement(session -> session
