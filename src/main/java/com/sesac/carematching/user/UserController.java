@@ -1,6 +1,9 @@
 package com.sesac.carematching.user;
 
 import com.sesac.carematching.config.JwtUtil;
+import com.sesac.carematching.user.dto.UserSignupDTO;
+import com.sesac.carematching.user.dto.UserUpdateDTO;
+import com.sesac.carematching.user.dto.UsernameDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,17 +51,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<User> getUserPage() {
-        System.out.println("일반 인증 성공");
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        // 유저 정보
-        User user = userService.getUserInfo(username);
-
-        return ResponseEntity.ok(user);
+    private void checkAdminPrivileges(HttpServletRequest request) {
+        User requestedUser = userService.getUserInfo(tokenAuth.extractUsernameFromToken(request));
+        if (requestedUser == null || !requestedUser.getRole().getRname().equals("ROLE_ADMIN")) {
+            throw new IllegalArgumentException("관리자 전용 기능입니다.");
+        }
     }
 
     @DeleteMapping("/delete")
@@ -86,6 +83,45 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("회원 정보 수정 중 오류가 발생했습니다.");
+        }
+    }
+
+    @PostMapping("/admin/cert")
+    public ResponseEntity<?> createAdminCert(HttpServletRequest request) {
+        try {
+            checkAdminPrivileges(request);
+            return ResponseEntity.ok(userService.getCertList());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("목록을 불러오는 도중 오류가 발생했습니다.");
+        }
+    }
+
+    @PostMapping("/admin/cert/approve")
+    public ResponseEntity<?> createAdminCertApprove(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
+        try {
+            checkAdminPrivileges(request);
+            return ResponseEntity.ok(userService.updatePending(usernameDTO, false));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("처리하는 도중 오류가 발생했습니다.");
+        }
+    }
+
+    @PostMapping("/admin/cert/revoke")
+    public ResponseEntity<?> createAdminCertRevoke(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
+        try {
+            checkAdminPrivileges(request);
+            return ResponseEntity.ok(userService.updatePending(usernameDTO, true));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("처리하는 도중 오류가 발생했습니다.");
         }
     }
 

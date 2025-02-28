@@ -1,4 +1,4 @@
-package com.sesac.carematching.user;
+package com.sesac.carematching.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
