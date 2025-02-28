@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Component
 public class TokenAuth {
     private final JwtUtil jwtUtil;
 
