@@ -33,20 +33,20 @@ public class JwtUtil {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         String role = userDetails.getAuthorities().stream()
-                .findFirst()
-                .map(GrantedAuthority::getAuthority)
-                .orElse("ROLE_USER");
+            .findFirst()
+            .map(GrantedAuthority::getAuthority)
+            .orElse("ROLE_USER");
 
         claims.put("role", role);
         claims.put("username", userDetails.getUsername());
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(key)
-                .compact();
+            .setClaims(claims)
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
+            .signWith(key)
+            .compact();
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
@@ -60,10 +60,10 @@ public class JwtUtil {
 
     private Claims extractClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
     }
 
     private boolean isTokenExpired(String token) {

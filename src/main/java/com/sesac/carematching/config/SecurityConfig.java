@@ -51,7 +51,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/user/login", "/api/user/signup", "/api/health", "/api/**").permitAll()
-            .anyRequest().authenticated());
+            .anyRequest().permitAll());
 
         http.addFilterBefore(jsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 

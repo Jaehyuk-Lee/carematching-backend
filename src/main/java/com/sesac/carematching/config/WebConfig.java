@@ -13,7 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**") // 모든 API 엔드포인트에 대해 CORS 설정
+                registry.addMapping("/**") // 모든 API 엔드포인트에 대해 CORS 설정
                         .allowedOrigins("http://localhost:3000") // 허용할 출처
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 허용할 HTTP 메소드
                         .allowedHeaders("*") // 허용할 헤더
