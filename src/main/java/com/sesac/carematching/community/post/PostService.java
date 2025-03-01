@@ -128,15 +128,21 @@ public class PostService {
      *  - ALL 접근은 제한 없음
      */
     private void checkAccessRole(String access, User user) {
+        // CAREGIVER 접근: ROLE_CAREGIVER 혹은 ROLE_ADMIN
         if ("CAREGIVER".equalsIgnoreCase(access)
-            && !"ROLE_CAREGIVER".equals(user.getRole().getRname())) {
+                && !( "ROLE_CAREGIVER".equals(user.getRole().getRname())
+                || "ROLE_ADMIN".equals(user.getRole().getRname()) )) {
             throw new RuntimeException("요양사 전용 카테고리입니다.");
         }
+
+        // USER 접근: ROLE_USER 혹은 ROLE_ADMIN
         if ("USER".equalsIgnoreCase(access)
-            && !"ROLE_USER".equals(user.getRole().getRname())) {
+                && !( "ROLE_USER".equals(user.getRole().getRname())
+                || "ROLE_ADMIN".equals(user.getRole().getRname()) )) {
             throw new RuntimeException("수급자 전용 카테고리입니다.");
         }
-        // ALL -> 제한 없음
+
+        // ALL 접근: 제한 없음
     }
 
     /**
