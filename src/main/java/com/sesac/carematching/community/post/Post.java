@@ -1,6 +1,7 @@
 package com.sesac.carematching.community.post;
 
 import com.sesac.carematching.community.category.Category;
+import com.sesac.carematching.community.like.Like;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -15,6 +16,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -66,5 +69,9 @@ public class Post {
     @LastModifiedDate
     @Column(name = "UPDATED_AT", nullable = false)
     private Instant updatedAt;
+
+    // 좋아요 매핑 (Like 엔티티 쪽에서 mappedBy="post")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
 
 }
