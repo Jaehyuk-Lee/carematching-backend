@@ -4,7 +4,6 @@ import com.sesac.carematching.user.dto.UserCertListDTO;
 import com.sesac.carematching.user.dto.UserSignupDTO;
 import com.sesac.carematching.user.dto.UserUpdateDTO;
 import com.sesac.carematching.user.dto.UsernameDTO;
-import com.sesac.carematching.user.role.Role;
 import com.sesac.carematching.user.role.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

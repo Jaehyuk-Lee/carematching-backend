@@ -145,7 +145,6 @@ public class PostService {
         // ALL 접근: 제한 없음
     }
 
-
     /**
      * Post -> CommunityPostListResponse 변환
      */
