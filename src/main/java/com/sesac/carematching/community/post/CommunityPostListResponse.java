@@ -22,7 +22,7 @@ public class CommunityPostListResponse {
         this.content = post.getContent();
         this.image = post.getImage();
         this.profileImage = "사용자 프로필 이미지 url";  // 실제로는 User 엔티티에 profileImage 필드를 추가한 뒤 활용
-        this.nickname = user.getNickname();
+        this.nickname = post.getIsAnonymous() ? "익명" : user.getNickname();
         this.relativeTime = relativeTime;
         this.viewCount = viewCount;
         this.likeCount = likeCount;
