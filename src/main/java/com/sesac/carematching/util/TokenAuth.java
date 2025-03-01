@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.ExpiredJwtException;
+
 @RequiredArgsConstructor
 @Component
 public class TokenAuth {
@@ -17,7 +19,12 @@ public class TokenAuth {
         }
 
         String token = authHeader.substring(7);
-        String username = jwtUtil.extractUsername(token);
+        String username;
+        try {
+            username = jwtUtil.extractUsername(token);
+        } catch (ExpiredJwtException e) {
+            throw new IllegalArgumentException("토큰이 만료되었습니다.");
+        }
 
         if (username == null) {
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
