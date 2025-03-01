@@ -15,7 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +28,7 @@ public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final CaregiverRepository caregiverRepository;
-    private final MessageRepository messageRepository; // 추가: MessageRepository 주입
+    private final MessageRepository messageRepository;
 
     @Override
     @Transactional
@@ -53,7 +56,10 @@ public class RoomServiceImpl implements RoomService {
             savedRoom.getRequester().getId(),
             savedRoom.getCaregiver().getId(),
             savedRoom.getCreatedAt(),
-            List.of() // 새로 생성된 채팅방은 메시지가 없으므로 빈 리스트 전달
+            "", // 상대방 username (새로운 채팅방이므로 빈 값)
+            List.of(), // 새로 생성된 채팅방은 메시지가 없으므로 빈 리스트 전달
+            "메시지가 없습니다.",// 마지막 메시지도 없음
+            "1월 1일"
         );
     }
 
@@ -69,13 +75,26 @@ public class RoomServiceImpl implements RoomService {
             .map(this::convertToMessageResponse)
             .collect(Collectors.toList());
 
-        // 3) RoomResponse로 변환하여 메시지 목록 포함
+        // 3) 마지막 메시지 가져오기
+        Optional<Message> lastMessageOpt = messageRepository.findTopByRoomIdOrderByCreatedAtDesc(roomId);
+        String lastMessageText = lastMessageOpt.map(Message::getMessage).orElse("메시지가 없습니다.");
+
+        // 👇 마지막 메시지 날짜 (월/일 형식)
+        String lastMessageDate = lastMessageOpt.map(message ->
+            message.getCreatedAt()
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("MM/dd"))
+        ).orElse("");
+        // 4) RoomResponse로 변환하여 메시지 목록 포함
         return new RoomResponse(
             room.getId(),
             room.getRequester().getId(),
             room.getCaregiver().getId(),
             room.getCreatedAt(),
-            messages // 메시지 목록 포함
+            "", // 상대방 username (개별 조회 시 필요 없음)
+            messages, // 메시지 목록 포함
+            lastMessageText,
+            lastMessageDate
         );
     }
 
@@ -86,17 +105,36 @@ public class RoomServiceImpl implements RoomService {
         List<Room> rooms = roomRepository.findByRequesterIdOrCaregiverId(userId, userId);
 
         // 2. Room을 RoomResponse로 변환하여 반환
-        return rooms.stream()
-            .map(room -> new RoomResponse(
+        return rooms.stream().map(room -> {
+            // 👇 현재 로그인한 사용자가 아닌 상대방 userId 가져오기
+            Integer otherUserId = room.getRequester().getId().equals(userId) ? room.getCaregiver().getId() : room.getRequester().getId();
+
+            // 👇 상대방 username 가져오기
+            String otherUsername = userRepository.findById(otherUserId)
+                .map(User::getUsername)
+                .orElse("알 수 없음");
+
+            // 👇 마지막 메시지 가져오기
+            Optional<Message> lastMessageOpt = messageRepository.findTopByRoomIdOrderByCreatedAtDesc(room.getId());
+            String lastMessageText = lastMessageOpt.map(Message::getMessage).orElse("메시지가 없습니다.");
+            // 👇 마지막 메시지 날짜 (월/일 형식)
+            String lastMessageDate = lastMessageOpt.map(message ->
+                message.getCreatedAt()
+                    .atZone(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("MM/dd"))
+            ).orElse("");
+            return new RoomResponse(
                 room.getId(),
                 room.getRequester().getId(),
                 room.getCaregiver().getId(),
                 room.getCreatedAt(),
-                List.of() // 메시지는 빈 리스트로 전달
-            ))
-            .collect(Collectors.toList());
+                otherUsername, // 상대방 username 추가
+                List.of(), // 메시지는 빈 리스트로 전달
+                lastMessageText, // 마지막 메시지 추가
+                lastMessageDate
+            );
+        }).collect(Collectors.toList());
     }
-
 
     /**
      * Message 엔티티를 MessageResponse DTO로 변환
@@ -105,6 +143,7 @@ public class RoomServiceImpl implements RoomService {
         return new MessageResponse(
             message.getRoom().getId(),
             message.getUser().getId(),
+            message.getUser().getUsername(),
             message.getMessage(),
             message.getIsRead(),
             message.getCreatedAt().toString()

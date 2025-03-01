@@ -17,22 +17,28 @@ public class RoomResponse {
     private Integer requesterUserId;
     private Integer caregiverId;
     private String createdAt;
-    private List<MessageResponse> messages; // Room과 연결된 메시지 목록
+    private String otherUsername;
+    private List<MessageResponse> messages;
+    private String lastMessage;
+    private String lastMessageDate; // 👈 마지막 메시지 날짜 (월/일)
 
-    /**
-     * 메시지 목록을 포함한 RoomResponse 생성자
-     */
     public RoomResponse(
         @NotNull Integer roomId,
         @NotNull Integer requesterUserId,
         @NotNull Integer caregiverId,
         @NotNull Instant createdAt,
-        @NotNull List<MessageResponse> messages
+        @NotNull String otherUsername,
+        @NotNull List<MessageResponse> messages,
+        @NotNull String lastMessage,
+        @NotNull String lastMessageDate // 👈 추가
     ) {
         this.roomId = roomId;
         this.requesterUserId = requesterUserId;
         this.caregiverId = caregiverId;
+        this.otherUsername = otherUsername;
         this.createdAt = DateTimeFormatter.ISO_INSTANT.format(createdAt);
-        this.messages = messages; // 메시지 목록 추가
+        this.messages = messages;
+        this.lastMessage = lastMessage;
+        this.lastMessageDate = lastMessageDate; // 👈 추가
     }
 }
