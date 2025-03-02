@@ -20,6 +20,7 @@ spring:
         show_sql: 'true'
     hibernate:
       ddl-auto: update
+    defer-datasource-initialization: true
     show-sql: 'false'
   datasource:
     driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
@@ -29,9 +30,9 @@ spring:
   devtools:
     restart:
       enabled: 'true'
-mybatis:
-  type-aliases-package: com.sesac.carematching
-  mapper-locations: classpath:mapper/**/*.xml
+  sql:
+    init:
+      mode: always
 
 springdoc:
   api-docs:
