@@ -58,7 +58,7 @@ public class UserController {
         }
     }
 
-    @DeleteMapping("/delete")
+    @PostMapping("/delete")
     public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
         try {
             String username = tokenAuth.extractUsernameFromToken(request);
