@@ -33,7 +33,7 @@ public class PostController {
 
     /**
      * 게시글 목록 조회
-     * access = "ALL", "CAREGIVER", "USER"
+     * access = "ALL", "CAREGIVER"
      * page, size (무한 스크롤/페이징용)
      */
     @GetMapping("/posts")
@@ -54,7 +54,7 @@ public class PostController {
 
     /**
      * 인기글(좋아요 10개 이상) 조회
-     * access = "ALL", "CAREGIVER", "USER"
+     * access = "ALL", "CAREGIVER"
      */
     @GetMapping("/popular-posts")
     public ResponseEntity<Page<CommunityPostListResponse>> getPopularPosts(
@@ -74,7 +74,7 @@ public class PostController {
 
     /**
      * 게시글 검색
-     * access = "ALL", "CAREGIVER", "USER"
+     * access = "ALL", "CAREGIVER"
      * keyword = 제목/내용 검색어
      */
     @GetMapping("/search")

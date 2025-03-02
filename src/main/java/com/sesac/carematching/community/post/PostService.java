@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +30,7 @@ public class PostService {
      */
     public CommunityUserResponse getUserInfo(String username) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         int postCount = postRepository.countByUser(user);
         int commentCount = commentRepository.countByUser(user);
@@ -42,24 +40,23 @@ public class PostService {
     }
 
     /**
-     * access("ALL","CAREGIVER","USER") 에 해당하는 카테고리의 게시글만 조회
+     * access("ALL","CAREGIVER") 에 해당하는 카테고리의 게시글만 조회
      */
     public Page<CommunityPostListResponse> getPostsByAccess(String access, User user, Pageable pageable) {
-        // 접근 권한 체크 (예: "CAREGIVER" 인데 user의 Role이 ROLE_CAREGIVER 인지)
+        // 접근 권한 체크
         checkAccessRole(access, user);
 
-        // 해당 access의 카테고리를 찾음
-        Category category = categoryRepository.findByAccess(access)
-            .orElseThrow(() -> new IllegalArgumentException("해당 access에 해당하는 카테고리가 존재하지 않습니다."));
+        // 해당 access의 카테고리를 가져오되, 존재하지 않으면 예외
+        Category category = getCategoryOrThrow(access);
 
         // 해당 카테고리 게시글 조회
         Page<Post> posts = postRepository.findByCategory(
-            category,
-            PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-            )
+                category,
+                PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        Sort.by(Sort.Direction.DESC, "createdAt")
+                )
         );
 
         return posts.map(this::mapToResponse);
@@ -67,55 +64,46 @@ public class PostService {
 
     /**
      * 인기글 (좋아요 10개 이상)
-     * -> DB 레벨에서 "10개 이상"인 것만 조회 + 최신순 정렬 + 페이징
      */
     public Page<CommunityPostListResponse> getPopularPosts(String access, User user, Pageable pageable) {
-        // 접근 권한 체크
         checkAccessRole(access, user);
 
-        Category category = categoryRepository.findByAccess(access)
-            .orElseThrow(() -> new IllegalArgumentException("해당 access 카테고리가 존재하지 않습니다."));
+        Category category = getCategoryOrThrow(access);
         Page<Post> postPage = postRepository.findPopularPostsByCategory(category, pageable);
 
-        // 페이지 안의 각 Post를 DTO로 변환
         return postPage.map(post -> {
-            // in-memory로 likeCount, commentCount, viewCount 세부 계산 가능
+            // in-memory로 likeCount, commentCount, viewCount 계산
             int likeCount = likeRepository.countByPost(post);
             int commentCount = commentRepository.countByPost(post);
             int viewCount = viewcountRepository.countByPost(post);
 
             String relativeTime = getRelativeTime(post.getCreatedAt());
             return new CommunityPostListResponse(
-                post,
-                post.getUser(),
-                relativeTime,
-                viewCount,
-                likeCount,
-                commentCount
+                    post,
+                    post.getUser(),
+                    relativeTime,
+                    viewCount,
+                    likeCount,
+                    commentCount
             );
         });
     }
 
     /**
      * 검색 (제목/내용)
-     * - 해당 access 카테고리에 속한 글만 검색
      */
     public Page<CommunityPostListResponse> searchPosts(String access, User user, String keyword, Pageable pageable) {
         checkAccessRole(access, user);
 
-        Category category = categoryRepository.findByAccess(access)
-            .orElseThrow(() -> new IllegalArgumentException("해당 access에 해당하는 카테고리가 존재하지 않습니다."));
-
-        // JPA Derived Query 특성상 OR 조건을 쓰려면 메서드가 다소 복잡해질 수 있으므로
-        // 아래처럼 Query Method를 정의해두었다고 가정합니다.
+        Category category = getCategoryOrThrow(access);
         Page<Post> posts = postRepository.findByCategoryAndTitleContainingIgnoreCaseOrCategoryAndContentContainingIgnoreCase(
-            category, keyword,
-            category, keyword,
-            PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-            )
+                category, keyword,
+                category, keyword,
+                PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        Sort.by(Sort.Direction.DESC, "createdAt")
+                )
         );
 
         return posts.map(this::mapToResponse);
@@ -123,28 +111,59 @@ public class PostService {
 
     /**
      * Role 검사
-     *  - CAREGIVER 접근은 ROLE_CAREGIVER만
-     *  - USER 접근은 ROLE_USER만
+     *  - CAREGIVER 접근은 ROLE_USER_CAREGIVER와 ROLE_ADMIN만 접근 가능
      *  - ALL 접근은 제한 없음
      */
     private void checkAccessRole(String access, User user) {
-        // CAREGIVER 접근: ROLE_CAREGIVER 혹은 ROLE_ADMIN
+        // CAREGIVER 접근: ROLE_USER_CAREGIVER 혹은 ROLE_ADMIN
         if ("CAREGIVER".equalsIgnoreCase(access)
-                && !( "ROLE_CAREGIVER".equals(user.getRole().getRname())
+                && !( "ROLE_USER_CAREGIVER".equals(user.getRole().getRname())
                 || "ROLE_ADMIN".equals(user.getRole().getRname()) )) {
             throw new RuntimeException("요양사 전용 카테고리입니다.");
-        }
-
-        // USER 접근: ROLE_USER 혹은 ROLE_ADMIN
-        if ("USER".equalsIgnoreCase(access)
-                && !( "ROLE_USER".equals(user.getRole().getRname())
-                || "ROLE_ADMIN".equals(user.getRole().getRname()) )) {
-            throw new RuntimeException("수급자 전용 카테고리입니다.");
         }
 
         // ALL 접근: 제한 없음
     }
 
+    /**
+     * [내가 작성한 게시글] 조회 (최신순)
+     */
+    public Page<MyPostListResponse> getMyPosts(User user, Pageable pageable) {
+        Page<Post> postPage = postRepository.findByUser(
+                user,
+                PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        Sort.by(Sort.Direction.DESC, "createdAt")
+                )
+        );
+
+        return postPage.map(post -> {
+            Category category = post.getCategory();
+
+            int viewCount = viewcountRepository.countByPost(post);
+            int likeCount = likeRepository.countByPost(post);
+            int commentCount = commentRepository.countByPost(post);
+
+            String relativeTime = getRelativeTime(post.getCreatedAt());
+            return new MyPostListResponse(
+                    post,
+                    category,
+                    relativeTime,
+                    viewCount,
+                    likeCount,
+                    commentCount
+            );
+        });
+    }
+
+    /**
+     * 카테고리 조회 (존재하지 않을 시 예외)
+     */
+    private Category getCategoryOrThrow(String access) {
+        return categoryRepository.findByAccess(access)
+                .orElseThrow(() -> new IllegalArgumentException("해당 access에 해당하는 카테고리가 존재하지 않습니다. access=" + access));
+    }
 
     /**
      * Post -> CommunityPostListResponse 변환
@@ -158,52 +177,18 @@ public class PostService {
         String relativeTime = getRelativeTime(post.getCreatedAt());
 
         return new CommunityPostListResponse(
-            post,
-            writer,
-            relativeTime,
-            viewCount,
-            likeCount,
-            commentCount
-        );
-    }
-
-    /**
-     * [내가 작성한 게시글] 조회 (최신순)
-     * page, size 로 페이징
-     */
-    public Page<MyPostListResponse> getMyPosts(User user, Pageable pageable) {
-        // 1) DB에서 user가 작성한 Post 목록을 최신순으로 조회
-        Page<Post> postPage = postRepository.findByUser(
-            user,
-            PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-            )
-        );
-
-        // 2) Post -> MyPostListResponse 로 매핑
-        return postPage.map(post -> {
-            Category category = post.getCategory();
-
-            int viewCount = viewcountRepository.countByPost(post);
-            int likeCount = likeRepository.countByPost(post);
-            int commentCount = commentRepository.countByPost(post);
-
-            String relativeTime = getRelativeTime(post.getCreatedAt());
-
-            return new MyPostListResponse(
                 post,
-                category,
+                writer,
                 relativeTime,
                 viewCount,
                 likeCount,
                 commentCount
-            );
-        });
+        );
     }
 
-    // "x분 전", "x시간 전", "x일 전"
+    /**
+     * "x분 전", "x시간 전", "x일 전" 형태의 상대 시간 계산
+     */
     private String getRelativeTime(Instant createdAt) {
         Duration duration = Duration.between(createdAt, Instant.now());
         long minutes = duration.toMinutes();
@@ -221,28 +206,9 @@ public class PostService {
         } else if (days < 30) {
             return days + "일 전";
         } else if (days < 360) {
-            return days/30 + "개월 전";
+            return (days / 30) + "개월 전";
         } else {
-            return days/360 + "년 전";
+            return (days / 360) + "년 전";
         }
-    }
-
-    /**
-     * 필터링된 목록을 Page 형태로 변환 (무한 스크롤 대비)
-     */
-    private Page<CommunityPostListResponse> toPage(List<Post> filteredList, Pageable pageable) {
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), filteredList.size());
-
-        // 만약 start가 end보다 크다면 빈 목록
-        List<Post> pageContent = (start > end)
-            ? List.of()
-            : filteredList.subList(start, end);
-
-        List<CommunityPostListResponse> responseContent = pageContent.stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
-
-        return new PageImpl<>(responseContent, pageable, filteredList.size());
     }
 }
