@@ -42,10 +42,10 @@ public class PostService {
     }
 
     /**
-     * access("ALL","CAREGIVER","USER") 에 해당하는 카테고리의 게시글만 조회
+     * access("ALL","CAREGIVER") 에 해당하는 카테고리의 게시글만 조회
      */
     public Page<CommunityPostListResponse> getPostsByAccess(String access, User user, Pageable pageable) {
-        // 접근 권한 체크 (예: "CAREGIVER" 인데 user의 Role이 ROLE_CAREGIVER 인지)
+        // 접근 권한 체크
         checkAccessRole(access, user);
 
         // 해당 access의 카테고리를 찾음
@@ -122,24 +122,46 @@ public class PostService {
     }
 
     /**
+     * 게시글 생성
+     */
+    public CommunityPostListResponse createPost(CommunityPostRequest dto, String imageUrl, User user) {
+        // 1) 카테고리 조회 (access = "ALL" / "CAREGIVER")
+        Category category = categoryRepository.findByName(dto.getCategory())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("해당 name에 해당하는 카테고리가 존재하지 않습니다. name=" + dto.getCategory()));
+
+        // 2) 권한 체크 (category.getAccess()와 user의 Role 비교)
+        checkAccessRole(category.getAccess(), user);
+
+        // 3) Post 엔티티 생성
+        Post post = new Post();
+        post.setUser(user);
+        post.setCategory(category);
+        post.setIsAnonymous(dto.getIsAnonymous() != null ? dto.getIsAnonymous() : false);
+        post.setTitle(dto.getTitle());
+        post.setContent(dto.getContent());
+        post.setImage(imageUrl); // S3에서 업로드한 이미지 URL 저장
+
+        // 4) DB 저장
+        Post savedPost = postRepository.save(post);
+
+        // 5) 저장된 Post를 DTO로 변환 후 반환
+        return mapToResponse(savedPost);
+    }
+
+
+    /**
      * Role 검사
-     *  - CAREGIVER 접근은 ROLE_CAREGIVER만
-     *  - USER 접근은 ROLE_USER만
-     *  - ALL 접근은 제한 없음
+     * - CAREGIVER 접근: ROLE_ADMIN, ROLE_USER_CAREGIVER만 접근 가능
+     * - ALL 접근: 제한 없음
      */
     private void checkAccessRole(String access, User user) {
-        // CAREGIVER 접근: ROLE_CAREGIVER 혹은 ROLE_ADMIN
-        if ("CAREGIVER".equalsIgnoreCase(access)
-                && !( "ROLE_CAREGIVER".equals(user.getRole().getRname())
-                || "ROLE_ADMIN".equals(user.getRole().getRname()) )) {
-            throw new RuntimeException("요양사 전용 카테고리입니다.");
-        }
-
-        // USER 접근: ROLE_USER 혹은 ROLE_ADMIN
-        if ("USER".equalsIgnoreCase(access)
-                && !( "ROLE_USER".equals(user.getRole().getRname())
-                || "ROLE_ADMIN".equals(user.getRole().getRname()) )) {
-            throw new RuntimeException("수급자 전용 카테고리입니다.");
+        // CAREGIVER 접근은 ROLE_ADMIN 이나 ROLE_USER_CAREGIVER만
+        if ("CAREGIVER".equalsIgnoreCase(access)) {
+            if (!("ROLE_ADMIN".equals(user.getRole().getRname())
+                    || "ROLE_USER_CAREGIVER".equals(user.getRole().getRname()))) {
+                throw new RuntimeException("요양사 전용 카테고리입니다.");
+            }
         }
 
         // ALL 접근: 제한 없음

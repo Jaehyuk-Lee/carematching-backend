@@ -2,14 +2,20 @@ package com.sesac.carematching.community.post;
 
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
+import com.sesac.carematching.util.S3UploadService;
 import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RequiredArgsConstructor
 @RestController
@@ -19,6 +25,7 @@ public class PostController {
     private final PostService postService;
     private final UserService userService;
     private final TokenAuth tokenAuth;
+    private final S3UploadService s3UploadService;
 
     /**
      * 현재 로그인한 사용자의 프로필 이미지, 닉네임, 작성글 수, 댓글 수, 좋아요 수 조회
@@ -113,4 +120,31 @@ public class PostController {
 
         return ResponseEntity.ok(myPosts);
     }
+
+    /**
+     * 게시글 작성
+     */
+    @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommunityPostListResponse> createPost(
+            HttpServletRequest request,
+            @RequestPart("postRequest") @Valid CommunityPostRequest postRequest, // 게시글 정보(JSON)
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile // 이미지 파일(Optional)
+    ) throws IOException {
+        // 1) 토큰에서 사용자 정보 추출
+        String username = tokenAuth.extractUsernameFromToken(request);
+        User user = userService.getUserInfo(username);
+
+        // 2) 이미지 업로드 처리
+        String imageUrl = null;
+        if (imageFile != null && !imageFile.isEmpty()) {
+            imageUrl = s3UploadService.saveFile(imageFile); // S3 업로드 후 URL 반환
+        }
+
+        // 3) 게시글 생성 서비스 호출
+        CommunityPostListResponse createdPost = postService.createPost(postRequest, imageUrl, user);
+
+        // 4) 생성된 게시글 정보 반환
+        return ResponseEntity.ok(createdPost);
+    }
+
 }

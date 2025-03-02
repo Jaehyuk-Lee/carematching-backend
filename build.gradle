@@ -59,6 +59,11 @@ dependencies {
 
     // Springdoc-openapi
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
+
+    // AWS
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.438'
+
 }
 
 tasks.named('test') {

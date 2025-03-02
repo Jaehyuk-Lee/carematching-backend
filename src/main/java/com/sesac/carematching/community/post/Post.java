@@ -26,6 +26,7 @@ import java.util.List;
 @Table(name = "community_post")
 public class Post {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CPNO", nullable = false)
     private Integer id;
 
@@ -51,7 +52,7 @@ public class Post {
     @Column(name = "CONTENT", nullable = false, length = 500)
     private String content;
 
-    @Size(max = 255)
+    @Size(max = 1000)
     @Column(name = "IMAGE")
     private String image;
 
