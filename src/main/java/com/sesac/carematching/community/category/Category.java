@@ -22,7 +22,7 @@ public class Category {
     private String name;
 
     @Size(max = 30)
-    @Column(name = "ACCESS", length = 30)
+    @Column(name = "ACCESS", nullable = false, length = 30)
     private String access;
 
 }

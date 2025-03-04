@@ -1,17 +1,14 @@
 package com.sesac.carematching.user;
 
-import com.sesac.carematching.config.JwtUtil;
 import com.sesac.carematching.user.dto.UserSignupDTO;
 import com.sesac.carematching.user.dto.UserUpdateDTO;
 import com.sesac.carematching.user.dto.UsernameDTO;
+import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import com.sesac.carematching.util.TokenAuth;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +19,6 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
-    private final JwtUtil jwtUtil;
     private final TokenAuth tokenAuth;
 
     @PostMapping("/signup")
@@ -33,24 +29,6 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/loginOk")
-    public ResponseEntity<Map<String, String>> loginOk() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        String authorities = authentication.getAuthorities().toString();
-
-        Map<String, String> response = new HashMap<>();
-        response.put("email", username);
-        response.put("authorities", authorities);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/logoutOk")
-    public ResponseEntity<Void> logoutOk() {
-        return ResponseEntity.ok().build();
-    }
-
     private void checkAdminPrivileges(HttpServletRequest request) {
         User requestedUser = userService.getUserInfo(tokenAuth.extractUsernameFromToken(request));
         if (requestedUser == null || !requestedUser.getRole().getRname().equals("ROLE_ADMIN")) {
@@ -58,7 +36,7 @@ public class UserController {
         }
     }
 
-    @DeleteMapping("/delete")
+    @PostMapping("/delete")
     public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
         try {
             String username = tokenAuth.extractUsernameFromToken(request);
@@ -79,7 +57,7 @@ public class UserController {
             userService.updateUser(username, userUpdateDTO);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("회원 정보 수정 중 오류가 발생했습니다.");

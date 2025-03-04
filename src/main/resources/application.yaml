@@ -20,6 +20,7 @@ spring:
         show_sql: 'true'
     hibernate:
       ddl-auto: update
+    defer-datasource-initialization: true
     show-sql: 'false'
   datasource:
     driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
@@ -29,9 +30,13 @@ spring:
   devtools:
     restart:
       enabled: 'true'
-mybatis:
-  type-aliases-package: com.sesac.carematching
-  mapper-locations: classpath:mapper/**/*.xml
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  sql:
+    init:
+      mode: always
 
 springdoc:
   api-docs:
@@ -45,3 +50,16 @@ server:
 jwt:
   secret: ${JWT_SECRET_KEY}
   expiration-time: ${JWT_EXPIRATION_TIME:172800000}  # 기본값 48시간(48 * 60 * 60 * 1000)
+
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET_NAME}
+    credentials:
+      access-key: ${ACCESS_KEY}
+      secret-key: ${SECRET_ACCESS_KEY}
+    region:
+      static: ap-northeast-2
+      auto: false
+    stack:
+      auto: false
