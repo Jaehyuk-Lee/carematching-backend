@@ -34,7 +34,6 @@ public class PostController {
     @GetMapping("/user-info")
     public ResponseEntity<CommunityUserResponse> getUserInfo(HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
-        System.out.println("username = " + username);
         CommunityUserResponse userInfo = postService.getUserInfo(username);
         return ResponseEntity.ok(userInfo);
     }
@@ -162,8 +161,6 @@ public class PostController {
 
         // 2) PostService에서 상세조회 로직
         CommunityPostDetailResponse detail = postService.getPostDetail(postId, user);
-
-        System.out.println("isAuthor: " + detail.isAuthor());
 
         return ResponseEntity.ok(detail);
     }
