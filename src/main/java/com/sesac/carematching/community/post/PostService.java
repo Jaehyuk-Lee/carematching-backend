@@ -4,12 +4,15 @@ import com.sesac.carematching.community.category.Category;
 import com.sesac.carematching.community.category.CategoryRepository;
 import com.sesac.carematching.community.comment.CommentRepository;
 import com.sesac.carematching.community.like.LikeRepository;
+import com.sesac.carematching.community.viewcount.Viewcount;
 import com.sesac.carematching.community.viewcount.ViewcountRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
+import com.sesac.carematching.util.S3UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -26,6 +29,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final ViewcountRepository viewcountRepository;
     private final CategoryRepository categoryRepository;
+    private final S3UploadService s3UploadService;
 
     /**
      * 사용자 정보 + 작성글 수, 댓글 수, 좋아요 수
@@ -147,6 +151,132 @@ public class PostService {
 
         // 5) 저장된 Post를 DTO로 변환 후 반환
         return mapToResponse(savedPost);
+    }
+
+    /**
+     * 게시글 상세 조회
+     */
+    public CommunityPostDetailResponse getPostDetail(Integer postId, User currentUser) {
+        // 1) 게시글 조회 (없으면 예외)
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 게시글입니다."));
+
+        // 2) 조회수 기록이 없으면 Viewcount 테이블에 추가 (첫 조회 시)
+        boolean alreadyViewed = viewcountRepository.existsByUserAndPost(currentUser, post);
+        if (!alreadyViewed) {
+            Viewcount view = new Viewcount();
+            view.setUser(currentUser);
+            view.setPost(post);
+            // createdAt은 AuditingEntityListener에 의해 자동 세팅
+            viewcountRepository.save(view);
+        }
+
+        // 3) 조회수, 좋아요 수, 댓글 수 계산
+        int viewCount = viewcountRepository.countByPost(post);
+        int likeCount = likeRepository.countByPost(post);
+        int commentCount = commentRepository.countByPost(post);
+
+        // 4) 현재 사용자가 이 게시글을 좋아요 눌렀는지, 작성자인지
+        boolean isLiked = likeRepository.findByUserAndPost(currentUser, post).isPresent();
+        boolean isAuthor = post.getUser().getId().equals(currentUser.getId());
+
+        // 5) CommunityPostDetailResponse 생성
+        //    - 생성자에 필요한 값들을 넘김
+        //    - 주의: DTO 생성자에 들어가는 user는 "게시글 작성자"여야 하므로, post.getUser()를 넘김
+        return new CommunityPostDetailResponse(
+                post,
+                post.getUser(),      // 작성자 (DB에서 얕은 참조, N+1 문제 주의)
+                viewCount,
+                likeCount,
+                commentCount,
+                isLiked,
+                isAuthor
+        );
+    }
+
+
+    /**
+     * 게시글 수정
+     */
+    @Transactional
+    public CommunityPostDetailResponse updatePost(
+            Integer postId,
+            CommunityPostRequest dto,   // 수정할 데이터(카테고리, 익명, 제목, 내용)
+            String newImageUrl,        // 새로 업로드한 이미지 URL(없으면 null)
+            User currentUser           // 수정 요청자
+    ) {
+        // 1) 기존 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 게시글입니다."));
+
+        // 2) 작성자 확인 (본인 글만 수정 가능)
+        if (!post.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("본인이 작성한 글만 수정할 수 있습니다.");
+        }
+
+        // 3) 변경된 카테고리 조회 후 권한 체크 (ex. "ALL" or "CAREGIVER")
+        Category category = categoryRepository.findByName(dto.getCategory())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("해당 name에 해당하는 카테고리가 존재하지 않습니다. name=" + dto.getCategory()));
+        checkAccessRole(category.getAccess(), currentUser);
+
+        // 4) 게시글 엔티티 업데이트
+        post.setCategory(category);
+        post.setIsAnonymous(dto.getIsAnonymous() != null ? dto.getIsAnonymous() : false);
+        post.setTitle(dto.getTitle());
+        post.setContent(dto.getContent());
+
+        // 새 이미지가 있으면 교체, 없으면 기존 이미지 유지
+        if (newImageUrl != null) {
+            post.setImage(newImageUrl);
+            // 필요하다면 이전 이미지 S3 삭제 로직도 가능
+        }
+
+        // 5) 영속성 컨텍스트가 자동으로 flush하면서 UPDATE 됨 (@Transactional)
+        //    -> 수정된 post 엔티티 기반으로 상세 DTO 생성해서 반환
+        //    (더 자세히 반환하려면 CommunityPostDetailResponse 등 사용)
+        int viewCount = viewcountRepository.countByPost(post);
+        int likeCount = likeRepository.countByPost(post);
+        int commentCount = commentRepository.countByPost(post);
+        boolean isLiked = likeRepository.findByUserAndPost(currentUser, post).isPresent();
+        boolean isAuthor = true; // 여기선 수정자 == 작성자
+
+        return new CommunityPostDetailResponse(
+                post,
+                post.getUser(),
+                viewCount,
+                likeCount,
+                commentCount,
+                isLiked,
+                isAuthor
+        );
+    }
+
+    /**
+     * 게시글 삭제
+     */
+    @Transactional
+    public void deletePost(Integer postId, User currentUser) {
+        // 1) 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 게시글입니다."));
+
+        // 2) 작성자 확인 (본인 글만 삭제 가능)
+        if (!post.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("본인이 작성한 글만 삭제할 수 있습니다.");
+        }
+
+        // 3) S3 이미지 삭제 (post.getImage()가 null/empty 아닌 경우)
+        if (post.getImage() != null && !post.getImage().isEmpty()) {
+            long count = postRepository.countByImage(post.getImage());
+            // 현재 게시글 외에 다른 게시글이 없다면(참조 수가 1이라면) S3 삭제 수행
+            if(count <= 1) {
+                s3UploadService.deleteFile(post.getImage());
+            }
+        }
+
+        // 4) DB에서 게시글 삭제
+        postRepository.delete(post);
     }
 
 

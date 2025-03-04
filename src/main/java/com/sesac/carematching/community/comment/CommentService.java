@@ -21,49 +21,64 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
 
-    // 댓글 생성
-    public Comment createComment(Integer postId, String username, String content, boolean isAnonymous) {
-        Post post = postRepository.findById(postId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    /**
+     * 댓글 등록
+     */
+    public CommentResponse createComment(User user, CommentRequest request) {
+        // 게시글 조회 (게시글이 없으면 예외 발생)
+        Post post = postRepository.findById(request.getPostId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
+        // 새로운 댓글 엔티티 생성
         Comment comment = new Comment();
         comment.setPost(post);
         comment.setUser(user);
-        comment.setContent(content);
-        comment.setIsAnonymous(isAnonymous);
-        comment.setCreatedAt(Instant.now());
-        comment.setUpdatedAt(Instant.now());
+        comment.setContent(request.getContent());
+        comment.setIsAnonymous(request.isAnonymous());
 
-        return commentRepository.save(comment);
+        // 댓글 저장
+        Comment savedComment = commentRepository.save(comment);
+
+        // 새 댓글은 현재 로그인한 사용자가 작성했으므로 isAuthor 값은 true로 설정
+        return new CommentResponse(savedComment, post.getId(), user, true);
     }
 
-    // 댓글 삭제
-    public void deleteComment(Integer commentId, String username) {
-        Comment comment = commentRepository.findById(commentId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+    /**
+     * 게시글에 작성된 댓글 조회 (최신순, 페이징 처리)
+     */
+    public Page<CommentResponse> getCommentsByPost(Integer postId, User currentUser, Pageable pageable) {
+        // 게시글 조회 (존재하지 않으면 예외 발생)
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
-        // 본인 댓글인지 확인
-        if (!comment.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("본인 댓글만 삭제할 수 있습니다.");
+        // 게시글에 해당하는 댓글들을 페이지 단위로 조회
+        Page<Comment> commentPage = commentRepository.findByPost(post, pageable);
+
+        // 각 댓글마다 현재 사용자가 작성자인지 여부를 판단 후 CommentResponse로 변환
+        return commentPage.map(comment -> {
+            boolean isAuthor = comment.getUser().getId().equals(currentUser.getId());
+            return new CommentResponse(comment, post.getId(), comment.getUser(), isAuthor);
+        });
+    }
+
+    /**
+     * 댓글 삭제
+     * @param commentId 삭제할 댓글의 id
+     * @param currentUser 현재 로그인한 사용자
+     */
+    public void deleteComment(Integer commentId, User currentUser) {
+        // 댓글 조회 (존재하지 않으면 예외 발생)
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        // 댓글 작성자와 현재 사용자가 일치하는지 확인
+        if (!comment.getUser().getId().equals(currentUser.getId())) {
+            throw new IllegalArgumentException("댓글 작성자만 삭제할 수 있습니다.");
         }
 
+        // 댓글 삭제
         commentRepository.delete(comment);
-    }
-
-    // 특정 게시글의 댓글 목록 조회
-    public List<Comment> getCommentsByPost(Integer postId) {
-        Post post = postRepository.findById(postId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
-        return commentRepository.findByPostOrderByCreatedAtDesc(post);
-    }
-
-    // 사용자별 댓글 수
-    public int countByUser(User user) {
-        return commentRepository.countByUser(user);
     }
 
     /**

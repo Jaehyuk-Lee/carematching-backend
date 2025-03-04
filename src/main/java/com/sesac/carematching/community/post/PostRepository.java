@@ -50,4 +50,5 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
        """)
     Page<Post> findPopularPostsByCategory(Category category, Pageable pageable);
 
+    long countByImage(String image);
 }
