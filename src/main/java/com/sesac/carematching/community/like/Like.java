@@ -20,6 +20,7 @@ import java.time.Instant;
 @Table(name = "community_like")
 public class Like {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CLNO", nullable = false)
     private Integer id;
 
