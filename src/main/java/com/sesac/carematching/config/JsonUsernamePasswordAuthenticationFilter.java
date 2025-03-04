@@ -23,7 +23,6 @@ public class JsonUsernamePasswordAuthenticationFilter extends AbstractAuthentica
 
     private static final String DEFAULT_LOGIN_REQUEST_URL = "/api/user/login";
     private static final String HTTP_METHOD = "POST";
-    private static final String CONTENT_TYPE = "application/json"; // json 타입의 데이터만 허용
     private static final AntPathRequestMatcher DEFAULT_LOGIN_PATH_REQUEST_MATCHER =
         new AntPathRequestMatcher(DEFAULT_LOGIN_REQUEST_URL, HTTP_METHOD); //=>   /login 의 요청에, POST로 온 요청에 매칭된다.
 
@@ -43,7 +42,7 @@ public class JsonUsernamePasswordAuthenticationFilter extends AbstractAuthentica
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
 
-        if (request.getContentType() == null || !request.getContentType().equals(CONTENT_TYPE)) {
+        if (request.getContentType() == null) {
             throw new AuthenticationServiceException("Authentication Content-Type not supported: " + request.getContentType());
         }
 
