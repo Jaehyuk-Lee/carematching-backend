@@ -4,7 +4,7 @@ import com.sesac.carematching.caregiver.*;
 import lombok.Getter;
 
 @Getter
-public class CaregiverResponse {
+public class CaregiverDetailDto {
     private String loc;
     private String realName;
     private String servNeeded;
@@ -13,8 +13,9 @@ public class CaregiverResponse {
     private WorkForm workForm;
     private EmploymentType employmentType;
     private Integer salary;
+    private Status status;
 
-    public CaregiverResponse(Caregiver caregiver) {
+    public CaregiverDetailDto(Caregiver caregiver) {
         this.loc = caregiver.getLoc();
         this.realName = caregiver.getRealName();
         this.servNeeded = caregiver.getServNeeded();
@@ -23,5 +24,6 @@ public class CaregiverResponse {
         this.workForm = caregiver.getWorkForm();
         this.employmentType = caregiver.getEmploymentType();
         this.salary = caregiver.getSalary();
+        this.status = caregiver.getStatus();
     }
 }

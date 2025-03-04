@@ -57,17 +57,15 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-	// mark down
-	implementation 'org.commonmark:commonmark:0.21.0'
-
-	// mybatis
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
-
     // Springdoc-openapi
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
-
+    
     //websocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    
+    // AWS
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.438'
 }
 
 tasks.named('test') {
