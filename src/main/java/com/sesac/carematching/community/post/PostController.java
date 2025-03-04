@@ -137,8 +137,10 @@ public class PostController {
         // 2) 이미지 업로드 처리
         String imageUrl = null;
         if (imageFile != null && !imageFile.isEmpty()) {
-            imageUrl = s3UploadService.saveFile(imageFile); // S3 업로드 후 URL 반환
+            imageUrl = s3UploadService.saveCommunityImageFile(imageFile); // S3 업로드 후 URL 반환
         }
+
+        System.out.println("imageUrl: " + imageUrl);
 
         // 3) 게시글 생성 서비스 호출
         CommunityPostListResponse createdPost = postService.createPost(postRequest, imageUrl, user);
@@ -215,7 +217,7 @@ public class PostController {
         // 2) 새 이미지 업로드 처리 (있다면)
         String newImageUrl = null;
         if (imageFile != null && !imageFile.isEmpty()) {
-            newImageUrl = s3UploadService.saveFile(imageFile);
+            newImageUrl = s3UploadService.saveCommunityImageFile(imageFile);
             // 필요하다면 이전 이미지를 S3에서 삭제할 수도 있음
         }
 
@@ -245,7 +247,5 @@ public class PostController {
         // 3) 삭제 성공 메시지 (또는 다른 DTO) 반환
         return ResponseEntity.ok("게시글이 삭제되었습니다.");
     }
-
-
 
 }

@@ -197,13 +197,14 @@ public class PostService {
 
     /**
      * 게시글 수정
+     * - 새 이미지가 업로드된 경우 기존 이미지도 S3에서 삭제하고 새 URL로 교체
      */
     @Transactional
     public CommunityPostDetailResponse updatePost(
             Integer postId,
             CommunityPostRequest dto,   // 수정할 데이터(카테고리, 익명, 제목, 내용)
-            String newImageUrl,        // 새로 업로드한 이미지 URL(없으면 null)
-            User currentUser           // 수정 요청자
+            String newImageUrl,         // 새로 업로드한 이미지 URL(없으면 null)
+            User currentUser            // 수정 요청자
     ) {
         // 1) 기존 게시글 조회
         Post post = postRepository.findById(postId)
@@ -214,7 +215,7 @@ public class PostService {
             throw new RuntimeException("본인이 작성한 글만 수정할 수 있습니다.");
         }
 
-        // 3) 변경된 카테고리 조회 후 권한 체크 (ex. "ALL" or "CAREGIVER")
+        // 3) 변경된 카테고리 조회 후 권한 체크
         Category category = categoryRepository.findByName(dto.getCategory())
                 .orElseThrow(() ->
                         new IllegalArgumentException("해당 name에 해당하는 카테고리가 존재하지 않습니다. name=" + dto.getCategory()));
@@ -226,20 +227,20 @@ public class PostService {
         post.setTitle(dto.getTitle());
         post.setContent(dto.getContent());
 
-        // 새 이미지가 있으면 교체, 없으면 기존 이미지 유지
+        // 새 이미지가 업로드된 경우: 기존 이미지가 있다면 S3에서 삭제 후 교체
         if (newImageUrl != null) {
+            if (post.getImage() != null && !post.getImage().isEmpty()) {
+                s3UploadService.deleteCommunityImageFile(post.getImage());
+            }
             post.setImage(newImageUrl);
-            // 필요하다면 이전 이미지 S3 삭제 로직도 가능
         }
 
-        // 5) 영속성 컨텍스트가 자동으로 flush하면서 UPDATE 됨 (@Transactional)
-        //    -> 수정된 post 엔티티 기반으로 상세 DTO 생성해서 반환
-        //    (더 자세히 반환하려면 CommunityPostDetailResponse 등 사용)
+        // 5) 업데이트된 post 기반으로 상세 DTO 생성 및 반환 (영속성 컨텍스트가 flush하며 UPDATE)
         int viewCount = viewcountRepository.countByPost(post);
         int likeCount = likeRepository.countByPost(post);
         int commentCount = commentRepository.countByPost(post);
         boolean isLiked = likeRepository.findByUserAndPost(currentUser, post).isPresent();
-        boolean isAuthor = true; // 여기선 수정자 == 작성자
+        boolean isAuthor = true; // 수정자는 작성자임
 
         return new CommunityPostDetailResponse(
                 post,
@@ -254,6 +255,7 @@ public class PostService {
 
     /**
      * 게시글 삭제
+     * - 게시글 삭제 전에 S3에 업로드된 이미지가 있다면 해당 이미지도 삭제
      */
     @Transactional
     public void deletePost(Integer postId, User currentUser) {
@@ -266,13 +268,9 @@ public class PostService {
             throw new RuntimeException("본인이 작성한 글만 삭제할 수 있습니다.");
         }
 
-        // 3) S3 이미지 삭제 (post.getImage()가 null/empty 아닌 경우)
+        // 3) S3 이미지 삭제 (이미지 URL이 존재하면 삭제)
         if (post.getImage() != null && !post.getImage().isEmpty()) {
-            long count = postRepository.countByImage(post.getImage());
-            // 현재 게시글 외에 다른 게시글이 없다면(참조 수가 1이라면) S3 삭제 수행
-            if(count <= 1) {
-                s3UploadService.deleteFile(post.getImage());
-            }
+            s3UploadService.deleteCommunityImageFile(post.getImage());
         }
 
         // 4) DB에서 게시글 삭제
