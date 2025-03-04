@@ -20,7 +20,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // CORS 설정을 통해 프론트엔드에서 접근 가능하게 함
         registry.addEndpoint("/ws")
-            .setAllowedOrigins("http://localhost:3000") // 프론트엔드 도메인 허용
+            .setAllowedOrigins("https://d12hp6zm8su88f.cloudfront.net/",
+                    "https://carematching.net/", "https://www.carematching.net/",
+                    "http://localhost:3000", "http://localhost") // 프론트엔드 도메인 허용
             .withSockJS(); // SockJS 사용 시 필요
     }
 }
