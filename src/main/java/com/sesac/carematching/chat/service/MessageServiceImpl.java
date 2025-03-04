@@ -1,5 +1,6 @@
 package com.sesac.carematching.chat.service;
 
+/*import com.sesac.carematching.chat.controller.NotificationController;*/
 import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.message.Message;
@@ -22,6 +23,7 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    /*private final NotificationService notificationService;*/
 
     @Override
     @Transactional
@@ -66,4 +68,7 @@ public class MessageServiceImpl implements MessageService {
             ))
             .collect(Collectors.toList());
     }
+
+
+
 }

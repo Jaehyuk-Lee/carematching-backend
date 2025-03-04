@@ -9,13 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 
-/*public class MessageResponse {
-    private Integer roomId;   // 채팅방 ID
-    private Integer userId;   // 메시지 보낸 사용자 ID
-    private String message;   // 메시지 내용
-    private Boolean isRead;   // 읽음 여부
-    private String createdAt; // 생성 시간
-}*/
 public class MessageResponse {
     private Integer roomId;
     private Integer userId;
