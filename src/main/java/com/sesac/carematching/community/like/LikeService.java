@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +72,29 @@ public class LikeService {
                 commentCount
             );
         });
+    }
+
+    /**
+     * 좋아요 상태 업데이트
+     * @param user 현재 로그인한 사용자
+     * @param post 대상 게시글
+     * @param isLiked true이면 삭제(좋아요 취소), false이면 추가(좋아요 등록)
+     */
+    public void updateLikeStatus(User user, Post post, boolean isLiked) {
+        Optional<Like> existingLikeOpt = likeRepository.findByUserAndPost(user, post);
+        if (isLiked) {
+            // 현재 좋아요 상태이면 삭제 (취소)
+            existingLikeOpt.ifPresent(like -> likeRepository.delete(like));
+        } else {
+            // 현재 좋아요가 아니라면 추가
+            if (existingLikeOpt.isEmpty()) {
+                Like newLike = new Like();
+                newLike.setUser(user);
+                newLike.setPost(post);
+                newLike.setCreatedAt(Instant.now());
+                likeRepository.save(newLike);
+            }
+        }
     }
 
     /**
