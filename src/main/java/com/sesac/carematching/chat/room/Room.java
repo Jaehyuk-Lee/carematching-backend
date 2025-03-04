@@ -20,24 +20,30 @@ import java.util.Optional;
 @Table(name = "chat_room")
 @Getter
 @Setter
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 public class Room {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "crno")
+    @Column(name = "CRNO", nullable = false)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "requester_uno", nullable = false)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "REQUESTER_UNO", nullable = false)
     private User requester;
 
-    @ManyToOne
-    @JoinColumn(name = "receiver_uno", nullable = false)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "RECEIVER_UNO", nullable = false)
     private Caregiver caregiver;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @NotNull
+    @CreatedDate
+    @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
 
