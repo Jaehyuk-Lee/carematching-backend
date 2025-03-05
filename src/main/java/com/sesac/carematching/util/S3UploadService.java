@@ -74,4 +74,19 @@ public class S3UploadService {
         // 업로드된 이미지의 URL 반환
         return amazonS3.getUrl(bucket, fileKey).toString();
     }
+
+    public void deleteProfileImageFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            return;
+        }
+
+        try {
+            URL url = new URL(fileUrl);
+            // URL 경로에서 선행 "/"를 제거하고 URL 디코딩
+            String key = URLDecoder.decode(url.getPath().substring(1), StandardCharsets.UTF_8);
+            amazonS3.deleteObject(bucket, key);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
 }
