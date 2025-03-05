@@ -1,5 +1,6 @@
 package com.sesac.carematching.community.post;
 
+import com.sesac.carematching.config.EnvProperties;
 import com.sesac.carematching.user.User;
 import lombok.Getter;
 
@@ -14,7 +15,10 @@ public class CommunityUserResponse {
 
     public CommunityUserResponse(User user, int postCount, int commentCount, int likeCount) {
         this.id = user.getId();
-        this.profileImage = "사용자 프로필 이미지 url";  // 실제로는 User 엔티티에 profileImage 필드를 추가한 뒤 활용
+
+        String bucketName = EnvProperties.getS3BucketName();
+        this.profileImage = (user.getProfileImage() == null || user.getProfileImage().isEmpty()) ? "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/user_profile_image/basicprofileimage.png" : user.getProfileImage();
+
         this.nickname = user.getNickname();
         this.postCount = postCount;
         this.commentCount = commentCount;

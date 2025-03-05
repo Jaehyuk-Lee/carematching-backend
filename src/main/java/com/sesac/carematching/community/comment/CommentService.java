@@ -41,7 +41,7 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
 
         // 새 댓글은 현재 로그인한 사용자가 작성했으므로 isAuthor 값은 true로 설정
-        return new CommentResponse(savedComment, post.getId(), user, true);
+        return new CommentResponse(savedComment, user, true);
     }
 
     /**
@@ -58,7 +58,7 @@ public class CommentService {
         // 각 댓글마다 현재 사용자가 작성자인지 여부를 판단 후 CommentResponse로 변환
         return commentPage.map(comment -> {
             boolean isAuthor = comment.getUser().getId().equals(currentUser.getId());
-            return new CommentResponse(comment, post.getId(), comment.getUser(), isAuthor);
+            return new CommentResponse(comment, comment.getUser(), isAuthor);
         });
     }
 

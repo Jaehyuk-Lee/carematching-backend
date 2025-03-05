@@ -1,16 +1,14 @@
-package com.sesac.carematching.community.comment;
+package com.sesac.carematching.review;
 
-import com.sesac.carematching.community.post.Post;
+import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.user.User;
+import com.sesac.carematching.user.role.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
@@ -19,37 +17,35 @@ import java.time.Instant;
 @Setter
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "community_comment")
-public class Comment {
+@Table(name = "review")
+public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "CCNO", nullable = false)
+    @Column(name = "RVNO", nullable = false)
     private Integer id;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "PNO", nullable = false)
-    private Post post;
-
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "UNO", nullable = false)
     private User user;
 
-    @Size(max = 500)
     @NotNull
-    @Column(name = "CONTENT", nullable = false, length = 500)
-    private String content;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "CNO", nullable = false)
+    private Caregiver caregiver;
 
+    @Size(max = 5)
     @NotNull
-    @Column(name = "IS_ANONYMOUS", nullable = false)
-    private Boolean isAnonymous = false;
+    @Column(name = "STARS", nullable = false, length = 5)
+    private Integer stars;
+
+    @Size(max = 255)
+    @NotNull
+    @Column(name = "COMMENT")
+    private String comment;
 
     @NotNull
     @CreatedDate
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
-
 }
