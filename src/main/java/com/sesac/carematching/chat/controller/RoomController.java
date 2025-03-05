@@ -29,16 +29,15 @@ public class RoomController {
         String username = tokenAuth.extractUsernameFromToken(request);
         System.out.println("🔍 [DEBUG] 추출된 사용자 이름: " + username);
 
-        // 2. username을 사용하여 User ID 조회
+        // 2. username을 사용하여 User ID 조회 (요청자 ID 설정)
         User requester = userRepository.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
         System.out.println("🔍 [DEBUG] 요청자 ID: " + requester.getId());
 
-        // 3. Room 생성 요청 시 userId를 설정
+        // 3. 요청자의 ID를 roomRequest에 설정
         roomRequest.setRequesterUserId(requester.getId());
 
-        // 4. Room 생성
+        // 4. 방 생성 요청 (receiverUserId는 Service에서 설정됨)
         RoomResponse roomResponse = roomService.createRoom(roomRequest);
         return ResponseEntity.ok(roomResponse);
     }

@@ -15,30 +15,31 @@ import java.util.List;
 public class RoomResponse {
     private Integer roomId;
     private Integer requesterUserId;
-    private Integer caregiverId;
+    private Integer receiverUserId; // 👈 caregiverId → receiverUserId 로 변경
     private String createdAt;
     private String otherUsername;
     private List<MessageResponse> messages;
     private String lastMessage;
-    private String lastMessageDate; // 👈 마지막 메시지 날짜 (월/일)
+    private String lastMessageDate;
 
     public RoomResponse(
         @NotNull Integer roomId,
         @NotNull Integer requesterUserId,
-        @NotNull Integer caregiverId,
+        @NotNull Integer receiverUserId, // 👈 변경된 부분
         @NotNull Instant createdAt,
         @NotNull String otherUsername,
         @NotNull List<MessageResponse> messages,
         @NotNull String lastMessage,
-        @NotNull String lastMessageDate // 👈 추가
+        @NotNull String lastMessageDate
     ) {
         this.roomId = roomId;
         this.requesterUserId = requesterUserId;
-        this.caregiverId = caregiverId;
+        this.receiverUserId = receiverUserId; // 👈 caregiverId → receiverUserId 로 변경
         this.otherUsername = otherUsername;
         this.createdAt = DateTimeFormatter.ISO_INSTANT.format(createdAt);
         this.messages = messages;
         this.lastMessage = lastMessage;
-        this.lastMessageDate = lastMessageDate; // 👈 추가
+        this.lastMessageDate = lastMessageDate;
     }
 }
+

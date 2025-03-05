@@ -8,6 +8,8 @@ import java.util.List;
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Integer> {
 
-    // User가 요청자이거나 수급자인 채팅방 조회
-    List<Room> findByRequesterIdOrCaregiverId(Integer requesterUserId, Integer caregiverId);
+    // User가 요청자이거나 수신자인 채팅방 조회 (receiverUserId = Caregiver의 UNO)
+    List<Room> findByRequesterIdOrReceiverId(Integer requesterUserId, Integer receiverUserId);
 }
+
+

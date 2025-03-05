@@ -35,33 +35,40 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse createRoom(CreateRoomRequest createRoomRequest) {
         System.out.println("🔍 [DEBUG] 서비스 계층 받은 요청 데이터: " + createRoomRequest);
 
-        // 1) User 및 Caregiver 조회
+        // 1️⃣ 요청자(User) 조회
         User requester = userRepository.findById(createRoomRequest.getRequesterUserId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 User ID 입니다."));
+
+        // 2️⃣ Caregiver 조회 (caregiverId를 기반으로)
         Caregiver caregiver = caregiverRepository.findById(createRoomRequest.getCaregiverId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Caregiver ID 입니다."));
 
-        // 2) Room 엔티티 생성 및 설정
-        Room room = new Room();
-        room.setRequester(requester);
-        room.setCaregiver(caregiver);
+        // 3️⃣ Caregiver의 User ID(UNO) 조회
+        User receiver = caregiver.getUser(); // Caregiver의 User 정보 가져오기
+        System.out.println("🔍 [DEBUG] Caregiver의 User ID(UNO)로 receiverUserId 설정: " + receiver.getId());
 
-        // 3) Room 엔티티 저장
+        // 4️⃣ Room 엔티티 생성 및 설정
+        Room room = new Room();
+        room.setRequester(requester); // 요청자(User) 설정
+        room.setReceiver(receiver); // **Caregiver의 User ID 저장**
+
+        // 5️⃣ Room 엔티티 저장
         Room savedRoom = roomRepository.save(room);
         System.out.println("💾 [INFO] 채팅방이 저장되었습니다. Room ID: " + savedRoom.getId());
 
-        // 4) 빈 메시지 목록과 함께 RoomResponse 반환
+        // 6️⃣ RoomResponse 반환
         return new RoomResponse(
             savedRoom.getId(),
             savedRoom.getRequester().getId(),
-            savedRoom.getCaregiver().getId(),
+            savedRoom.getReceiver().getId(), // **Caregiver의 UNO(User ID)가 들어감**
             savedRoom.getCreatedAt(),
             "", // 상대방 username (새로운 채팅방이므로 빈 값)
             List.of(), // 새로 생성된 채팅방은 메시지가 없으므로 빈 리스트 전달
-            "메시지가 없습니다.",// 마지막 메시지도 없음
+            "메시지가 없습니다.", // 마지막 메시지도 없음
             "1월 1일"
         );
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -89,7 +96,7 @@ public class RoomServiceImpl implements RoomService {
         return new RoomResponse(
             room.getId(),
             room.getRequester().getId(),
-            room.getCaregiver().getId(),
+            room.getReceiver().getId(),
             room.getCreatedAt(),
             "", // 상대방 username (개별 조회 시 필요 없음)
             messages, // 메시지 목록 포함
@@ -102,16 +109,16 @@ public class RoomServiceImpl implements RoomService {
     @Transactional(readOnly = true)
     public List<RoomResponse> getUserRooms(Integer userId) {
         // 1. User가 참여 중인 채팅방을 모두 조회
-        List<Room> rooms = roomRepository.findByRequesterIdOrCaregiverId(userId, userId);
+        List<Room> rooms = roomRepository.findByRequesterIdOrReceiverId(userId, userId);
 
         // 2. Room을 RoomResponse로 변환하여 반환
         return rooms.stream().map(room -> {
             // 👇 현재 로그인한 사용자가 아닌 상대방 userId 가져오기
-            Integer otherUserId = room.getRequester().getId().equals(userId) ? room.getCaregiver().getId() : room.getRequester().getId();
+            Integer otherUserId = room.getRequester().getId().equals(userId) ? room.getReceiver().getId() : room.getRequester().getId();
 
             // 👇 상대방 username 가져오기
             String otherUsername = userRepository.findById(otherUserId)
-                .map(User::getUsername)
+                .map(User::getNickname)
                 .orElse("알 수 없음");
 
             // 👇 마지막 메시지 가져오기
@@ -126,7 +133,7 @@ public class RoomServiceImpl implements RoomService {
             return new RoomResponse(
                 room.getId(),
                 room.getRequester().getId(),
-                room.getCaregiver().getId(),
+                room.getReceiver().getId(),
                 room.getCreatedAt(),
                 otherUsername, // 상대방 username 추가
                 List.of(), // 메시지는 빈 리스트로 전달

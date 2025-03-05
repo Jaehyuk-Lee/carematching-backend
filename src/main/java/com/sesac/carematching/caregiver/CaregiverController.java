@@ -18,6 +18,8 @@ import java.util.List;
 @RequestMapping("/api/caregivers")
 public class CaregiverController {
     private final CaregiverService caregiverService;
+    private final CaregiverRepository caregiverRepository;
+/*    CaregiverService caregiverRepository;*/
     private final RoleService roleService;
     private final TokenAuth tokenAuth;
 
@@ -44,6 +46,12 @@ public class CaregiverController {
         Caregiver caregiver = caregiverService.findByUsername(username);
         return ResponseEntity.ok()
             .body(new CaregiverDetailDto(caregiver));
+    }
+    @GetMapping("/{caregiverId}/userId")
+    public ResponseEntity<Integer> getCaregiverUserId(@PathVariable Integer caregiverId) {
+        return caregiverRepository.findById(caregiverId)
+            .map(caregiver -> ResponseEntity.ok(caregiver.getUser().getId())) // Caregiver의 User ID(UNO) 반환
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
 //    @PostMapping("/delete/{id}")
