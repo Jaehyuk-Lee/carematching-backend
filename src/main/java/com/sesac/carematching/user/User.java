@@ -41,6 +41,10 @@ public class User {
     @Column(name = "PASSWORD", nullable = false)
     private String password;
 
+    @Size(max = 1000)
+    @Column(name = "PROFILE_IMAGE")
+    private String profileImage;
+
     @Size(max = 50)
     @NotNull
     @Column(name = "NICKNAME", nullable = false, length = 50)

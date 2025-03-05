@@ -52,9 +52,4 @@ public class Comment {
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
-    @NotNull
-    @LastModifiedDate
-    @Column(name = "UPDATED_AT", nullable = false)
-    private Instant updatedAt;
-
 }
