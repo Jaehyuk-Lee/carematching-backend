@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class TransactionMakeDTO {
+public class TransactionAddDTO {
     @NotNull
     private Integer cno;
     @NotNull

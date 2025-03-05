@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -22,7 +21,7 @@ public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "transaction_id")
+    @Column(name = "TRANSACTION_ID")
     private UUID transactionId;
 
     @NotNull
@@ -39,10 +38,13 @@ public class Transaction {
     @Column(name = "PRICE", nullable = false)
     private Integer price;
 
+    @Column(name = "PAID_PRICE")
+    private Integer paidPrice;
+
     @NotNull
-    @ColumnDefault("0")
-    @Column(name = "PAID", nullable = false)
-    private Boolean paid = false;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "STATUS", nullable = false)
+    private Status status = Status.PENDING;
 
     @NotNull
     @CreatedDate
