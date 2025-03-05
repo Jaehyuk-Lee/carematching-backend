@@ -17,7 +17,7 @@ public class CommentResponse {
 
     public CommentResponse(Comment comment, Integer postId, User user, boolean isAuthor) {
         this.id = comment.getId();
-        this.profileImage = comment.getIsAnonymous() ? "https://carematching-uploaded-files.s3.ap-northeast-2.amazonaws.com/basicprofileimage.png" : "작성자 프로필 이미지 url";
+        this.profileImage = comment.getIsAnonymous() ? "https://test-carematching-uploaded-files.s3.ap-northeast-2.amazonaws.com/user_profile_image/basicprofileimage.png" : "작성자 프로필 이미지 url";
         this.nickname = comment.getIsAnonymous() ? "익명" : user.getNickname();
         if(user.getRole().getId() == 1) {
             this.role = "관리자";
