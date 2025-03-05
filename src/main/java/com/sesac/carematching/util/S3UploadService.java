@@ -51,10 +51,27 @@ public class S3UploadService {
             URL url = new URL(fileUrl);
             // URL 경로에서 선행 "/"를 제거하고 URL 디코딩
             String key = URLDecoder.decode(url.getPath().substring(1), StandardCharsets.UTF_8);
-            System.out.println("Deleting " + key);
             amazonS3.deleteObject(bucket, key);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
+    }
+
+    public String saveProfileImageFile(MultipartFile multipartFile) throws IOException {
+        // 원본 파일명
+        String originalFilename = multipartFile.getOriginalFilename();
+        // UUID와 원본 파일명을 조합하고 "community_image/" 폴더를 prefix로 사용
+        String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFilename;
+        String fileKey = "user_profile_image/" + uniqueFileName;
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(multipartFile.getSize());
+        metadata.setContentType(multipartFile.getContentType());
+
+        // S3에 객체 업로드
+        amazonS3.putObject(bucket, fileKey, multipartFile.getInputStream(), metadata);
+
+        // 업로드된 이미지의 URL 반환
+        return amazonS3.getUrl(bucket, fileKey).toString();
     }
 }
