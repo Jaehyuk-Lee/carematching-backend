@@ -13,7 +13,6 @@ public class CaregiverDetailDto {
     private WorkForm workForm;
     private EmploymentType employmentType;
     private Integer salary;
-    private Status status;
 
     public CaregiverDetailDto(Caregiver caregiver) {
         this.loc = caregiver.getLoc();
@@ -24,6 +23,5 @@ public class CaregiverDetailDto {
         this.workForm = caregiver.getWorkForm();
         this.employmentType = caregiver.getEmploymentType();
         this.salary = caregiver.getSalary();
-        this.status = caregiver.getStatus();
     }
 }
