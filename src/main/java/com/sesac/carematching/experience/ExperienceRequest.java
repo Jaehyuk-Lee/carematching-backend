@@ -1,5 +1,6 @@
 package com.sesac.carematching.experience;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +8,8 @@ import lombok.Setter;
 @Setter
 public class ExperienceRequest {
     private String location;
+    @NotBlank(message = "필수항목입니다")
     private String title;
+    @NotBlank(message = "필수항목입니다")
     private String summary;
 }

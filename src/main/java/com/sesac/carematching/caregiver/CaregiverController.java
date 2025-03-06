@@ -9,6 +9,7 @@ import com.sesac.carematching.experience.ExperienceService;
 import com.sesac.carematching.user.role.RoleService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.stream.IntStream;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/caregivers")
+@Log4j2
 public class CaregiverController {
     private final CaregiverService caregiverService;
     private final RoleService roleService;
@@ -43,7 +45,6 @@ public class CaregiverController {
     public ResponseEntity<CaregiverDetailDto> findCaregiverById(@PathVariable Integer id) {
         Caregiver caregiver = caregiverService.findById(id);
         List<Experience> experiences = experienceService.findExperienceList(caregiver);
-
         return ResponseEntity.ok()
             .body(new CaregiverDetailDto(caregiver, experiences));
     }
@@ -52,8 +53,8 @@ public class CaregiverController {
     public ResponseEntity<CaregiverDetailDto> findCaregiverByUser(HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
         Caregiver caregiver = caregiverService.findByUsername(username);
+        log.info("caregiverId: "+ caregiver.getId());
         List<Experience> experiences = experienceService.findExperienceList(caregiver);
-
         return ResponseEntity.ok()
             .body(new CaregiverDetailDto(caregiver, experiences));
     }
@@ -63,7 +64,8 @@ public class CaregiverController {
                                                              @RequestBody BuildCaregiverDto dto) {
         String username = tokenAuth.extractUsernameFromToken(request);
         Caregiver caregiver = updateOrCreateCaregiver(username, dto);
-        List<Experience> experiences = processExperienceList(caregiver, dto.getExperienceRequestList());
+        log.info("caregiver {}", caregiver);
+        List<Experience> experiences = processExperienceList(caregiver, dto.getExperienceList());
 
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(new CaregiverDetailDto(caregiver, experiences));
@@ -76,9 +78,10 @@ public class CaregiverController {
     }
 
     private List<Experience> processExperienceList(Caregiver caregiver, List<ExperienceRequest> experienceRequestList) {
-        if (experienceRequestList == null || experienceRequestList.isEmpty()) return null;
+        if (experienceRequestList == null || experienceRequestList.isEmpty()) return List.of();
 
         List<Experience> existingExperiences = caregiver.getExperienceList();
+
         int existingSize = existingExperiences.size();
         int newSize = experienceRequestList.size();
 
@@ -95,7 +98,7 @@ public class CaregiverController {
         List<Experience> allExperiences = new ArrayList<>(existingExperiences);
         allExperiences.addAll(newExperiences);
 
-        return allExperiences;
+        return allExperiences.isEmpty() ? List.of() : allExperiences;
     }
 
     @GetMapping("/check")

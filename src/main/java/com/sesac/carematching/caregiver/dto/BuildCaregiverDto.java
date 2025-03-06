@@ -25,5 +25,5 @@ public class BuildCaregiverDto {
     @NotBlank(message = "봉급은 필수 입력 사항입니다.")
     private Integer salary;
     private Status status;
-    List<ExperienceRequest> experienceRequestList;
+    List<ExperienceRequest> experienceList;
 }

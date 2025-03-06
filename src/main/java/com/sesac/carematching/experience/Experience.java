@@ -14,7 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Setter
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "exercise")
+@Table(name = "experience")
 @NoArgsConstructor
 public class Experience {
     @Id
@@ -22,8 +22,8 @@ public class Experience {
     @Column(name = "ENO", nullable = false)
     private Integer id;
 
-    @Size(max = 5)
-    @Column(name = "LOCATION", nullable = false, length = 5)
+    @Size(max = 50)
+    @Column(name = "LOCATION", nullable = false, length = 50)
     private String location;
 
     @Size(max = 50)
@@ -38,13 +38,21 @@ public class Experience {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "CNO", nullable = false)
+    @JoinColumn(name = "CNO")
     private Caregiver caregiver;
 
     @Builder
-    public Experience(String location, String title, String summary) {
+    public Experience(String location, String title, String summary, Caregiver caregiver) {
         this.location = location;
         this.title = title;
         this.summary = summary;
+        this.caregiver = caregiver;
+    }
+
+    public Experience(ExperienceRequest request, Caregiver caregiver) {
+        this.location = request.getLocation();
+        this.title = request.getTitle();
+        this.summary = request.getSummary();
+        this.caregiver = caregiver;
     }
 }

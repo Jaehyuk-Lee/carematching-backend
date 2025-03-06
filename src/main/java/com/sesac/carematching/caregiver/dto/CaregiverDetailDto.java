@@ -19,18 +19,7 @@ public class CaregiverDetailDto {
     private EmploymentType employmentType;
     private Integer salary;
     private Status status;
-    private List<ExperienceResponse> experienceResponseList;
-
-    public CaregiverDetailDto(Caregiver caregiver) {
-        this.loc = caregiver.getLoc();
-        this.realName = caregiver.getRealName();
-        this.servNeeded = caregiver.getServNeeded();
-        this.workDays = caregiver.getWorkDays();
-        this.workTime = caregiver.getWorkTime();
-        this.workForm = caregiver.getWorkForm();
-        this.employmentType = caregiver.getEmploymentType();
-        this.salary = caregiver.getSalary();
-    }
+    private List<ExperienceResponse> experienceList;
 
     public CaregiverDetailDto(Caregiver caregiver, List<Experience> experiences) {
         this.loc = caregiver.getLoc();
@@ -41,7 +30,9 @@ public class CaregiverDetailDto {
         this.workForm = caregiver.getWorkForm();
         this.employmentType = caregiver.getEmploymentType();
         this.salary = caregiver.getSalary();
-        this.experienceResponseList = experiences.stream()
+        this.status = caregiver.getStatus();
+        this.experienceList = (experiences != null ? experiences : List.<Experience>of())
+            .stream()
             .map(ExperienceResponse::new)
             .collect(Collectors.toList());
     }
