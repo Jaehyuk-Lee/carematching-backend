@@ -1,4 +1,4 @@
-package com.sesac.carematching.experience;
+package com.sesac.carematching.caregiver.experience;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.sesac.carematching.experience;
+package com.sesac.carematching.caregiver.experience;
 
 import lombok.Getter;
 import lombok.Setter;
