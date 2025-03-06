@@ -1,8 +1,7 @@
 package com.sesac.carematching.caregiver;
 
 import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
-import com.sesac.carematching.experience.Experience;
-import com.sesac.carematching.experience.ExperienceRepository;
+import com.sesac.carematching.caregiver.experience.ExperienceRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service

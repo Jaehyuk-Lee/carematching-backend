@@ -1,4 +1,4 @@
-package com.sesac.carematching.experience;
+package com.sesac.carematching.caregiver.experience;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import jakarta.persistence.*;
