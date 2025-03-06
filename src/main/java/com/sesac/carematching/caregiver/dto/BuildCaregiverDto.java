@@ -1,9 +1,12 @@
 package com.sesac.carematching.caregiver.dto;
 
 import com.sesac.carematching.caregiver.*;
+import com.sesac.carematching.experience.ExperienceRequest;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Setter
 @Getter
@@ -22,4 +25,5 @@ public class BuildCaregiverDto {
     @NotBlank(message = "봉급은 필수 입력 사항입니다.")
     private Integer salary;
     private Status status;
+    List<ExperienceRequest> experienceList;
 }
