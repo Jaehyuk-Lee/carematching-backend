@@ -58,6 +58,10 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public User findById(Integer id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
     public User getUserInfo(String username) {
         return userRepository.findByUsername(username).orElse(null);
     }
@@ -134,5 +138,14 @@ public class UserService {
 
         return 0;
     }
+
+    @Transactional
+    public void updateProfileImage(String username, String newImageUrl) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        user.setProfileImage(newImageUrl);
+        userRepository.save(user);
+    }
+
 
 }
