@@ -46,16 +46,9 @@ public class CaregiverController {
             .body(new CaregiverDetailDto(caregiver));
     }
 
-//    @PostMapping("/delete/{id}")
-//    public ResponseEntity<Void> deleteCaregiver(@PathVariable Integer id) {
-//        caregiverService.delete(id);
-//        return ResponseEntity.ok()
-//            .build();
-//    }
-
     @PostMapping("/build")
     public ResponseEntity<CaregiverDetailDto> buildCaregiver(HttpServletRequest request,
-                                                              @RequestBody BuildCaregiverDto dto) {
+                                                             @RequestBody BuildCaregiverDto dto) {
         String username = tokenAuth.extractUsernameFromToken(request);
         Caregiver caregiver = caregiverService.findByUsername(username);
         if (caregiver != null) {

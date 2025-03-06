@@ -32,13 +32,10 @@ public class CaregiverService {
 
     public Caregiver findByUsername(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(()->new IllegalArgumentException("User is null"));
-        return  caregiverRepository.findByUser(user)
+        Caregiver caregiver = caregiverRepository.findByUser(user)
             .orElse(null);
+        return caregiver;
     }
-
-//    public void delete(Integer id) {
-//        caregiverRepository.deleteById(id);
-//    }
 
     @Transactional
     public Caregiver update(String username, BuildCaregiverDto dto) {
