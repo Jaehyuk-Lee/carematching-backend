@@ -36,10 +36,6 @@ public class CaregiverService {
             .orElse(null);
     }
 
-//    public void delete(Integer id) {
-//        caregiverRepository.deleteById(id);
-//    }
-
     @Transactional
     public Caregiver update(String username, BuildCaregiverDto dto) {
         Caregiver caregiver = findByUsername(username);
