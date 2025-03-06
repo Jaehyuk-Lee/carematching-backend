@@ -140,8 +140,6 @@ public class PostController {
             imageUrl = s3UploadService.saveCommunityImageFile(imageFile); // S3 업로드 후 URL 반환
         }
 
-        System.out.println("imageUrl: " + imageUrl);
-
         // 3) 게시글 생성 서비스 호출
         CommunityPostListResponse createdPost = postService.createPost(postRequest, imageUrl, user);
 
