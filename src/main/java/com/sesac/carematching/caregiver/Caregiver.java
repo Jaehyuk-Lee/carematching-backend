@@ -1,6 +1,6 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.experience.Experience;
+import com.sesac.carematching.caregiver.experience.Experience;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -11,9 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.springframework.data.annotation.CreatedDate;
 
-import java.time.Instant;
 import java.util.List;
 
 @Getter
