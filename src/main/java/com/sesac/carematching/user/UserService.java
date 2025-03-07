@@ -58,6 +58,10 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public User findById(Integer id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
     public User getUserInfo(String username) {
         return userRepository.findByUsername(username).orElse(null);
     }

@@ -16,14 +16,18 @@ public class MessageResponse {
     private String message;
     private boolean isRead;
     private String createdAt;
+    private String createdDate; // 월/일 (예: "06/18")
+    private String createdTime; // 시/분 (예: "14:45")
 
-    public MessageResponse(Integer roomId, Integer userId, String username, String message, boolean isRead, String createdAt) {
+    public MessageResponse(Integer roomId, Integer userId, String username, String message, boolean isRead, String createdAt,  String createdDate, String createdTime) {
         this.roomId = roomId;
         this.userId = userId;
         this.username = username;
         this.message = message;
         this.isRead = isRead;
         this.createdAt = createdAt;
+        this.createdDate = createdDate;
+        this.createdTime = createdTime;
     }
 
     // Getter, Setter 추가

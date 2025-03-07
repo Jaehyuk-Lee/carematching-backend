@@ -147,13 +147,23 @@ public class RoomServiceImpl implements RoomService {
      * Message 엔티티를 MessageResponse DTO로 변환
      */
     private MessageResponse convertToMessageResponse(Message message) {
+        // 각 메시지의 생성시간을 "MM/dd" (날짜)와 "HH:mm" (시간)으로 포맷팅
+        String formattedDate = message.getCreatedAt()
+            .atZone(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("MM/dd"));
+        String formattedTime = message.getCreatedAt()
+            .atZone(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("HH:mm"));
+
         return new MessageResponse(
             message.getRoom().getId(),
             message.getUser().getId(),
             message.getUser().getUsername(),
             message.getMessage(),
             message.getIsRead(),
-            message.getCreatedAt().toString()
+            message.getCreatedAt().toString(),
+            formattedDate,
+            formattedTime
         );
     }
 }

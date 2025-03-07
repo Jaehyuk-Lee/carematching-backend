@@ -1,5 +1,6 @@
 package com.sesac.carematching.caregiver;
 
+import com.sesac.carematching.caregiver.experience.Experience;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.List;
 
 @Getter
 @Setter
@@ -73,6 +75,9 @@ public class Caregiver {
     @Enumerated(EnumType.STRING)
     @Column(name = "STATUS", nullable = false)
     private Status status;
+
+    @OneToMany(mappedBy = "caregiver", fetch = FetchType.LAZY)
+    private List<Experience> experienceList;
 
     @Builder
     public Caregiver(User user, String loc, String realName, String servNeeded, String workDays, WorkTime workTime,

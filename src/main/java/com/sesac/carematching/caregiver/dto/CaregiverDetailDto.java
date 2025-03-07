@@ -1,7 +1,12 @@
 package com.sesac.carematching.caregiver.dto;
 
 import com.sesac.carematching.caregiver.*;
+import com.sesac.carematching.caregiver.experience.Experience;
+import com.sesac.carematching.caregiver.experience.ExperienceResponse;
 import lombok.Getter;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 public class CaregiverDetailDto {
@@ -14,8 +19,10 @@ public class CaregiverDetailDto {
     private WorkForm workForm;
     private EmploymentType employmentType;
     private Integer salary;
+    private Status status;
+    private List<ExperienceResponse> experienceList;
 
-    public CaregiverDetailDto(Caregiver caregiver) {
+    public CaregiverDetailDto(Caregiver caregiver, List<Experience> experiences) {
         this.loc = caregiver.getLoc();
         this.uno = caregiver.getUser().getId();
         this.realName = caregiver.getRealName();
@@ -25,5 +32,10 @@ public class CaregiverDetailDto {
         this.workForm = caregiver.getWorkForm();
         this.employmentType = caregiver.getEmploymentType();
         this.salary = caregiver.getSalary();
+        this.status = caregiver.getStatus();
+        this.experienceList = (experiences != null ? experiences : List.<Experience>of())
+            .stream()
+            .map(ExperienceResponse::new)
+            .collect(Collectors.toList());
     }
 }
