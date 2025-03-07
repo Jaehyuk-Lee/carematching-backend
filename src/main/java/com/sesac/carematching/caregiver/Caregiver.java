@@ -11,7 +11,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.http.ResponseEntity;
 
+import java.time.Instant;
+import java.util.Optional;
 import java.util.List;
 
 @Getter
@@ -89,4 +93,6 @@ public class Caregiver {
         this.salary = salary;
         this.status = status;
     }
+
+
 }
