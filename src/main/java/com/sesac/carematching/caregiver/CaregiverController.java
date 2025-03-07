@@ -27,6 +27,8 @@ import java.util.stream.IntStream;
 @Log4j2
 public class CaregiverController {
     private final CaregiverService caregiverService;
+    private final CaregiverRepository caregiverRepository;
+/*    CaregiverService caregiverRepository;*/
     private final RoleService roleService;
     private final ExperienceService experienceService;
     private final TokenAuth tokenAuth;
@@ -57,6 +59,12 @@ public class CaregiverController {
         List<Experience> experiences = experienceService.findExperienceList(caregiver);
         return ResponseEntity.ok()
             .body(new CaregiverDetailDto(caregiver, experiences));
+    }
+    @GetMapping("/{caregiverId}/userId")
+    public ResponseEntity<Integer> getCaregiverUserId(@PathVariable Integer caregiverId) {
+        return caregiverRepository.findById(caregiverId)
+            .map(caregiver -> ResponseEntity.ok(caregiver.getUser().getId())) // Caregiver의 User ID(UNO) 반환
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/build")
