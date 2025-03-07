@@ -1,4 +1,4 @@
-package com.sesac.carematching.review;
+package com.sesac.carematching.caregiver.review;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.user.User;
