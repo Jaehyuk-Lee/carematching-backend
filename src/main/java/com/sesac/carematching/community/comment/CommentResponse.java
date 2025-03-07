@@ -1,6 +1,5 @@
 package com.sesac.carematching.community.comment;
 
-import com.sesac.carematching.config.EnvProperties;
 import com.sesac.carematching.user.User;
 import lombok.Getter;
 
@@ -18,20 +17,17 @@ public class CommentResponse {
 
     public CommentResponse(Comment comment, User user, boolean isAuthor) {
         this.id = comment.getId();
+        this.profileImage = comment.getIsAnonymous() ? null : user.getProfileImage();
+        this.nickname = comment.getIsAnonymous() ? "익명" : user.getNickname();
 
-        String bucketName = EnvProperties.getS3BucketName();
-
-        this.profileImage = (comment.getIsAnonymous() || user.getProfileImage() == null || user.getProfileImage().isEmpty())
-            ? "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/user_profile_image/basicprofileimage.png"
-            : user.getProfileImage();        this.nickname = comment.getIsAnonymous() ? "익명" : user.getNickname();
-
-            if(user.getRole().getId() == 1) {
+        if(user.getRole().getId() == 1) {
             this.role = "관리자";
         }else if(user.getRole().getId() == 2) {
             this.role = "요양사";
         }else{
             this.role = "수급자";
         }
+
         this.content = comment.getContent();
         this.createdAt = comment.getCreatedAt();
         this.isAuthor = isAuthor;
