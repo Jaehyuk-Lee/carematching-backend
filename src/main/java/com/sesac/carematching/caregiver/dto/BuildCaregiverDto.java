@@ -1,7 +1,7 @@
 package com.sesac.carematching.caregiver.dto;
 
 import com.sesac.carematching.caregiver.*;
-import com.sesac.carematching.experience.ExperienceRequest;
+import com.sesac.carematching.caregiver.experience.ExperienceRequest;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;

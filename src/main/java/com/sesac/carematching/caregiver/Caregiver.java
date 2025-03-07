@@ -1,6 +1,6 @@
 package com.sesac.carematching.caregiver;
 
-import com.sesac.carematching.experience.Experience;
+import com.sesac.carematching.caregiver.experience.Experience;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

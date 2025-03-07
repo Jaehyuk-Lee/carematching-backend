@@ -1,8 +1,8 @@
 package com.sesac.carematching.caregiver.dto;
 
 import com.sesac.carematching.caregiver.*;
-import com.sesac.carematching.experience.Experience;
-import com.sesac.carematching.experience.ExperienceResponse;
+import com.sesac.carematching.caregiver.experience.Experience;
+import com.sesac.carematching.caregiver.experience.ExperienceResponse;
 import lombok.Getter;
 
 import java.util.List;
