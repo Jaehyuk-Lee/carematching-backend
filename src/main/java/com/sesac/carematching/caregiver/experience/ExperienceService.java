@@ -33,7 +33,7 @@ public class ExperienceService {
         return experienceRepository.findByCaregiver(caregiver);
     }
 
-    public Experience toEntity(ExperienceRequest dto, Caregiver caregiver) {
+    private Experience toEntity(ExperienceRequest dto, Caregiver caregiver) {
         return Experience.builder()
             .title(dto.getTitle())
             .summary(dto.getSummary())
