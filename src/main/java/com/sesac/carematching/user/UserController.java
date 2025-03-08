@@ -55,6 +55,19 @@ public class UserController {
         }
     }
 
+    @GetMapping("/info")
+    public ResponseEntity<?> getUser(HttpServletRequest request) {
+        try {
+            String username = tokenAuth.extractUsernameFromToken(request);
+            return ResponseEntity.ok(userService.getUser(username));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("회원 정보 조회 중 오류가 발생했습니다.");
+        }
+    }
+
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody UserUpdateDTO userUpdateDTO, HttpServletRequest request) {
         try {
