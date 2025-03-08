@@ -28,7 +28,6 @@ import java.util.stream.IntStream;
 public class CaregiverController {
     private final CaregiverService caregiverService;
     private final CaregiverRepository caregiverRepository;
-/*    CaregiverService caregiverRepository;*/
     private final RoleService roleService;
     private final ExperienceService experienceService;
     private final TokenAuth tokenAuth;
