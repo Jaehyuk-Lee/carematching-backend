@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
     Optional<Review> findByUser(User user);
     List<Review> findByCaregiver(Caregiver caregiver);
+    Integer countByCaregiver(Caregiver caregiver);
 }

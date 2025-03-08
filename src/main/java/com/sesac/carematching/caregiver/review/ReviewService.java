@@ -48,6 +48,10 @@ public class ReviewService {
         Review review = reviewRepository.findByUser(user).orElse(null);
         reviewRepository.delete(review);
     }
+    public Integer count(Caregiver caregiver) {
+        return reviewRepository.countByCaregiver(caregiver);
+    }
+
 
     private Review toEntity(ReviewRequest dto) {
         return Review.builder()
