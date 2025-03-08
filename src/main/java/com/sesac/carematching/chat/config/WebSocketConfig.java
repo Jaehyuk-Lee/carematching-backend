@@ -25,7 +25,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // ✅ 클라이언트가 WebSocket을 연결하는 엔드포인트
-        registry.addEndpoint("/ws")
+        registry.addEndpoint("/wss")
             .setAllowedOrigins("https://d12hp6zm8su88f.cloudfront.net/",
                     "https://carematching.net/", "https://www.carematching.net/",
                     "http://localhost:3000", "http://localhost") // 프론트엔드 도메인 허용
