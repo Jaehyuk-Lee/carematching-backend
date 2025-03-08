@@ -2,8 +2,6 @@ package com.sesac.carematching.caregiver.review;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
-import com.sesac.carematching.caregiver.dto.CaregiverDetailDto;
-import com.sesac.carematching.caregiver.experience.Experience;
 import com.sesac.carematching.caregiver.review.dto.ReviewRequest;
 import com.sesac.carematching.caregiver.review.dto.ReviewResponse;
 import com.sesac.carematching.util.TokenAuth;
@@ -35,24 +33,25 @@ public class ReviewController {
             .body(reviews);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ReviewResponse> findReviewById(@PathVariable Integer id) {
-        Review review = reviewService.findById(id);
+    @GetMapping("/user")
+    public ResponseEntity<ReviewResponse> findReviewByUser(HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        Review review = reviewService.findByUser(username);
         return ResponseEntity.ok()
             .body(new ReviewResponse(review));
     }
 
-    @PostMapping("/update/{id}")
-    public ResponseEntity<ReviewResponse> updateReview(@PathVariable Integer id,
-                                                       @RequestBody ReviewRequest) {
-        Review review = reviewService.findById(id);
-
+    @PostMapping("/build")
+    public ResponseEntity<ReviewResponse> updateReview(HttpServletRequest request,
+                                                       @RequestBody ReviewRequest dto) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        Review review;
+        if (reviewService.findByUser(username) == null) {
+            review = reviewService.save(dto);
+        } else {
+            review = reviewService.update(username, dto);
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(new ReviewResponse(review));
-    }
-
-    @PostMapping("/create")
-    public ResponseEntity<ReviewResponse> createReview() {
-
     }
 }

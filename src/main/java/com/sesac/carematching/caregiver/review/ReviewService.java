@@ -21,7 +21,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review update(ReviewRequest dto, String username) {
+    public Review update(String username, ReviewRequest dto) {
         User user = userRepository.findByUsername(username).orElseThrow(
                 ()->new IllegalArgumentException("User is null")
         );
@@ -35,12 +35,12 @@ public class ReviewService {
         return reviewRepository.findByCaregiver(caregiver);
     }
 
-    public Review findById(Integer id) {
-        return reviewRepository.findById(id).orElseThrow(
-            ()->new IllegalArgumentException("review not found")
+    public Review findByUser(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(
+                ()->new IllegalArgumentException("User is null")
         );
+        return reviewRepository.findByUser(user).orElse(null);
     }
-
     public void delete(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(
             ()->new IllegalArgumentException("User is null")
