@@ -2,7 +2,6 @@ package com.sesac.carematching.chat.service;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverRepository;
-import com.sesac.carematching.chat.dto.CreateRoomRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.dto.RoomResponse;
 import com.sesac.carematching.chat.message.Message;
@@ -15,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -30,42 +31,48 @@ public class RoomServiceImpl implements RoomService {
     private final CaregiverRepository caregiverRepository;
     private final MessageRepository messageRepository;
 
-    @Override
+
     @Transactional
-    public RoomResponse createRoom(CreateRoomRequest createRoomRequest) {
-        System.out.println("🔍 [DEBUG] 서비스 계층 받은 요청 데이터: " + createRoomRequest);
+    public RoomResponse createRoom(String requesterUsername, Integer caregiverId) {
+        // (1) 요청자 조회
+        User requester = userRepository.findByUsername(requesterUsername)
+            .orElseThrow(() -> new IllegalArgumentException("요청자 정보가 존재하지 않습니다."));
 
-        // 1️⃣ 요청자(User) 조회
-        User requester = userRepository.findById(createRoomRequest.getRequesterUserId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 User ID 입니다."));
+        // (2) 요청자가 요양사이면 에러
+        if (caregiverRepository.existsByUser(requester)) {
+            throw new SecurityException("요양사는 요청자가 될 수 없습니다.");
+        }
 
-        // 2️⃣ Caregiver 조회 (caregiverId를 기반으로)
-        Caregiver caregiver = caregiverRepository.findById(createRoomRequest.getCaregiverId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Caregiver ID 입니다."));
+        // (3) caregiverId로 수신자(Caregiver) 조회 → receiver(User)
+        Caregiver caregiver = caregiverRepository.findById(caregiverId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 요양사입니다."));
+        User receiver = caregiver.getUser();
 
-        // 3️⃣ Caregiver의 User ID(UNO) 조회
-        User receiver = caregiver.getUser(); // Caregiver의 User 정보 가져오기
-        System.out.println("🔍 [DEBUG] Caregiver의 User ID(UNO)로 receiverUserId 설정: " + receiver.getId());
+        // (4) 중복된 방이 있는지 확인
+        boolean roomExists = roomRepository.existsByRequesterAndReceiver(requester, receiver);
+        if (roomExists) {
+            throw new IllegalStateException("이미 해당 요양사와 채팅방이 존재합니다.");
+        }
 
-        // 4️⃣ Room 엔티티 생성 및 설정
+        // (5) 방 생성
         Room room = new Room();
-        room.setRequester(requester); // 요청자(User) 설정
-        room.setReceiver(receiver); // **Caregiver의 User ID 저장**
+        room.setRequester(requester);
+        room.setReceiver(receiver);
+        room.setCreatedAt(Instant.now());
 
-        // 5️⃣ Room 엔티티 저장
         Room savedRoom = roomRepository.save(room);
-        System.out.println("💾 [INFO] 채팅방이 저장되었습니다. Room ID: " + savedRoom.getId());
 
-        // 6️⃣ RoomResponse 반환
+        // (6) 방 응답 DTO
         return new RoomResponse(
             savedRoom.getId(),
-            savedRoom.getRequester().getId(),
-            savedRoom.getReceiver().getId(), // **Caregiver의 UNO(User ID)가 들어감**
+            savedRoom.getRequester().getUsername(),
+            savedRoom.getReceiver().getUsername(),
             savedRoom.getCreatedAt(),
-            "", // 상대방 username (새로운 채팅방이므로 빈 값)
-            List.of(), // 새로 생성된 채팅방은 메시지가 없으므로 빈 리스트 전달
-            "메시지가 없습니다.", // 마지막 메시지도 없음
-            "1월 1일"
+            "",
+            null,
+            "메시지가 없습니다.",
+            "01/01"
+
         );
     }
 
@@ -92,52 +99,72 @@ public class RoomServiceImpl implements RoomService {
                 .atZone(ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("MM/dd"))
         ).orElse("");
+
         // 4) RoomResponse로 변환하여 메시지 목록 포함
         return new RoomResponse(
             room.getId(),
-            room.getRequester().getId(),
-            room.getReceiver().getId(),
+            room.getRequester().getUsername(),
+            room.getReceiver().getUsername(),
             room.getCreatedAt(),
             "", // 상대방 username (개별 조회 시 필요 없음)
-            messages, // 메시지 목록 포함
+            messages,
             lastMessageText,
             lastMessageDate
         );
     }
 
     @Override
+    public List<RoomResponse> getUserRooms(Integer id) {
+        return List.of();
+    }
+
     @Transactional(readOnly = true)
-    public List<RoomResponse> getUserRooms(Integer userId) {
+    @Override
+    public List<RoomResponse> getUserRooms(String username) {
         // 1. User가 참여 중인 채팅방을 모두 조회
-        List<Room> rooms = roomRepository.findByRequesterIdOrReceiverId(userId, userId);
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        List<Room> rooms = roomRepository.findByRequesterOrReceiver(user, user);
 
         // 2. Room을 RoomResponse로 변환하여 반환
         return rooms.stream().map(room -> {
-            // 👇 현재 로그인한 사용자가 아닌 상대방 userId 가져오기
-            Integer otherUserId = room.getRequester().getId().equals(userId) ? room.getReceiver().getId() : room.getRequester().getId();
+            // 상대방 user 객체
+            User otherUser = room.getRequester().equals(user) ? room.getReceiver() : room.getRequester();
 
-            // 👇 상대방 username 가져오기
-            String otherUsername = userRepository.findById(otherUserId)
-                .map(User::getNickname)
-                .orElse("알 수 없음");
+            // ⭐ 요양사 여부 판별: caregiverRepository.existsByUser(otherUser)
+            boolean isCaregiver = caregiverRepository.existsByUser(otherUser);
+
+            // 실제로 Caregiver 엔티티를 가져와서 realName을 꺼내고 싶다면:
+            String displayName;
+            if (isCaregiver) {
+                Caregiver cg = caregiverRepository.findByUser(otherUser)
+                    .orElseThrow(() -> new IllegalStateException("Caregiver 엔티티를 찾을 수 없습니다."));
+                displayName = cg.getRealName();
+            } else {
+                displayName = otherUser.getNickname(); // 일반 유저의 닉네임
+            }
 
             // 👇 마지막 메시지 가져오기
             Optional<Message> lastMessageOpt = messageRepository.findTopByRoomIdOrderByCreatedAtDesc(room.getId());
             String lastMessageText = lastMessageOpt.map(Message::getMessage).orElse("메시지가 없습니다.");
+
             // 👇 마지막 메시지 날짜 (월/일 형식)
             String lastMessageDate = lastMessageOpt.map(message ->
                 message.getCreatedAt()
                     .atZone(ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("MM/dd"))
             ).orElse("");
+
+
             return new RoomResponse(
                 room.getId(),
-                room.getRequester().getId(),
-                room.getReceiver().getId(),
+                room.getRequester().getUsername(),
+                room.getReceiver().getUsername(),
                 room.getCreatedAt(),
-                otherUsername, // 상대방 username 추가
-                List.of(), // 메시지는 빈 리스트로 전달
-                lastMessageText, // 마지막 메시지 추가
+                displayName, // 상대방 username 추가
+                List.of(),
+                lastMessageText,
                 lastMessageDate
             );
         }).collect(Collectors.toList());
@@ -147,24 +174,21 @@ public class RoomServiceImpl implements RoomService {
      * Message 엔티티를 MessageResponse DTO로 변환
      */
     private MessageResponse convertToMessageResponse(Message message) {
-        // 각 메시지의 생성시간을 "MM/dd" (날짜)와 "HH:mm" (시간)으로 포맷팅
         String formattedDate = message.getCreatedAt()
             .atZone(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("MM/dd"));
         String formattedTime = message.getCreatedAt()
             .atZone(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("HH:mm"));
-
+        // 2) MessageResponse로 변환 (null 방지)
         return new MessageResponse(
-            message.getRoom().getId(),
-            message.getUser().getId(),
-            message.getUser().getUsername(),
-            message.getMessage(),
+            message.getRoom() != null ? message.getRoom().getId() : null,
+            message.getUser() != null ? message.getUser().getUsername() : "알 수 없음",
+            message.getMessage() != null ? message.getMessage() : "내용 없음",
             message.getIsRead(),
-            message.getCreatedAt().toString(),
+            message.getCreatedAt() != null ? message.getCreatedAt().toString() : "알 수 없음",
             formattedDate,
             formattedTime
         );
     }
-
 }

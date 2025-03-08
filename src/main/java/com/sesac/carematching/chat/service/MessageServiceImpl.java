@@ -24,20 +24,22 @@ public class MessageServiceImpl implements MessageService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
 
-    // DateTimeFormatter를 한 번만 생성해두고 재사용
+    // ✅ DateTimeFormatter를 한 번만 생성해두고 재사용
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     @Override
     @Transactional
     public MessageResponse saveMessage(MessageRequest messageRequest) {
-        // 1. 채팅방 및 사용자 조회
+        // ✅ 1. 채팅방 조회
         Room room = roomRepository.findById(messageRequest.getRoomId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방 ID입니다."));
-        User user = userRepository.findById(messageRequest.getUserId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자 ID입니다."));
 
-        // 2. 메시지 저장
+        // ✅ 2. username을 사용하여 사용자 조회
+        User user = userRepository.findByUsername(messageRequest.getUsername())
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // ✅ 3. 메시지 저장
         Message message = new Message();
         message.setRoom(room);
         message.setUser(user);
@@ -46,7 +48,7 @@ public class MessageServiceImpl implements MessageService {
 
         Message savedMessage = messageRepository.save(message);
 
-        // 3. 생성시간을 각각 "MM/dd"와 "HH:mm" 형식으로 포맷팅
+        // ✅ 4. 생성시간을 각각 "MM/dd"와 "HH:mm" 형식으로 포맷팅
         String formattedDate = savedMessage.getCreatedAt()
             .atZone(ZoneId.systemDefault())
             .format(dateFormatter);
@@ -54,11 +56,10 @@ public class MessageServiceImpl implements MessageService {
             .atZone(ZoneId.systemDefault())
             .format(timeFormatter);
 
-        // 4. 저장된 메시지를 응답 DTO로 변환
+        // ✅ 5. 저장된 메시지를 응답 DTO로 변환
         return new MessageResponse(
             savedMessage.getRoom().getId(),
-            savedMessage.getUser().getId(),
-            savedMessage.getUser().getUsername(),
+            savedMessage.getUser().getUsername(), // ✅ userId 대신 username 사용
             savedMessage.getMessage(),
             savedMessage.getIsRead(),
             savedMessage.getCreatedAt().toString(),
@@ -72,7 +73,7 @@ public class MessageServiceImpl implements MessageService {
     public List<MessageResponse> getMessagesByRoomId(Integer roomId) {
         return messageRepository.findByRoomId(roomId).stream()
             .map(message -> {
-                // 각 메시지마다 생성시간 포맷팅
+                // ✅ 각 메시지마다 생성시간 포맷팅
                 String formattedDate = message.getCreatedAt()
                     .atZone(ZoneId.systemDefault())
                     .format(dateFormatter);
@@ -81,8 +82,7 @@ public class MessageServiceImpl implements MessageService {
                     .format(timeFormatter);
                 return new MessageResponse(
                     message.getRoom().getId(),
-                    message.getUser().getId(),
-                    message.getUser().getUsername(),
+                    message.getUser().getUsername(), // ✅ userId 대신 username 사용
                     message.getMessage(),
                     message.getIsRead(),
                     message.getCreatedAt().toString(),
