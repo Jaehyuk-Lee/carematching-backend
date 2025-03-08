@@ -1,6 +1,5 @@
 package com.sesac.carematching.community.post;
 
-import com.sesac.carematching.config.EnvProperties;
 import com.sesac.carematching.user.User;
 import lombok.Getter;
 
@@ -22,10 +21,7 @@ public class CommunityPostListResponse {
         this.title = post.getTitle();
         this.content = post.getContent();
         this.image = post.getImage();
-
-        String bucketName = EnvProperties.getS3BucketName();
-        this.profileImage = (post.getIsAnonymous() || user.getProfileImage() == null || user.getProfileImage().isEmpty()) ? "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/user_profile_image/basicprofileimage.png" : user.getProfileImage();
-
+        this.profileImage = post.getIsAnonymous() ? null : user.getProfileImage();
         this.nickname = post.getIsAnonymous() ? "익명" : user.getNickname();
         this.relativeTime = relativeTime;
         this.viewCount = viewCount;

@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -14,8 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 public class RoomResponse {
     private Integer roomId;
-    private Integer requesterUserId;
-    private Integer receiverUserId; // 👈 caregiverId → receiverUserId 로 변경
+    private String requesterUsername;  // UserId → Username
+    private String receiverUsername;   // UserId → Username
     private String createdAt;
     private String otherUsername;
     private List<MessageResponse> messages;
@@ -24,8 +23,8 @@ public class RoomResponse {
 
     public RoomResponse(
         @NotNull Integer roomId,
-        @NotNull Integer requesterUserId,
-        @NotNull Integer receiverUserId, // 👈 변경된 부분
+        @NotNull String requesterUsername,  // 👈 변경된 부분
+        @NotNull String receiverUsername,   // 👈 변경된 부분
         @NotNull Instant createdAt,
         @NotNull String otherUsername,
         @NotNull List<MessageResponse> messages,
@@ -33,8 +32,9 @@ public class RoomResponse {
         @NotNull String lastMessageDate
     ) {
         this.roomId = roomId;
-        this.requesterUserId = requesterUserId;
-        this.receiverUserId = receiverUserId; // 👈 caregiverId → receiverUserId 로 변경
+
+        this.requesterUsername = requesterUsername;  // 👈 변경된 부분
+        this.receiverUsername = receiverUsername;    // 👈 변경된 부분
         this.otherUsername = otherUsername;
         this.createdAt = DateTimeFormatter.ISO_INSTANT.format(createdAt);
         this.messages = messages;
@@ -42,4 +42,3 @@ public class RoomResponse {
         this.lastMessageDate = lastMessageDate;
     }
 }
-

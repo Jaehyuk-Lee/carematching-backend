@@ -1,6 +1,5 @@
 package com.sesac.carematching.chat.room;
 
-import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
