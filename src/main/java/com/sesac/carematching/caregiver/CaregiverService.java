@@ -16,7 +16,6 @@ import java.util.List;
 public class CaregiverService {
     private final CaregiverRepository caregiverRepository;
     private final UserRepository userRepository;
-    private final ExperienceRepository experienceRepository;
 
     @Transactional
     public Caregiver save(String username, BuildCaregiverDto dto) {

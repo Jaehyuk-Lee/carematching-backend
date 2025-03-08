@@ -1,7 +1,7 @@
 package com.sesac.carematching.caregiver.review;
 
 import com.sesac.carematching.caregiver.Caregiver;
-import com.sesac.carematching.caregiver.review.dto.ReviewDto;
+import com.sesac.carematching.caregiver.review.dto.ReviewRequest;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +16,12 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
 
-    public Review save(ReviewDto dto) {
+    public Review save(ReviewRequest dto) {
         return reviewRepository.save(toEntity(dto));
     }
 
     @Transactional
-    public Review update(ReviewDto dto, String username) {
+    public Review update(ReviewRequest dto, String username) {
         User user = userRepository.findByUsername(username).orElseThrow(
                 ()->new IllegalArgumentException("User is null")
         );
@@ -35,6 +35,12 @@ public class ReviewService {
         return reviewRepository.findByCaregiver(caregiver);
     }
 
+    public Review findById(Integer id) {
+        return reviewRepository.findById(id).orElseThrow(
+            ()->new IllegalArgumentException("review not found")
+        );
+    }
+
     public void delete(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(
             ()->new IllegalArgumentException("User is null")
@@ -43,7 +49,7 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
-    private Review toEntity(ReviewDto dto) {
+    private Review toEntity(ReviewRequest dto) {
         return Review.builder()
             .stars(dto.getStars())
             .comment(dto.getComment())

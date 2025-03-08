@@ -28,8 +28,6 @@ import java.util.stream.IntStream;
 public class CaregiverController {
     private final CaregiverService caregiverService;
     private final CaregiverRepository caregiverRepository;
-/*    CaregiverService caregiverRepository;*/
-    private final RoleService roleService;
     private final ExperienceService experienceService;
     private final TokenAuth tokenAuth;
 
@@ -60,6 +58,7 @@ public class CaregiverController {
         return ResponseEntity.ok()
             .body(new CaregiverDetailDto(caregiver, experiences));
     }
+
     @GetMapping("/{caregiverId}/userId")
     public ResponseEntity<Integer> getCaregiverUserId(@PathVariable Integer caregiverId) {
         return caregiverRepository.findById(caregiverId)

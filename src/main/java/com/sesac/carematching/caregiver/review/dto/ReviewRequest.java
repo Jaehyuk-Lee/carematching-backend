@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ReviewDto {
+public class ReviewRequest {
     @NotBlank(message = "별점은 필수입니다.")
     Integer stars;
     String comment;
