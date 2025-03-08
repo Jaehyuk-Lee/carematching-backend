@@ -3,6 +3,7 @@ package com.sesac.carematching.chat.controller;
 import com.sesac.carematching.chat.dto.CreateRoomRequest;
 import com.sesac.carematching.chat.dto.RoomResponse;
 import com.sesac.carematching.chat.service.RoomService;
+
 import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,9 @@ public class RoomController {
     private final RoomService roomService;
     private final TokenAuth tokenAuth;
 
+
     /**
-     * 🔒 채팅방 생성 (로그인 사용자는 username, 요양사는 caregiverId로 처리)
+     * 채팅방 생성 (로그인 사용자는 username, 요양사는 caregiverId로 처리)
      */
     @PostMapping
     public ResponseEntity<RoomResponse> createRoom(HttpServletRequest request,
@@ -36,7 +38,7 @@ public class RoomController {
     }
 
     /**
-     * 🔒 사용자가 참여 중인 채팅방 목록 조회 (username 기반)
+     * 사용자가 참여 중인 채팅방 목록 조회 (username 기반)
      */
     @GetMapping
     public ResponseEntity<List<RoomResponse>> getUserRooms(HttpServletRequest request) {
@@ -47,12 +49,10 @@ public class RoomController {
         // 2. 참여 중인 채팅방 목록 조회
         List<RoomResponse> rooms = roomService.getUserRooms(username);
 
+
         return ResponseEntity.ok(rooms);
     }
 
-    /**
-     * 🔒 특정 채팅방 조회
-     */
     @GetMapping("/{roomId}")
     public ResponseEntity<RoomResponse> getRoom(@PathVariable Integer roomId) {
         RoomResponse roomResponse = roomService.getRoom(roomId);

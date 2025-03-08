@@ -1,6 +1,6 @@
 package com.sesac.carematching.chat.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,7 +9,7 @@ import lombok.Setter;
 
 public class MessageResponse {
     private Integer roomId;
-    private String username;  // ✅ userId 대신 username 사용
+    private String username; 
     private String message;
     private boolean isRead;
     private String createdAt;
@@ -18,7 +18,7 @@ public class MessageResponse {
 
     public MessageResponse(
             @NotNull Integer roomId,
-            @NotNull String username,  // ✅ userId 대신 username
+            @NotNull String username, 
             @NotNull String message,
             boolean isRead,
             @NotNull String createdAt,

@@ -161,6 +161,14 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 게시글입니다."));
 
+        // [추가] CAREGIVER 전용 게시글 접근 권한 체크
+        if ("CAREGIVER".equalsIgnoreCase(post.getCategory().getAccess())) {
+            if (!("ROLE_ADMIN".equals(currentUser.getRole().getRname()) ||
+                "ROLE_USER_CAREGIVER".equals(currentUser.getRole().getRname()))) {
+                throw new RuntimeException("요양사 전용 게시글입니다.");
+            }
+        }
+
         // 2) 조회수 기록이 없으면 Viewcount 테이블에 추가 (첫 조회 시)
         boolean alreadyViewed = viewcountRepository.existsByUserAndPost(currentUser, post);
         if (!alreadyViewed) {

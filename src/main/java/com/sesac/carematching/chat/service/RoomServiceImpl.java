@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -71,6 +72,7 @@ public class RoomServiceImpl implements RoomService {
             null,
             "메시지가 없습니다.",
             "01/01"
+
         );
     }
 
@@ -154,6 +156,7 @@ public class RoomServiceImpl implements RoomService {
                     .format(DateTimeFormatter.ofPattern("MM/dd"))
             ).orElse("");
 
+
             return new RoomResponse(
                 room.getId(),
                 room.getRequester().getUsername(),
@@ -171,14 +174,12 @@ public class RoomServiceImpl implements RoomService {
      * Message 엔티티를 MessageResponse DTO로 변환
      */
     private MessageResponse convertToMessageResponse(Message message) {
-        // 1) 메시지 생성시간 포맷팅
         String formattedDate = message.getCreatedAt()
             .atZone(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("MM/dd"));
         String formattedTime = message.getCreatedAt()
             .atZone(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("HH:mm"));
-
         // 2) MessageResponse로 변환 (null 방지)
         return new MessageResponse(
             message.getRoom() != null ? message.getRoom().getId() : null,

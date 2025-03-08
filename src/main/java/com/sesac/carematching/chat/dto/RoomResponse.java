@@ -33,6 +33,7 @@ public class RoomResponse {
         @NotNull String lastMessageDate
     ) {
         this.roomId = roomId;
+
         this.requesterUsername = requesterUsername;  // 👈 변경된 부분
         this.receiverUsername = receiverUsername;    // 👈 변경된 부분
         this.otherUsername = otherUsername;

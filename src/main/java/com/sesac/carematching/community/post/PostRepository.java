@@ -46,7 +46,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
        WHERE p.category = :category
        GROUP BY p
        HAVING COUNT(l) >= 10
-       ORDER BY MAX(l.createdAt) DESC
+       ORDER BY p.createdAt DESC
        """)
     Page<Post> findPopularPostsByCategory(Category category, Pageable pageable);
 

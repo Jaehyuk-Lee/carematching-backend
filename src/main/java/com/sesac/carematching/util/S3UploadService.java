@@ -24,6 +24,12 @@ public class S3UploadService {
     private String bucket;
 
     public String saveCommunityImageFile(MultipartFile multipartFile) throws IOException {
+        // 파일 타입 검증: 이미지 파일만 허용
+        String contentType = multipartFile.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("업로드된 파일은 이미지가 아닙니다.");
+        }
+
         // 원본 파일명
         String originalFilename = multipartFile.getOriginalFilename();
         // UUID와 원본 파일명을 조합하고 "community_image/" 폴더를 prefix로 사용
@@ -58,6 +64,12 @@ public class S3UploadService {
     }
 
     public String saveProfileImageFile(MultipartFile multipartFile) throws IOException {
+        // 파일 타입 검증: 이미지 파일만 허용
+        String contentType = multipartFile.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("업로드된 파일은 이미지가 아닙니다.");
+        }
+
         // 원본 파일명
         String originalFilename = multipartFile.getOriginalFilename();
         // UUID와 원본 파일명을 조합하고 "community_image/" 폴더를 prefix로 사용

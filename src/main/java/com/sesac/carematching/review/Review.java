@@ -6,6 +6,7 @@ import com.sesac.carematching.user.role.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -48,4 +49,10 @@ public class Review {
     @CreatedDate
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
+
+    @Builder
+    public Review(Integer stars, String comment) {
+        this.stars = stars;
+        this.comment = comment;
+    }
 }
