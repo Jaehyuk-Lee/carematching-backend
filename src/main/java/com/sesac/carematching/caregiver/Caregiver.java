@@ -35,6 +35,10 @@ public class Caregiver {
     @JoinColumn(name = "UNO", nullable = false)
     private User user;
 
+    @Size(max = 1000)
+    @Column(name = "CAREGIVER_IMAGE")
+    private String caregiverImage;
+
     @Size(max = 255)
     @NotNull
     @Column(name = "REAL_NAME", nullable = false)
@@ -81,7 +85,7 @@ public class Caregiver {
 
     @Builder
     public Caregiver(User user, String loc, String realName, String servNeeded, String workDays, WorkTime workTime,
-                     WorkForm workForm, EmploymentType employmentType, Integer salary, Status status) {
+                     WorkForm workForm, EmploymentType employmentType, Integer salary, Status status, String caregiverImage) {
         this.user = user;
         this.loc = loc;
         this.realName = realName;
@@ -92,6 +96,7 @@ public class Caregiver {
         this.employmentType = employmentType;
         this.salary = salary;
         this.status = status;
+        this.caregiverImage = caregiverImage;
     }
 
 
