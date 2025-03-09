@@ -21,6 +21,7 @@ public class CaregiverDetailDto {
     private Integer salary;
     private Status status;
     private List<ExperienceResponse> experienceList;
+    private String caregiverImage;
 
     public CaregiverDetailDto(Caregiver caregiver, List<Experience> experiences) {
         this.loc = caregiver.getLoc();
@@ -37,5 +38,6 @@ public class CaregiverDetailDto {
             .stream()
             .map(ExperienceResponse::new)
             .collect(Collectors.toList());
+        this.caregiverImage = caregiver.getCaregiverImage();
     }
 }
