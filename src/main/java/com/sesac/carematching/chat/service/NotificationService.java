@@ -14,12 +14,15 @@ public class NotificationService {
     private final StringRedisTemplate redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChannelTopic topic;
+    private String message;
 
     // ✅ Redis를 통해 알림 메시지 전송 (username 기반)
-    public void sendNotificationToUser(String username, String message) {
+    // ✅ Redis를 통해 알림 메시지 전송 (username 기반)
+        public void sendNotificationToUser(String username, String message) {
         log.info("📢 Redis 알림 전송 → {}: {}", username, message);
         redisTemplate.convertAndSend(topic.getTopic(), username + ":" + message);
     }
+
 
     // ✅ Redis에서 수신한 메시지를 WebSocket으로 전송
     public void onMessage(String message) {

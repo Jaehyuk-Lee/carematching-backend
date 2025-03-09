@@ -41,7 +41,7 @@ public class MessageController {
 
         // 1. username으로 User ID 조회
         User user = userRepository.findByUsername(messageRequest.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 2. 메시지 저장을 위해 MessageRequest를 업데이트
         messageRequest.setUserId(user.getId());
