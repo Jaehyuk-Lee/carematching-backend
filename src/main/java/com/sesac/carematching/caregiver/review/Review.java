@@ -1,4 +1,4 @@
-package com.sesac.carematching.review;
+package com.sesac.carematching.caregiver.review;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.user.User;
@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -18,6 +19,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor
 @Table(name = "review")
 public class Review {
     @Id
