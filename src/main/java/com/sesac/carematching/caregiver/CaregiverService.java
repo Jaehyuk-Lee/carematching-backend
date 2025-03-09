@@ -4,6 +4,7 @@ import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
 import com.sesac.carematching.caregiver.experience.ExperienceRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
+import com.sesac.carematching.util.S3UploadService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,8 @@ public class CaregiverService {
     private final CaregiverRepository caregiverRepository;
     private final UserRepository userRepository;
     private final ExperienceRepository experienceRepository;
+    private final S3UploadService s3UploadService;
+
 
     @Transactional
     public Caregiver save(String username, BuildCaregiverDto dto) {
@@ -53,6 +56,14 @@ public class CaregiverService {
         caregiver.setEmploymentType(dto.getEmploymentType());
         caregiver.setSalary(dto.getSalary());
         caregiver.setStatus(dto.getStatus());
+
+        // 새 이미지가 제공된 경우: 기존 이미지가 있다면 S3에서 삭제 후 새 URL로 교체
+        if (dto.getCaregiverImage() != null && !dto.getCaregiverImage().isEmpty()) {
+            if (caregiver.getCaregiverImage() != null && !caregiver.getCaregiverImage().isEmpty()) {
+                s3UploadService.deleteCaregiverImageFile(caregiver.getCaregiverImage());
+            }
+            caregiver.setCaregiverImage(dto.getCaregiverImage());
+        }
         return caregiverRepository.save(caregiver);
     }
 
@@ -81,6 +92,7 @@ public class CaregiverService {
             .employmentType(dto.getEmploymentType())
             .salary(dto.getSalary())
             .status(dto.getStatus())
+            .caregiverImage(dto.getCaregiverImage())
             .build();
     }
 }
