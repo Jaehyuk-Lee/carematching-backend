@@ -37,75 +37,46 @@ public class UserController {
     private void checkAdminPrivileges(HttpServletRequest request) {
         User requestedUser = userService.getUserInfo(tokenAuth.extractUsernameFromToken(request));
         if (requestedUser == null || !requestedUser.getRole().getRname().equals("ROLE_ADMIN")) {
-            throw new IllegalArgumentException("관리자 전용 기능입니다.");
+            throw new AdminAuthException("관리자 전용 기능입니다.");
         }
     }
 
     @PostMapping("/delete")
     public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
-        try {
-            String username = tokenAuth.extractUsernameFromToken(request);
-            userService.deleteUser(username);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("회원 탈퇴 처리 중 오류가 발생했습니다.");
-        }
+        String username = tokenAuth.extractUsernameFromToken(request);
+        userService.deleteUser(username);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<?> getUser(HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        return ResponseEntity.ok(userService.getUser(username));
     }
 
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody UserUpdateDTO userUpdateDTO, HttpServletRequest request) {
-        try {
-            String username = tokenAuth.extractUsernameFromToken(request);
-            userService.updateUser(username, userUpdateDTO);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("회원 정보 수정 중 오류가 발생했습니다.");
-        }
+        String username = tokenAuth.extractUsernameFromToken(request);
+        userService.updateUser(username, userUpdateDTO);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/admin/cert")
     public ResponseEntity<?> createAdminCert(HttpServletRequest request) {
-        try {
-            checkAdminPrivileges(request);
-            return ResponseEntity.ok(userService.getCertList());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("목록을 불러오는 도중 오류가 발생했습니다.");
-        }
+        checkAdminPrivileges(request);
+        return ResponseEntity.ok(userService.getCertList());
     }
 
     @PostMapping("/admin/cert/approve")
     public ResponseEntity<?> createAdminCertApprove(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
-        try {
-            checkAdminPrivileges(request);
-            return ResponseEntity.ok(userService.updatePending(usernameDTO, false));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("처리하는 도중 오류가 발생했습니다.");
-        }
+        checkAdminPrivileges(request);
+        return ResponseEntity.ok(userService.updatePending(usernameDTO, false));
     }
 
     @PostMapping("/admin/cert/revoke")
     public ResponseEntity<?> createAdminCertRevoke(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
-        try {
-            checkAdminPrivileges(request);
-            return ResponseEntity.ok(userService.updatePending(usernameDTO, true));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("처리하는 도중 오류가 발생했습니다.");
-        }
+        checkAdminPrivileges(request);
+        return ResponseEntity.ok(userService.updatePending(usernameDTO, true));
     }
 
     @PostMapping(value = "/update/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -136,11 +107,4 @@ public class UserController {
         }
     }
 
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
 }

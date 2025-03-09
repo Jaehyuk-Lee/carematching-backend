@@ -1,9 +1,6 @@
 package com.sesac.carematching.user;
 
-import com.sesac.carematching.user.dto.UserCertListDTO;
-import com.sesac.carematching.user.dto.UserSignupDTO;
-import com.sesac.carematching.user.dto.UserUpdateDTO;
-import com.sesac.carematching.user.dto.UsernameDTO;
+import com.sesac.carematching.user.dto.*;
 import com.sesac.carematching.user.role.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +81,18 @@ public class UserService {
 
         // 연관된 데이터들은 JPA 엔티티에서 @OnDelete(action = OnDeleteAction.CASCADE) 설정으로 자동 삭제됨
         userRepository.delete(user);
+    }
+
+    public UserInfoDTO getUser(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        UserInfoDTO dto = new UserInfoDTO();
+
+        dto.setCertno(user.getCertno());
+        dto.setNickname(user.getNickname());
+        dto.setPhoneNumber(user.getPhone());
+        dto.setCreatedAt(String.valueOf(user.getCreatedAt()));
+
+        return dto;
     }
 
     @Transactional

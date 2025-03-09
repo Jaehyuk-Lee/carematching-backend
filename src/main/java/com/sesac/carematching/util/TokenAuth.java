@@ -15,7 +15,7 @@ public class TokenAuth {
     public String extractUsernameFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("인증 토큰이 필요합니다.");
+            throw new TokenAuthException("인증 토큰이 필요합니다.");
         }
 
         String token = authHeader.substring(7);
@@ -23,11 +23,11 @@ public class TokenAuth {
         try {
             username = jwtUtil.extractUsername(token);
         } catch (ExpiredJwtException e) {
-            throw new IllegalArgumentException("토큰이 만료되었습니다.");
+            throw new TokenAuthException("토큰이 만료되었습니다.");
         }
 
         if (username == null) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+            throw new TokenAuthException("유효하지 않은 토큰입니다.");
         }
 
         return username;

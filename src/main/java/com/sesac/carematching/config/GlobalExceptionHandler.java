@@ -1,0 +1,50 @@
+package com.sesac.carematching.config;
+
+import com.sesac.carematching.user.AdminAuthException;
+import com.sesac.carematching.util.TokenAuthException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * 토큰 인증 실패 시 401 Unauthorized 응답 반환
+     */
+    @ExceptionHandler(TokenAuthException.class)
+    public ResponseEntity<Map<String, String>> handleTokenAuthException(TokenAuthException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("status", "error");
+        errorResponse.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    /**
+     * 관리자 권한 요구 시 403 Forbidden 응답 반환
+     */
+    @ExceptionHandler(AdminAuthException.class)
+    public ResponseEntity<Map<String, String>> handleAdminAuthException(AdminAuthException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("status", "error");
+        errorResponse.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    /**
+     * IllegalArgumentException 처리 (400 Bad Request)
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("status", "error");
+        errorResponse.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+}
