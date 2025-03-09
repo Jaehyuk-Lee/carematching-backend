@@ -4,8 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -18,34 +16,53 @@ import java.util.Map;
 public class JwtUtil {
 
     private final Key key;
-    private final long expirationTime;
+    private final long accessExpirationTime;
+    private final long refreshExpirationTime;
 
     public JwtUtil(
         @Value("${jwt.secret}") String secretKey,
-        @Value("${jwt.expiration-time}") long expirationTime
+        @Value("${jwt.access-expiration-time}") long accessExpirationTime,
+        @Value("${jwt.refresh-expiration-time}") long  refreshExpirationTime
     ) {
         byte[] keyBytes = Base64.getDecoder().decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
-        this.expirationTime = expirationTime;
+        this.accessExpirationTime = accessExpirationTime;
+        this.refreshExpirationTime = refreshExpirationTime;
     }
 
-    public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        String role = userDetails.getAuthorities().stream()
-            .findFirst()
-            .map(GrantedAuthority::getAuthority)
-            .orElse("ROLE_USER");
-
-        claims.put("role", role);
-        claims.put("username", userDetails.getUsername());
-
+    private String createToken(Map<String, Object> claims, String subject, long expiration) {
         return Jwts.builder()
-            .setClaims(claims)
-            .setSubject(userDetails.getUsername())
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-            .signWith(key)
-            .compact();
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(key)
+                .compact();
+    }
+
+    public String generateAccessToken(String username, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        claims.put("username", username);
+        return createToken(claims, username, accessExpirationTime);
+    }
+
+    public String generateRefreshToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", username);
+        return createToken(claims, username, refreshExpirationTime);
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String extractUsername(String token) {
