@@ -1,4 +1,3 @@
-/*
 package com.sesac.carematching.chat.config;
 
 import com.sesac.carematching.chat.service.NotificationService;
@@ -6,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
@@ -15,7 +15,12 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory("localhost", 6379); // Redis 서버와 연결
+        return new LettuceConnectionFactory("127.0.0.1", 6379); // Redis 서버와 연결
+    }
+
+    @Bean
+    public StringRedisTemplate redisTemplate(RedisConnectionFactory connectionFactory) {
+        return new StringRedisTemplate(connectionFactory); // ✅ StringRedisTemplate 빈 등록
     }
 
     @Bean
@@ -34,7 +39,7 @@ public class RedisConfig {
 
     @Bean
     public MessageListenerAdapter messageListener(NotificationService notificationService) {
-        return new MessageListenerAdapter(notificationService, "onMessage"); // Redis에서 메시지를 받으면 NotificationService의 onMessage 실행
+        return new MessageListenerAdapter(notificationService, "onMessage"); // ✅ 수정: 정확한 메서드 이름 전달
     }
+
 }
-*/
