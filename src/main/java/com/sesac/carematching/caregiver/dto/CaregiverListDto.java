@@ -18,6 +18,7 @@ public class CaregiverListDto {
     private WorkForm workForm;
     private EmploymentType employmentType;
     private Integer reviewCount;
+    private String caregiverImage;
 
     public CaregiverListDto(Caregiver caregiver) {
         this.id = caregiver.getId();
@@ -29,6 +30,7 @@ public class CaregiverListDto {
         this.workTime = caregiver.getWorkTime();
         this.workForm = caregiver.getWorkForm();
         this.employmentType = caregiver.getEmploymentType();
+        this.caregiverImage = caregiver.getCaregiverImage();
     }
 
     public CaregiverListDto(Caregiver caregiver, Integer reviewCount) {
@@ -41,6 +43,7 @@ public class CaregiverListDto {
         this.workTime = caregiver.getWorkTime();
         this.workForm = caregiver.getWorkForm();
         this.employmentType = caregiver.getEmploymentType();
+        this.caregiverImage = caregiver.getCaregiverImage();
         this.reviewCount = reviewCount;
     }
 }
