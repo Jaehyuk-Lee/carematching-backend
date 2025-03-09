@@ -34,7 +34,7 @@ public class Transaction {
     @JoinColumn(name = "UNO", nullable = false)
     private User uno;
 
-    @Column(name = "ORDER_ID", length = 50, nullable = false)
+    @Column(name = "ORDER_ID", length = 50)
     private String orderId;
 
     @NotNull
