@@ -2,6 +2,10 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionAddDTO;
+import com.sesac.carematching.transaction.dto.TransactionOrderAddDTO;
+import com.sesac.carematching.transaction.dto.TransactionSuccessDTO;
+import com.sesac.carematching.util.TokenAuth;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
@@ -16,15 +20,37 @@ import java.util.UUID;
 public class TransactionController {
 
     private final TransactionService transactionService;
+    private final TokenAuth tokenAuth;
 
     @PostMapping("/add")
-    public ResponseEntity<UUID> get(@RequestBody TransactionAddDTO transactionAddDTO) {
-        Transaction transaction = transactionService.saveTransaction(transactionAddDTO);
+    public ResponseEntity<UUID> addTransaction(@RequestBody TransactionAddDTO transactionAddDTO, HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        String caregiverUsername = transactionAddDTO.getReceiverUsername();
+        Transaction transaction = transactionService.saveTransaction(username, caregiverUsername);
         return ResponseEntity.ok(transaction.getTransactionId());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TransactionGetDTO> getTransactionById(@PathVariable UUID id) {
-        return ResponseEntity.ok(transactionService.getValidTransaction(id));
+    public ResponseEntity<TransactionGetDTO> getTransactionById(@PathVariable UUID id, HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        return ResponseEntity.ok(transactionService.getValidTransaction(id, username));
+    }
+
+    @PostMapping("/save-orderid")
+    public ResponseEntity<?> saveOrderId(@RequestBody TransactionOrderAddDTO transactionOrderAddDTO, HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        UUID transactionId = transactionOrderAddDTO.getTransactionId();
+        String orderId = transactionOrderAddDTO.getOrderId();
+        Integer price = transactionOrderAddDTO.getPrice();
+        transactionService.saveOrderId(transactionId, orderId, price, username);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/success")
+    public ResponseEntity<TransactionSuccessDTO> tossPaymentSuccess(@RequestBody TransactionSuccessDTO transactionSuccessDTO, HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        String orderId = transactionSuccessDTO.getOrderId();
+        Integer price = transactionSuccessDTO.getPrice();
+        return ResponseEntity.ok().body(transactionService.transactionSuccess(orderId, price, username));
     }
 }

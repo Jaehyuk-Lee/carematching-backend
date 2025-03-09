@@ -34,6 +34,9 @@ public class Transaction {
     @JoinColumn(name = "UNO", nullable = false)
     private User uno;
 
+    @Column(name = "ORDER_ID", length = 50, nullable = false)
+    private String orderId;
+
     @NotNull
     @Column(name = "PRICE", nullable = false)
     private Integer price;
