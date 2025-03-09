@@ -7,6 +7,7 @@ import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
 import com.sesac.carematching.caregiver.experience.Experience;
 import com.sesac.carematching.caregiver.experience.ExperienceRequest;
 import com.sesac.carematching.caregiver.experience.ExperienceService;
+import com.sesac.carematching.caregiver.review.ReviewService;
 import com.sesac.carematching.user.role.RoleService;
 import com.sesac.carematching.util.S3UploadService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,20 +34,21 @@ import java.util.stream.IntStream;
 public class CaregiverController {
     private final CaregiverService caregiverService;
     private final CaregiverRepository caregiverRepository;
-/*    CaregiverService caregiverRepository;*/
-    private final RoleService roleService;
     private final ExperienceService experienceService;
+    private final ReviewService reviewService;
     private final TokenAuth tokenAuth;
     private final S3UploadService s3UploadService;
 
     @GetMapping
-    public ResponseEntity<List<CaregiverListDto>> CaregiverList() {
-        List<CaregiverListDto> caregivers = caregiverService.findALlOpenCaregiver()
-            .stream()
-            .map(CaregiverListDto::new)
+    public ResponseEntity<List<CaregiverListDto>> getCaregiverList() {
+        List<Caregiver> caregivers = caregiverService.findAllOpenCaregiver();
+
+        // Controller에서 DTO 변환 수행
+        List<CaregiverListDto> caregiverDtos = caregivers.stream()
+            .map(caregiver -> new CaregiverListDto(caregiver, reviewService.count(caregiver)))
             .toList();
-        return ResponseEntity.ok()
-            .body(caregivers);
+
+        return ResponseEntity.ok(caregiverDtos);
     }
 
     @GetMapping("/{id}")
@@ -66,10 +68,12 @@ public class CaregiverController {
         return ResponseEntity.ok()
             .body(new CaregiverDetailDto(caregiver, experiences));
     }
+
+
     @GetMapping("/{caregiverId}/userId")
     public ResponseEntity<Integer> getCaregiverUserId(@PathVariable Integer caregiverId) {
-        return caregiverRepository.findById(caregiverId)
-            .map(caregiver -> ResponseEntity.ok(caregiver.getUser().getId())) // Caregiver의 User ID(UNO) 반환
+        return caregiverService.findUserIdByCaregiverId(caregiverId)
+            .map(ResponseEntity::ok)  // Optional<Integer> → ResponseEntity<Integer>
             .orElseGet(() -> ResponseEntity.notFound().build());
     }
 

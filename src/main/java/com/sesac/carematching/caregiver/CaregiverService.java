@@ -1,7 +1,9 @@
 package com.sesac.carematching.caregiver;
 
 import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
+import com.sesac.carematching.caregiver.dto.CaregiverListDto;
 import com.sesac.carematching.caregiver.experience.ExperienceRepository;
+import com.sesac.carematching.caregiver.review.ReviewRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import com.sesac.carematching.util.S3UploadService;
@@ -11,15 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
 public class CaregiverService {
     private final CaregiverRepository caregiverRepository;
     private final UserRepository userRepository;
-    private final ExperienceRepository experienceRepository;
     private final S3UploadService s3UploadService;
-
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public Caregiver save(String username, BuildCaregiverDto dto) {
@@ -35,6 +37,11 @@ public class CaregiverService {
     public Caregiver findById(Integer id) {
         return caregiverRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Caregiver not found with id: " + id));
+    }
+
+    public Optional<Integer> findUserIdByCaregiverId(Integer caregiverId) {
+        return caregiverRepository.findById(caregiverId)
+            .map(caregiver -> caregiver.getUser().getId());  // Caregiver의 User ID 반환
     }
 
     public Caregiver findByUsername(String username) {
@@ -67,7 +74,7 @@ public class CaregiverService {
         return caregiverRepository.save(caregiver);
     }
 
-    public List<Caregiver> findALlOpenCaregiver() {
+    public List<Caregiver> findAllOpenCaregiver() {
         return caregiverRepository.findByStatusAndRoleName(Status.OPEN, "ROLE_USER_CAREGIVER");
     }
 
