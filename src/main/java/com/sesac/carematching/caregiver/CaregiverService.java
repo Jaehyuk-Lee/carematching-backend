@@ -44,6 +44,10 @@ public class CaregiverService {
             .map(caregiver -> caregiver.getUser().getId());  // Caregiver의 User ID 반환
     }
 
+    public Caregiver findByUserId(Integer userId) {
+        return caregiverRepository.findByUserId(userId).orElseThrow(()-> new EntityNotFoundException("Caregiver not found with id: " + userId));
+    }
+
     public Caregiver findByUsername(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(()->new IllegalArgumentException("User is null"));
         Caregiver caregiver = caregiverRepository.findByUser(user)

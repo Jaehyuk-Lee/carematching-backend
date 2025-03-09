@@ -20,6 +20,7 @@ public interface CaregiverRepository extends JpaRepository<Caregiver, Integer> {
         @Param("status") Status status,
         @Param("roleName") String roleName
     );
+    Optional<Caregiver> findByUserId(Integer userId);
 
     Optional<Caregiver> findById(Integer caregiverId);
 }
