@@ -103,17 +103,19 @@ public class CaregiverController {
     private List<Experience> processExperienceList(Caregiver caregiver, List<ExperienceRequest> experienceRequestList) {
         if (experienceRequestList == null || experienceRequestList.isEmpty()) return List.of();
 
-        List<Experience> existingExperiences = caregiver.getExperienceList();
+        // caregiver의 경험 리스트가 null이면 빈 리스트를 할당
+        final List<Experience> existingExperiences =
+            (caregiver.getExperienceList() != null) ? caregiver.getExperienceList() : new ArrayList<>();
 
         int existingSize = existingExperiences.size();
         int newSize = experienceRequestList.size();
 
-        // 기존 경험 업데이트
+        // 기존 경험 업데이트 (두 리스트 중 짧은 길이만큼 반복)
         IntStream.range(0, Math.min(existingSize, newSize))
             .forEach(i -> experienceService.update(experienceRequestList.get(i), existingExperiences.get(i).getId()));
 
         // 추가 경험 저장 (새로운 데이터가 더 많은 경우)
-        List<Experience> newExperiences = experienceRequestList.subList(existingSize, newSize).stream()
+        List<Experience> newExperiences = experienceRequestList.subList(Math.min(existingSize, newSize), newSize).stream()
             .map(ex -> experienceService.save(ex, caregiver))
             .collect(Collectors.toList());
 
