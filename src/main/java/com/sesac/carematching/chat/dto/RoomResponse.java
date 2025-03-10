@@ -20,6 +20,7 @@ public class RoomResponse {
     private List<MessageResponse> messages;
     private String lastMessage;
     private String lastMessageDate;
+    private String avatar;
 
     public RoomResponse(
         @NotNull Integer roomId,
@@ -29,7 +30,8 @@ public class RoomResponse {
         @NotNull String otherUsername,
         @NotNull List<MessageResponse> messages,
         @NotNull String lastMessage,
-        @NotNull String lastMessageDate
+        @NotNull String lastMessageDate,
+        String avatar
     ) {
         this.roomId = roomId;
 
@@ -40,5 +42,6 @@ public class RoomResponse {
         this.messages = messages;
         this.lastMessage = lastMessage;
         this.lastMessageDate = lastMessageDate;
+        this.avatar = avatar;
     }
 }
