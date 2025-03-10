@@ -2,6 +2,7 @@ package com.sesac.carematching.chat.service;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverRepository;
+import com.sesac.carematching.chat.RoomBuildException;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.dto.RoomResponse;
 import com.sesac.carematching.chat.message.Message;
@@ -37,22 +38,22 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse createRoom(String requesterUsername, Integer caregiverId) {
         // (1) 요청자 조회
         User requester = userRepository.findByUsername(requesterUsername)
-            .orElseThrow(() -> new IllegalArgumentException("요청자 정보가 존재하지 않습니다."));
+            .orElseThrow(() -> new RoomBuildException("요청자 정보가 존재하지 않습니다."));
 
         // (2) 요청자가 요양사이면 에러
         if (caregiverRepository.existsByUser(requester)) {
-            throw new SecurityException("요양사는 요청자가 될 수 없습니다.");
+            throw new RoomBuildException("요양사는 요청자가 될 수 없습니다.");
         }
 
         // (3) caregiverId로 수신자(Caregiver) 조회 → receiver(User)
         Caregiver caregiver = caregiverRepository.findById(caregiverId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 요양사입니다."));
+            .orElseThrow(() -> new RoomBuildException("존재하지 않는 요양사입니다."));
         User receiver = caregiver.getUser();
 
         // (4) 중복된 방이 있는지 확인
         boolean roomExists = roomRepository.existsByRequesterAndReceiver(requester, receiver);
         if (roomExists) {
-            throw new IllegalStateException("이미 해당 요양사와 채팅방이 존재합니다.");
+            throw new RoomBuildException("이미 해당 요양사와 채팅방이 존재합니다.");
         }
 
         // (5) 방 생성
