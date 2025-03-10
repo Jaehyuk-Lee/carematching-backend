@@ -127,52 +127,61 @@ public class RoomServiceImpl implements RoomService {
     @Transactional(readOnly = true)
     @Override
     public List<RoomResponse> getUserRooms(String username) {
-        // 1. User가 참여 중인 채팅방을 모두 조회
+        // 1. 현재 사용자의 정보를 조회합니다.
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
 
+        // 2. 사용자가 참여 중인 채팅방들을 조회합니다.
         List<Room> rooms = roomRepository.findByRequesterOrReceiver(user, user);
 
-        // 2. Room을 RoomResponse로 변환하여 반환
+        // 3. 각 Room에 대해 상대방 정보를 정확하게 판단합니다.
         return rooms.stream().map(room -> {
-            // 상대방 user 객체
-            User otherUser = room.getRequester().equals(user) ? room.getReceiver() : room.getRequester();
+            User requester = room.getRequester();
+            User receiver = room.getReceiver();
+            User otherUser;
 
-            // ⭐ 요양사 여부 판별: caregiverRepository.existsByUser(otherUser)
+            // equals() 대신 ID를 비교하여 현재 사용자의 상대방을 판단합니다.
+            if (requester.getId().equals(user.getId())) {
+                otherUser = receiver;
+            } else {
+                otherUser = requester;
+            }
+
+            // 4. 상대방이 Caregiver인지 여부를 확인하고, 그에 맞게 정보를 가져옵니다.
             boolean isCaregiver = caregiverRepository.existsByUser(otherUser);
 
-            // 실제로 Caregiver 엔티티를 가져와서 realName을 꺼내고 싶다면:
             String displayName;
+            String profileImage;
+
             if (isCaregiver) {
                 Caregiver cg = caregiverRepository.findByUser(otherUser)
                     .orElseThrow(() -> new IllegalStateException("Caregiver 엔티티를 찾을 수 없습니다."));
                 displayName = cg.getRealName();
+                profileImage = cg.getCaregiverImage();  // caregiver 전용 이미지
             } else {
-                displayName = otherUser.getNickname(); // 일반 유저의 닉네임
+                displayName = otherUser.getNickname();
+                profileImage = otherUser.getProfileImage();  // 일반 User 이미지
             }
 
-            // 👇 마지막 메시지 가져오기
+            // 5. 마지막 메시지 정보도 함께 조회합니다.
             Optional<Message> lastMessageOpt = messageRepository.findTopByRoomIdOrderByCreatedAtDesc(room.getId());
             String lastMessageText = lastMessageOpt.map(Message::getMessage).orElse("메시지가 없습니다.");
-
-            // 👇 마지막 메시지 날짜 (월/일 형식)
             String lastMessageDate = lastMessageOpt.map(message ->
                 message.getCreatedAt()
                     .atZone(ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("MM/dd"))
             ).orElse("");
 
-
             return new RoomResponse(
                 room.getId(),
-                room.getRequester().getUsername(),
-                room.getReceiver().getUsername(),
+                requester.getUsername(),
+                receiver.getUsername(),
                 room.getCreatedAt(),
-                displayName, // 상대방 username 추가
+                displayName,
                 List.of(),
                 lastMessageText,
                 lastMessageDate,
-                otherUser.getProfileImage()
+                profileImage
             );
         }).collect(Collectors.toList());
     }
