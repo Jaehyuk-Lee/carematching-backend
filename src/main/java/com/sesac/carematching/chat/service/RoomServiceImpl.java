@@ -30,7 +30,7 @@ public class RoomServiceImpl implements RoomService {
     private final UserRepository userRepository;
     private final CaregiverRepository caregiverRepository;
     private final MessageRepository messageRepository;
-    //private final NotificationService notificationService;
+    private final NotificationService notificationService;
 
 
     @Transactional
@@ -64,7 +64,7 @@ public class RoomServiceImpl implements RoomService {
         Room savedRoom = roomRepository.save(room);
 
         // (6) 상대방(요양사)에게 알림 전송
-        //notificationService.sendNotificationToUser(receiver.getUsername(), "새로운 매칭 신청이 왔습니다!");
+        notificationService.sendNotificationToUser(receiver.getUsername(), "새로운 매칭 신청이 왔습니다!");
 
         // (6) 방 응답 DTO
         return new RoomResponse(

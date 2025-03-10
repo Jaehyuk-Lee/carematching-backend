@@ -23,7 +23,7 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
-//    private final NotificationService notificationService;
+    private final NotificationService notificationService;
 
     // ✅ DateTimeFormatter를 한 번만 생성해두고 재사용
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
