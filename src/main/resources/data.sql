@@ -7,4 +7,4 @@ INSERT IGNORE INTO role (rno, rname) VALUES (3, 'ROLE_USER');
 
 /* Initialize COMMUNITY_CATEGORY Table */
 INSERT IGNORE INTO community_category (cpcno, name, access) VALUES (1, '자유게시판', 'ALL');
-INSERT IGNORE INTO community_category (cpcno, name, access) VALUES (2, '요양사', 'CAREGIVER');
+INSERT IGNORE INTO community_category (cpcno, name, access) VALUES (2, '요양사게시판', 'CAREGIVER');
