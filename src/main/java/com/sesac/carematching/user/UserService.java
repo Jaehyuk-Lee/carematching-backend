@@ -2,6 +2,7 @@ package com.sesac.carematching.user;
 
 import com.sesac.carematching.user.dto.*;
 import com.sesac.carematching.user.role.RoleService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -60,7 +61,7 @@ public class UserService {
     }
 
     public User getUserInfo(String username) {
-        return userRepository.findByUsername(username).orElse(null);
+        return userRepository.findByUsername(username) .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
     }
 
     // 아이디 중복 확인
@@ -77,14 +78,14 @@ public class UserService {
     @Transactional
     public void deleteUser(String username) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+            .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
 
         // 연관된 데이터들은 JPA 엔티티에서 @OnDelete(action = OnDeleteAction.CASCADE) 설정으로 자동 삭제됨
         userRepository.delete(user);
     }
 
     public UserInfoDTO getUser(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
         UserInfoDTO dto = new UserInfoDTO();
 
         dto.setCertno(user.getCertno());
@@ -98,7 +99,7 @@ public class UserService {
     @Transactional
     public void updateUser(String username, UserUpdateDTO dto) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+            .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
 
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
@@ -135,7 +136,7 @@ public class UserService {
     @Transactional
     public int updatePending(UsernameDTO usernameDTO, boolean pending) {
         User user = userRepository.findByUsername(usernameDTO.getUsername())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+            .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
 
         user.setPending(pending);
         if (pending)
@@ -151,7 +152,7 @@ public class UserService {
     @Transactional
     public void updateProfileImage(String username, String newImageUrl) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+            .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
         user.setProfileImage(newImageUrl);
         userRepository.save(user);
     }
