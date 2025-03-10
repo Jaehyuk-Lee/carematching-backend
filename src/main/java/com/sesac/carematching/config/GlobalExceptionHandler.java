@@ -1,7 +1,9 @@
 package com.sesac.carematching.config;
 
+import com.sesac.carematching.chat.RoomBuildException;
 import com.sesac.carematching.user.AdminAuthException;
 import com.sesac.carematching.util.TokenAuthException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -41,6 +43,18 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("status", "error");
+        errorResponse.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * RoomBuildException 처리  (400 Bad Request)
+     */
+    @ExceptionHandler(RoomBuildException.class)
+    public ResponseEntity<Map<String, String>> handleSecurityException(SecurityException ex) {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("status", "error");
         errorResponse.put("message", ex.getMessage());
