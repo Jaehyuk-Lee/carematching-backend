@@ -75,7 +75,8 @@ public class RoomServiceImpl implements RoomService {
             "",
             null,
             "메시지가 없습니다.",
-            "01/01"
+            "01/01",
+            null
 
         );
     }
@@ -113,7 +114,8 @@ public class RoomServiceImpl implements RoomService {
             "", // 상대방 username (개별 조회 시 필요 없음)
             messages,
             lastMessageText,
-            lastMessageDate
+            lastMessageDate,
+            null
         );
     }
 
@@ -169,7 +171,8 @@ public class RoomServiceImpl implements RoomService {
                 displayName, // 상대방 username 추가
                 List.of(),
                 lastMessageText,
-                lastMessageDate
+                lastMessageDate,
+                otherUser.getProfileImage()
             );
         }).collect(Collectors.toList());
     }
