@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
      * RoomBuildException 처리  (400 Bad Request)
      */
     @ExceptionHandler(RoomBuildException.class)
-    public ResponseEntity<Map<String, String>> handleSecurityException(SecurityException ex) {
+    public ResponseEntity<Map<String, String>> handleRoomBuildException(RoomBuildException ex) {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("status", "error");
         errorResponse.put("message", ex.getMessage());
