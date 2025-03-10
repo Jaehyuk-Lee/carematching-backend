@@ -65,7 +65,6 @@ public class TransactionService {
         return transactionGetDTO;
     }
 
-    @Transactional
     public void saveOrderId(UUID transactionId, String orderId, Integer price, String username) {
         Transaction transaction = verifyTransaction(transactionId, price, username);
 
@@ -73,13 +72,9 @@ public class TransactionService {
         transactionRepository.save(transaction);
     }
 
-    @Transactional
     public TransactionSuccessDTO transactionSuccess(String orderId, Integer price, String username) {
         UUID transactionId = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("order ID를 찾지 못하였습니다.")).getTransactionId();
         Transaction transaction = verifyTransaction(transactionId, price, username);
-        if (!transaction.getOrderId().equals(orderId)) {
-            throw new IllegalArgumentException("order ID가 잘못되었습니다.");
-        }
 
         transaction.setStatus(Status.SUCCESS);
         transaction.setPaidPrice(price);
