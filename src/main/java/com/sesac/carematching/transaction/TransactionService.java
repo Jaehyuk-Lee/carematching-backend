@@ -28,10 +28,10 @@ public class TransactionService {
     public Transaction saveTransaction(String username, String caregiverUsername) {
         Transaction transaction = new Transaction();
         Caregiver caregiver = caregiverService.findByUserId(userService.getUserInfo(caregiverUsername).getId());
-        User user = userService.getUserInfo(username);
+        Integer uno = userService.getUserInfo(username).getId();
 
-        transaction.setCno(caregiver);
-        transaction.setUno(user);
+        transaction.setCno(caregiver.getId());
+        transaction.setUno(uno);
         transaction.setPrice(caregiver.getSalary());
         transaction.setStatus(Status.PENDING);
 
@@ -39,9 +39,10 @@ public class TransactionService {
     }
 
     public TransactionGetDTO getValidTransaction(UUID id, String username) {
+        User user = userService.getUserInfo(username);
         Transaction transaction = transactionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
 
-        if (!transaction.getUno().getUsername().equals(username)) {
+        if (!transaction.getUno().equals(user.getId())) {
             throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
         }
 
@@ -59,8 +60,9 @@ public class TransactionService {
         }
 
         TransactionGetDTO transactionGetDTO = new TransactionGetDTO();
-        transactionGetDTO.setCaregiverName(transaction.getCno().getRealName());
-        transactionGetDTO.setUserName(transaction.getUno().getUsername());
+        Caregiver caregiver = caregiverService.findById(transaction.getCno());
+        transactionGetDTO.setCaregiverName(caregiver.getRealName());
+        transactionGetDTO.setUserName(user.getUsername());
         transactionGetDTO.setPrice(transaction.getPrice());
         return transactionGetDTO;
     }
@@ -77,9 +79,6 @@ public class TransactionService {
     public TransactionSuccessDTO transactionSuccess(String orderId, Integer price, String username) {
         UUID transactionId = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("order ID를 찾지 못하였습니다.")).getTransactionId();
         Transaction transaction = verifyTransaction(transactionId, price, username);
-        if (!transaction.getOrderId().equals(orderId)) {
-            throw new IllegalArgumentException("order ID가 잘못되었습니다.");
-        }
 
         transaction.setStatus(Status.SUCCESS);
         transaction.setPaidPrice(price);
@@ -95,7 +94,8 @@ public class TransactionService {
 
     private Transaction verifyTransaction(UUID transactionId, Integer price, String username) {
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction ID를 찾을 수 없습니다."));
-        if (!transaction.getUno().getUsername().equals(username)) {
+        User user = userService.findById(transaction.getUno());
+        if (!user.getUsername().equals(username)) {
             throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
         }
         if (!transaction.getPrice().equals(price)) {

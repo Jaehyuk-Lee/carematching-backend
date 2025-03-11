@@ -1,7 +1,5 @@
 package com.sesac.carematching.transaction;
 
-import com.sesac.carematching.caregiver.Caregiver;
-import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -24,15 +22,11 @@ public class Transaction {
     @Column(name = "TRANSACTION_ID")
     private UUID transactionId;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "CNO", nullable = false)
-    private Caregiver cno;
+    @Column(name = "CNO")
+    private Integer cno;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "UNO", nullable = false)
-    private User uno;
+    @Column(name = "UNO")
+    private Integer uno;
 
     @Column(name = "ORDER_ID", length = 50)
     private String orderId;
