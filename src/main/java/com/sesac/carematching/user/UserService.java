@@ -1,5 +1,7 @@
 package com.sesac.carematching.user;
 
+import com.sesac.carematching.caregiver.Caregiver;
+import com.sesac.carematching.caregiver.CaregiverRepository;
 import com.sesac.carematching.user.dto.*;
 import com.sesac.carematching.user.role.RoleService;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,6 +20,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final RoleService roleService;
+    private final CaregiverRepository caregiverRepository;
 
     // 회원가입 로직
     public void registerUser(UserSignupDTO dto) {
@@ -79,6 +82,11 @@ public class UserService {
     public void deleteUser(String username) {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
+
+        Caregiver caregiver = caregiverRepository.findByUserId(user.getId()).orElse(null);
+        if (caregiver != null) {
+            caregiverRepository.delete(caregiver);
+        }
 
         // 연관된 데이터들은 JPA 엔티티에서 @OnDelete(action = OnDeleteAction.CASCADE) 설정으로 자동 삭제됨
         userRepository.delete(user);
