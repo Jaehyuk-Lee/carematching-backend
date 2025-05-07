@@ -202,7 +202,6 @@ public class RoomServiceImpl implements RoomService {
             message.getRoom() != null ? message.getRoom().getId() : null,
             message.getUser() != null ? message.getUser().getUsername() : "알 수 없음",
             message.getMessage() != null ? message.getMessage() : "내용 없음",
-            message.getIsRead(),
             message.getCreatedAt() != null ? message.getCreatedAt().toString() : "알 수 없음",
             formattedDate,
             formattedTime

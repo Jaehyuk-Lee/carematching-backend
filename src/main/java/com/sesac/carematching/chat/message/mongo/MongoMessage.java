@@ -23,12 +23,9 @@ public class MongoMessage {
 
     private String message;
 
-    private Boolean isRead;
-
     private Instant createdAt;
 
     public MongoMessage() {
-        this.isRead = false;
         this.createdAt = Instant.now();
     }
 }

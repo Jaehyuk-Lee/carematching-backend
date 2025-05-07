@@ -45,7 +45,6 @@ public class MessageServiceImpl implements MessageService {
         mongoMessage.setUserId(user.getId());
         mongoMessage.setUsername(user.getUsername());
         mongoMessage.setMessage(messageRequest.getMessage());
-        mongoMessage.setIsRead(false);
 
         MongoMessage savedMessage = mongoMessageRepository.save(mongoMessage);
 
@@ -62,7 +61,6 @@ public class MessageServiceImpl implements MessageService {
             savedMessage.getRoomId(),
             savedMessage.getUsername(),
             savedMessage.getMessage(),
-            savedMessage.getIsRead(),
             savedMessage.getCreatedAt().toString(),
             formattedDate,
             formattedTime
@@ -85,7 +83,6 @@ public class MessageServiceImpl implements MessageService {
                     message.getRoomId(),
                     message.getUsername(),
                     message.getMessage(),
-                    message.getIsRead(),
                     message.getCreatedAt().toString(),
                     formattedDate,
                     formattedTime
