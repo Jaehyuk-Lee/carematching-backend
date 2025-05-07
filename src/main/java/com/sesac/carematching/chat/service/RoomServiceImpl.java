@@ -7,6 +7,8 @@ import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.dto.RoomResponse;
 import com.sesac.carematching.chat.message.Message;
 import com.sesac.carematching.chat.message.MessageRepository;
+import com.sesac.carematching.chat.message.mongo.MongoMessage;
+import com.sesac.carematching.chat.message.mongo.MongoMessageRepository;
 import com.sesac.carematching.chat.room.Room;
 import com.sesac.carematching.chat.room.RoomRepository;
 import com.sesac.carematching.user.User;
@@ -31,6 +33,7 @@ public class RoomServiceImpl implements RoomService {
     private final UserRepository userRepository;
     private final CaregiverRepository caregiverRepository;
     private final MessageRepository messageRepository;
+    private final MongoMessageRepository mongoMessageRepository;
     private final NotificationService notificationService;
 
 
@@ -95,9 +98,9 @@ public class RoomServiceImpl implements RoomService {
             .map(this::convertToMessageResponse)
             .collect(Collectors.toList());
 
-        // 3) 마지막 메시지 가져오기
-        Optional<Message> lastMessageOpt = messageRepository.findTopByRoomIdOrderByCreatedAtDesc(roomId);
-        String lastMessageText = lastMessageOpt.map(Message::getMessage).orElse("메시지가 없습니다.");
+        // 3) 마지막 메시지 가져오기 (MongoDB에서)
+        Optional<MongoMessage> lastMessageOpt = mongoMessageRepository.findTopByRoomIdOrderByCreatedAtDesc(roomId);
+        String lastMessageText = lastMessageOpt.map(MongoMessage::getMessage).orElse("메시지가 없습니다.");
 
         // 👇 마지막 메시지 날짜 (월/일 형식)
         String lastMessageDate = lastMessageOpt.map(message ->
@@ -164,9 +167,9 @@ public class RoomServiceImpl implements RoomService {
                 profileImage = otherUser.getProfileImage();  // 일반 User 이미지
             }
 
-            // 5. 마지막 메시지 정보도 함께 조회합니다.
-            Optional<Message> lastMessageOpt = messageRepository.findTopByRoomIdOrderByCreatedAtDesc(room.getId());
-            String lastMessageText = lastMessageOpt.map(Message::getMessage).orElse("메시지가 없습니다.");
+            // 5. 마지막 메시지 정보도 함께 조회합니다. (MongoDB에서)
+            Optional<MongoMessage> lastMessageOpt = mongoMessageRepository.findTopByRoomIdOrderByCreatedAtDesc(room.getId());
+            String lastMessageText = lastMessageOpt.map(MongoMessage::getMessage).orElse("메시지가 없습니다.");
             String lastMessageDate = lastMessageOpt.map(message ->
                 message.getCreatedAt()
                     .atZone(ZoneId.systemDefault())
