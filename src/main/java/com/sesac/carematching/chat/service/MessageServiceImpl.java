@@ -2,8 +2,8 @@ package com.sesac.carematching.chat.service;
 
 import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
-import com.sesac.carematching.chat.message.Message;
-import com.sesac.carematching.chat.message.MessageRepository;
+import com.sesac.carematching.chat.message.mongo.MongoMessage;
+import com.sesac.carematching.chat.message.mongo.MongoMessageRepository;
 import com.sesac.carematching.chat.room.Room;
 import com.sesac.carematching.chat.room.RoomRepository;
 import com.sesac.carematching.user.User;
@@ -20,10 +20,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
 
-    private final MessageRepository messageRepository;
+    private final MongoMessageRepository mongoMessageRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
 
     // ✅ DateTimeFormatter를 한 번만 생성해두고 재사용
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
@@ -40,14 +39,15 @@ public class MessageServiceImpl implements MessageService {
         User user = userRepository.findByUsername(messageRequest.getUsername())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // ✅ 3. 메시지 저장
-        Message message = new Message();
-        message.setRoom(room);
-        message.setUser(user);
-        message.setMessage(messageRequest.getMessage());
-        message.setIsRead(false);
+        // ✅ 3. MongoDB에 메시지 저장
+        MongoMessage mongoMessage = new MongoMessage();
+        mongoMessage.setRoomId(room.getId());
+        mongoMessage.setUserId(user.getId());
+        mongoMessage.setUsername(user.getUsername());
+        mongoMessage.setMessage(messageRequest.getMessage());
+        mongoMessage.setIsRead(false);
 
-        Message savedMessage = messageRepository.save(message);
+        MongoMessage savedMessage = mongoMessageRepository.save(mongoMessage);
 
         // ✅ 4. 생성시간을 각각 "MM/dd"와 "HH:mm" 형식으로 포맷팅
         String formattedDate = savedMessage.getCreatedAt()
@@ -59,8 +59,8 @@ public class MessageServiceImpl implements MessageService {
 
         // ✅ 5. 저장된 메시지를 응답 DTO로 변환
         return new MessageResponse(
-            savedMessage.getRoom().getId(),
-            savedMessage.getUser().getUsername(), // ✅ userId 대신 username 사용
+            savedMessage.getRoomId(),
+            savedMessage.getUsername(),
             savedMessage.getMessage(),
             savedMessage.getIsRead(),
             savedMessage.getCreatedAt().toString(),
@@ -72,7 +72,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional(readOnly = true)
     public List<MessageResponse> getMessagesByRoomId(Integer roomId) {
-        return messageRepository.findByRoomId(roomId).stream()
+        return mongoMessageRepository.findByRoomId(roomId).stream()
             .map(message -> {
                 // ✅ 각 메시지마다 생성시간 포맷팅
                 String formattedDate = message.getCreatedAt()
@@ -82,8 +82,8 @@ public class MessageServiceImpl implements MessageService {
                     .atZone(ZoneId.systemDefault())
                     .format(timeFormatter);
                 return new MessageResponse(
-                    message.getRoom().getId(),
-                    message.getUser().getUsername(), // ✅ userId 대신 username 사용
+                    message.getRoomId(),
+                    message.getUsername(),
                     message.getMessage(),
                     message.getIsRead(),
                     message.getCreatedAt().toString(),

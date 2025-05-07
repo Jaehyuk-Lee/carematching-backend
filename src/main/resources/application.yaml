@@ -66,5 +66,13 @@ cloud:
       auto: false
 
 redis:
-  host: ${REDIS_HOST:127.0.0.1}
+  host: ${REDIS_HOST:localhost}
   port: ${REDIS_PORT:6379}
+
+mongodb:
+  host: ${MONGODB_HOST:localhost}
+  port: ${MONGODB_PORT:27017}
+  database: ${MONGODB_DATABASE:carematching}
+  username: ${MONGODB_USERNAME:}
+  password: ${MONGODB_PASSWORD:}
+  auth-source: ${MONGODB_AUTH_SOURCE:admin}
