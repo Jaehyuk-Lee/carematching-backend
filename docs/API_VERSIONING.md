@@ -71,7 +71,7 @@ public class ResourceController {
 
 2. 새 버전에서만 사용할 메서드 추가:
 ```java
-@GetMapping("/enhanced")
+@GetMapping("/api/enhanced")
 @ApiVersion({3})  // v3에서만 사용 가능
 public EnhancedResource getEnhancedResource() {
     // v3 전용 기능
