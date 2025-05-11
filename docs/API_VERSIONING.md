@@ -39,8 +39,7 @@ Spring의 RequestMappingHandlerMapping을 확장하여 API 버전 정보를 URL 
 
 ### 3. WebConfig 설정
 
-- WebMvcRegistrations 인터페이스를 구현하여 커스텀 핸들러 매핑 등록
-- 버전이 없는 요청을 v1 엔드포인트로 포워딩하는 필터 제공
+WebMvcRegistrations 인터페이스를 구현하여 커스텀 핸들러 매핑 등록
 
 ## 사용 방법
 

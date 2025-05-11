@@ -3,7 +3,6 @@ package com.sesac.carematching.chat.controller;
 import com.sesac.carematching.chat.dto.CreateRoomRequest;
 import com.sesac.carematching.chat.dto.RoomResponse;
 import com.sesac.carematching.chat.service.RoomService;
-import com.sesac.carematching.config.ApiVersion;
 import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

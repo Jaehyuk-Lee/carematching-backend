@@ -7,7 +7,6 @@ import com.sesac.carematching.caregiver.experience.Experience;
 import com.sesac.carematching.caregiver.experience.ExperienceRequest;
 import com.sesac.carematching.caregiver.experience.ExperienceService;
 import com.sesac.carematching.caregiver.review.ReviewService;
-import com.sesac.carematching.config.ApiVersion;
 import com.sesac.carematching.util.S3UploadService;
 import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
