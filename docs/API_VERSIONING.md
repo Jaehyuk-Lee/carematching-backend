@@ -33,7 +33,7 @@ public class CommonController {
 }
 ```
 
-### 2. ApiVersionRequestMappingHandlerMapping
+### 2. ApiVersionRMHM
 
 Spring의 RequestMappingHandlerMapping을 확장하여 API 버전 정보를 URL 경로에 추가합니다.
 
