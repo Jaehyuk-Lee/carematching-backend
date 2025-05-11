@@ -7,9 +7,7 @@ import java.util.List;
 
 public interface RoomService {
 
-    RoomResponse getRoom(Integer roomId);
-
-    List<RoomResponse> getUserRooms(Integer id);
+    RoomResponse getRoom(String roomId);
 
     @Transactional(readOnly = true)
     List<RoomResponse> getUserRooms(String username);

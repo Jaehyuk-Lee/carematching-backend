@@ -1,9 +1,11 @@
-package com.sesac.carematching.chat.message.mongo;
+package com.sesac.carematching.chat.message;
 
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
 
 import java.time.Instant;
 
@@ -13,9 +15,10 @@ import java.time.Instant;
 public class MongoMessage {
 
     @Id
+    @Field(targetType = FieldType.OBJECT_ID)
     private String id;
 
-    private Integer roomId;
+    private String roomId;
 
     private Integer userId;
 

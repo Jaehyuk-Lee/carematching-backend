@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @Configuration
-@EnableMongoRepositories(basePackages = "com.sesac.carematching.chat.message.mongo")
+@EnableMongoRepositories(basePackages = {"com.sesac.carematching.chat.message", "com.sesac.carematching.chat.room"})
 public class MongoDBConfig extends AbstractMongoClientConfiguration {
 
     @Value("${mongodb.host}")

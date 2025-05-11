@@ -28,7 +28,7 @@ public class MessageController {
      * 채팅방의 모든 메시지 불러오기
      */
     @GetMapping("/{roomId}")
-    public List<MessageResponse> getMessagesByRoom(@PathVariable Integer roomId) {
+    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId) {
         return messageService.getMessagesByRoomId(roomId);
     }
 

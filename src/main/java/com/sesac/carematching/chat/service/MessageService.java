@@ -9,5 +9,5 @@ public interface MessageService {
 
     MessageResponse saveMessage(MessageRequest messageRequest);
 
-    List<MessageResponse> getMessagesByRoomId(Integer roomId);
+    List<MessageResponse> getMessagesByRoomId(String roomId);
 }

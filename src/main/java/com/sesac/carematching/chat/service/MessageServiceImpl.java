@@ -2,10 +2,10 @@ package com.sesac.carematching.chat.service;
 
 import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
-import com.sesac.carematching.chat.message.mongo.MongoMessage;
-import com.sesac.carematching.chat.message.mongo.MongoMessageRepository;
-import com.sesac.carematching.chat.room.Room;
-import com.sesac.carematching.chat.room.RoomRepository;
+import com.sesac.carematching.chat.message.MongoMessage;
+import com.sesac.carematching.chat.message.MongoMessageRepository;
+import com.sesac.carematching.chat.room.MongoRoom;
+import com.sesac.carematching.chat.room.MongoRoomRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class MessageServiceImpl implements MessageService {
 
     private final MongoMessageRepository mongoMessageRepository;
-    private final RoomRepository roomRepository;
+    private final MongoRoomRepository mongoRoomRepository;
     private final UserRepository userRepository;
 
     // DateTimeFormatter를 한 번만 생성해두고 재사용
@@ -31,8 +31,8 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public MessageResponse saveMessage(MessageRequest messageRequest) {
-        // 1. 채팅방 조회
-        Room room = roomRepository.findById(messageRequest.getRoomId())
+        // 1. 채팅방 조회 (MongoDB에서)
+        MongoRoom room = mongoRoomRepository.findById(messageRequest.getRoomId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방 ID입니다."));
 
         // 2. username을 사용하여 사용자 조회
@@ -69,7 +69,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MessageResponse> getMessagesByRoomId(Integer roomId) {
+    public List<MessageResponse> getMessagesByRoomId(String roomId) {
         return mongoMessageRepository.findByRoomId(roomId).stream()
             .map(message -> {
                 // 각 메시지마다 생성시간 포맷팅
