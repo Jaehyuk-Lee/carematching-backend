@@ -1,5 +1,6 @@
 package com.sesac.carematching.chat.controller;
 
+import com.sesac.carematching.config.ApiVersion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Slf4j
 @RequiredArgsConstructor
 @Controller
+@ApiVersion({1, 2})
 public class NotificationController {
 
     private final SimpMessagingTemplate messagingTemplate;

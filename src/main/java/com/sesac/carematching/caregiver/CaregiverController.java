@@ -1,15 +1,15 @@
 package com.sesac.carematching.caregiver;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sesac.carematching.caregiver.dto.CaregiverListDto;
-import com.sesac.carematching.caregiver.dto.CaregiverDetailDto;
 import com.sesac.carematching.caregiver.dto.BuildCaregiverDto;
+import com.sesac.carematching.caregiver.dto.CaregiverDetailDto;
+import com.sesac.carematching.caregiver.dto.CaregiverListDto;
 import com.sesac.carematching.caregiver.experience.Experience;
 import com.sesac.carematching.caregiver.experience.ExperienceRequest;
 import com.sesac.carematching.caregiver.experience.ExperienceService;
 import com.sesac.carematching.caregiver.review.ReviewService;
-import com.sesac.carematching.user.role.RoleService;
+import com.sesac.carematching.config.ApiVersion;
 import com.sesac.carematching.util.S3UploadService;
+import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.sesac.carematching.util.TokenAuth;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -30,6 +29,7 @@ import java.util.stream.IntStream;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/caregivers")
+@ApiVersion({1, 2})
 @Log4j2
 public class CaregiverController {
     private final CaregiverService caregiverService;

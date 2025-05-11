@@ -3,6 +3,7 @@ package com.sesac.carematching.chat.controller;
 import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.service.MessageService;
+import com.sesac.carematching.config.ApiVersion;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/messages")
+@ApiVersion({1, 2})
 @RequiredArgsConstructor
 public class MessageController {
 
