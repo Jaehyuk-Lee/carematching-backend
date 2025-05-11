@@ -18,7 +18,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/messages")
-@ApiVersion({1, 2})
 @RequiredArgsConstructor
 public class MessageController {
 

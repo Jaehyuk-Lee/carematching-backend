@@ -29,7 +29,6 @@ import java.util.stream.IntStream;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/caregivers")
-@ApiVersion({1, 2})
 @Log4j2
 public class CaregiverController {
     private final CaregiverService caregiverService;

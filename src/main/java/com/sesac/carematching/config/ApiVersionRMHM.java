@@ -32,18 +32,23 @@ public class ApiVersionRMHM extends RequestMappingHandlerMapping {
         ApiVersion methodAnnotation = AnnotationUtils.findAnnotation(method, ApiVersion.class);
         ApiVersion typeAnnotation = AnnotationUtils.findAnnotation(handlerType, ApiVersion.class);
 
-        // 어노테이션이 없으면 기본 매핑 정보 반환
-        if (methodAnnotation == null && typeAnnotation == null) {
-            return info;
-        }
-
-        // 메서드 어노테이션이 있으면 메서드 어노테이션 사용, 없으면 클래스 어노테이션 사용
-        int[] versions = methodAnnotation != null ? methodAnnotation.value() : typeAnnotation.value();
-
         // 원래 경로 패턴 가져오기
         String originalPattern = info.getPatternValues().iterator().next();
+        Set<String> patterns = new HashSet<>();
 
-        Set<String> patterns = getStrings(versions, originalPattern);
+        if (methodAnnotation == null && typeAnnotation == null) {
+            // 어노테이션이 없는 경우, 모든 버전의 URL과 버전 없는 URL 처리
+            patterns.add(originalPattern); // 버전 없는 URL
+
+            // 모든 버전에 대한 URL 패턴 추가
+            // v1, v2, ... 등 모든 버전 번호에 대응
+            String versionPattern = prefix + "/v{version:\\d+}" + originalPattern.substring(prefix.length());
+            patterns.add(versionPattern);
+        } else {
+            // 어노테이션이 있는 경우 기존 로직대로 처리
+            int[] versions = methodAnnotation != null ? methodAnnotation.value() : typeAnnotation.value();
+            patterns = getStrings(versions, originalPattern);
+        }
 
         // 원래 RequestMappingInfo의 모든 설정을 유지하면서 경로만 변경
         return info.mutate()

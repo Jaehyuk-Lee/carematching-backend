@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Slf4j
 @RequiredArgsConstructor
 @Controller
-@ApiVersion({1, 2})
 public class NotificationController {
 
     private final SimpMessagingTemplate messagingTemplate;

@@ -11,9 +11,7 @@ public class WebConfig implements WebMvcConfigurer, WebMvcRegistrations {
 
     @Override
     public RequestMappingHandlerMapping getRequestMappingHandlerMapping() {
-        ApiVersionRMHM handlerMapping = new ApiVersionRMHM("/api");
-        handlerMapping.setOrder(0); // 우선순위를 가장 높게 설정
-        return handlerMapping;
+        return new ApiVersionRMHM("/api");
     }
 
     @Override

@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/health")
-@ApiVersion({1, 2})
 public class HealthCheckController {
 
     @GetMapping

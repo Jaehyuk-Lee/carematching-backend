@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/rooms")
-@ApiVersion({1, 2})
 @RequiredArgsConstructor
 public class RoomController {
 
