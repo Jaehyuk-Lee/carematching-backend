@@ -12,7 +12,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Document(collection = "chat_messages")
-public class MongoMessage {
+public class Message {
 
     @Id
     @Field(targetType = FieldType.OBJECT_ID)
@@ -28,7 +28,7 @@ public class MongoMessage {
 
     private Instant createdAt;
 
-    public MongoMessage() {
+    public Message() {
         this.createdAt = Instant.now();
     }
 }

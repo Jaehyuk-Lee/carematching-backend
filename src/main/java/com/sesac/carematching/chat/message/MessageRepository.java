@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface MongoMessageRepository extends MongoRepository<MongoMessage, String> {
-    List<MongoMessage> findByRoomId(String roomId);
-    Optional<MongoMessage> findTopByRoomIdOrderByCreatedAtDesc(String roomId);
+public interface MessageRepository extends MongoRepository<Message, String> {
+    List<Message> findByRoomId(String roomId);
+    Optional<Message> findTopByRoomIdOrderByCreatedAtDesc(String roomId);
 }

@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface MongoRoomRepository extends MongoRepository<MongoRoom, String> {
+public interface RoomRepository extends MongoRepository<Room, String> {
 
     @NonNull
-    Optional<MongoRoom> findById(@NonNull String id);
+    Optional<Room> findById(@NonNull String id);
 
-    List<MongoRoom> findByRequesterUserIdOrReceiverUserId(Integer requesterUserId, Integer receiverUserId);
+    List<Room> findByRequesterUserIdOrReceiverUserId(Integer requesterUserId, Integer receiverUserId);
 
     boolean existsByRequesterUserIdAndReceiverUserId(Integer requesterUserId, Integer receiverUserId);
 }

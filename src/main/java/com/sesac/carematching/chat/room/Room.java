@@ -12,7 +12,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Document(collection = "chat_rooms")
-public class MongoRoom {
+public class Room {
 
     @Id
     @Field(targetType = FieldType.OBJECT_ID)
@@ -28,7 +28,7 @@ public class MongoRoom {
 
     private Instant createdAt;
 
-    public MongoRoom() {
+    public Room() {
         this.createdAt = Instant.now();
     }
 }
