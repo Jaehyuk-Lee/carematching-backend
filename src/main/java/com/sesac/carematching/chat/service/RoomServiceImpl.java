@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class RoomServiceImpl_Mongo implements RoomService<String> {
+public class RoomServiceImpl implements RoomService {
 
     private final MongoRoomRepository mongoRoomRepository;
     private final UserRepository userRepository;
@@ -35,7 +35,7 @@ public class RoomServiceImpl_Mongo implements RoomService<String> {
 
 
     @Transactional
-    public RoomResponse<String> createRoom(String requesterUsername, Integer caregiverId) {
+    public RoomResponse createRoom(String requesterUsername, Integer caregiverId) {
         // (1) 요청자 조회
         User requester = userRepository.findByUsername(requesterUsername)
             .orElseThrow(() -> new RoomBuildException("요청자 정보가 존재하지 않습니다."));
@@ -83,15 +83,16 @@ public class RoomServiceImpl_Mongo implements RoomService<String> {
         );
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public RoomResponse<String> getRoom(String roomId) {
+    public RoomResponse getRoom(String roomId) {
         // 1) MongoRoom 문서 조회
         MongoRoom room = mongoRoomRepository.findById(roomId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Room ID 입니다."));
 
         // 2) Room에 연결된 메시지 목록 조회 (MongoDB에서)
-        List<MessageResponse<String>> messages = mongoMessageRepository.findByRoomId(roomId).stream()
+        List<MessageResponse> messages = mongoMessageRepository.findByRoomId(roomId).stream()
             .map(message -> {
                 String formattedDate = message.getCreatedAt()
                     .atZone(ZoneId.systemDefault())
@@ -99,7 +100,7 @@ public class RoomServiceImpl_Mongo implements RoomService<String> {
                 String formattedTime = message.getCreatedAt()
                     .atZone(ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("HH:mm"));
-                return new MessageResponse<>(
+                return new MessageResponse(
                     message.getRoomId(),
                     message.getUsername(),
                     message.getMessage(),
@@ -122,7 +123,7 @@ public class RoomServiceImpl_Mongo implements RoomService<String> {
         ).orElse("");
 
         // 4) RoomResponse로 변환하여 메시지 목록 포함
-        return new RoomResponse<String>(
+        return new RoomResponse(
             room.getId(),
             room.getRequesterUsername(),
             room.getReceiverUsername(),
@@ -137,7 +138,7 @@ public class RoomServiceImpl_Mongo implements RoomService<String> {
 
     @Transactional(readOnly = true)
     @Override
-    public List<RoomResponse<String>> getUserRooms(String username) {
+    public List<RoomResponse> getUserRooms(String username) {
         // 1. 현재 사용자의 정보를 조회합니다.
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
@@ -190,7 +191,7 @@ public class RoomServiceImpl_Mongo implements RoomService<String> {
                     .format(DateTimeFormatter.ofPattern("MM/dd"))
             ).orElse("");
 
-            return new RoomResponse<>(
+            return new RoomResponse(
                 room.getId(),
                 requesterUsername,
                 receiverUsername,

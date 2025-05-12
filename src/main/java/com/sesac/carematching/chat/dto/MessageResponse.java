@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 
-public class MessageResponse<T> {
-    private T roomId;
+public class MessageResponse {
+    private String roomId;
     private String username;
     private String message;
     private String createdAt;
@@ -16,7 +16,7 @@ public class MessageResponse<T> {
     private String createdTime; // 시/분 (예: "14:45")
 
     public MessageResponse(
-            @NotNull T roomId,
+            @NotNull String roomId,
             @NotNull String username,
             @NotNull String message,
             @NotNull String createdAt,

@@ -11,24 +11,24 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class RoomResponse <T> {
-    private T roomId;
+public class RoomResponse {
+    private String roomId;
     private String requesterUsername;  // UserId → Username
     private String receiverUsername;   // UserId → Username
     private String createdAt;
     private String otherUsername;
-    private List<MessageResponse<T>> messages;
+    private List<MessageResponse> messages;
     private String lastMessage;
     private String lastMessageDate;
     private String avatar;
 
     public RoomResponse(
-        @NotNull T roomId,
+        @NotNull String roomId,
         @NotNull String requesterUsername,  // 👈 변경된 부분
         @NotNull String receiverUsername,   // 👈 변경된 부분
         @NotNull Instant createdAt,
         @NotNull String otherUsername,
-        @NotNull List<MessageResponse<T>> messages,
+        @NotNull List<MessageResponse> messages,
         @NotNull String lastMessage,
         @NotNull String lastMessageDate,
         String avatar

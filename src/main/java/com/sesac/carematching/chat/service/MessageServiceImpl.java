@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class MessageServiceImpl_Mongo implements MessageService<String> {
+public class MessageServiceImpl implements MessageService {
 
     private final MongoMessageRepository mongoMessageRepository;
     private final MongoRoomRepository mongoRoomRepository;
@@ -30,7 +30,7 @@ public class MessageServiceImpl_Mongo implements MessageService<String> {
 
     @Override
     @Transactional
-    public MessageResponse<String> saveMessage(MessageRequest<String> messageRequest) {
+    public MessageResponse saveMessage(MessageRequest messageRequest) {
         // 1. 채팅방 조회 (MongoDB에서)
         MongoRoom room = mongoRoomRepository.findById(messageRequest.getRoomId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방 ID입니다."));
@@ -57,7 +57,7 @@ public class MessageServiceImpl_Mongo implements MessageService<String> {
             .format(timeFormatter);
 
         // 5. 저장된 메시지를 응답 DTO로 변환
-        return new MessageResponse<String>(
+        return new MessageResponse(
             savedMessage.getRoomId(),
             savedMessage.getUsername(),
             savedMessage.getMessage(),
@@ -69,7 +69,7 @@ public class MessageServiceImpl_Mongo implements MessageService<String> {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MessageResponse<String>> getMessagesByRoomId(String roomId) {
+    public List<MessageResponse> getMessagesByRoomId(String roomId) {
         return mongoMessageRepository.findByRoomId(roomId).stream()
             .map(message -> {
                 // 각 메시지마다 생성시간 포맷팅
@@ -79,7 +79,7 @@ public class MessageServiceImpl_Mongo implements MessageService<String> {
                 String formattedTime = message.getCreatedAt()
                     .atZone(ZoneId.systemDefault())
                     .format(timeFormatter);
-                return new MessageResponse<String>(
+                return new MessageResponse(
                     message.getRoomId(),
                     message.getUsername(),
                     message.getMessage(),

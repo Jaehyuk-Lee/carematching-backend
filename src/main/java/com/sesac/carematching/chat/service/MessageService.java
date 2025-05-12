@@ -5,9 +5,9 @@ import com.sesac.carematching.chat.dto.MessageResponse;
 
 import java.util.List;
 
-public interface MessageService<T> {
+public interface MessageService {
 
-    MessageResponse<T> saveMessage(MessageRequest<T> messageRequest);
+    MessageResponse saveMessage(MessageRequest messageRequest);
 
-    List<MessageResponse<T>> getMessagesByRoomId(T roomId);
+    List<MessageResponse> getMessagesByRoomId(String roomId);
 }
