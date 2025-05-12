@@ -1,3 +1,79 @@
+# CareMatching
+
+요양사와 환자를 연결하는 매칭 플랫폼 서비스입니다.
+
+## 프로젝트 소개
+
+Care Matching은 요양사와 환자를 효율적으로 연결하는 매칭 플랫폼입니다. 본 서비스는 다음과 같은 주요 기능을 제공합니다:
+
+- 사용자 관리 (회원가입, 로그인, 프로필 관리)
+- 요양사 자격 인증 시스템
+- 실시간 채팅 기능
+- 커뮤니티 게시판 (일반/요양사 전용)
+- 매칭 시스템
+
+## 기술 스택
+
+### 백엔드
+- Java 21
+- Spring Boot 3.x
+- Spring Security + JWT
+- Spring Data JPA
+- MariaDB
+- MongoDB (추가 중)
+- Redis
+- WebSocket
+
+### 프론트엔드
+- React - [프론트엔드 프로젝트 링크](https://github.com/Jaehyuk-Lee/carematching-front)
+
+## 주요 기능
+
+### 1. 사용자 관리
+- 회원가입/로그인 (JWT 기반 인증)
+- 사용자 프로필 관리
+- 요양사 자격 인증 시스템
+- 권한 관리 (일반 사용자, 요양사, 관리자)
+
+### 2. 실시간 채팅
+- WebSocket을 활용한 실시간 메시지 전송
+- 채팅방 생성 및 관리
+- 메시지 히스토리 저장
+
+### 3. 커뮤니티
+- 일반 게시판
+- 요양사 전용 게시판
+- 게시글 CRUD
+- 댓글 및 좋아요 기능
+- 조회수 관리
+
+### 4. 매칭 시스템
+- 요양사와 환자 간 매칭
+- 매칭 상태 관리
+- 리뷰 및 평가 시스템
+
+## 실행 방법
+
+1. 프로젝트 클론
+```bash
+git clone https://github.com/Jaehyuk-Lee/carematching-backend.git
+```
+
+2. 환경 변수 설정
+
+[.env.template](./.env.template) 파일을 복사해서 `.env`로 이름을 바꾸고, 모든 항목을 채워주세요.
+
+3. 프로젝트 빌드 및 실행
+```bash
+./gradlew build
+java -jar build/libs/carematching-0.0.1-SNAPSHOT.jar
+```
+
+## API 문서
+
+API 문서는 Swagger UI를 통해 제공됩니다:
+- 개발 환경: http://localhost:8080/swagger-ui.html
+
 ## API 버전 관리 시스템
 
 이 프로젝트는 Spring MVC에서 효율적인 API 버전 관리를 위한 표준 확장 방식을 구현했습니다.
