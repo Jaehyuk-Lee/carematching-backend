@@ -61,13 +61,24 @@ git clone https://github.com/Jaehyuk-Lee/carematching-backend.git
 
 2. 환경 변수 설정
 
-[.env.template](./.env.template) 파일을 복사해서 `.env`로 이름을 바꾸고, 모든 항목을 채워주세요.
+[.env.template](./.env.template) 파일을 복사하고 `.env`로 이름을 바꾼 뒤, 모든 항목을 채워주세요.
 
 3. 프로젝트 빌드 및 실행
 ```bash
 ./gradlew build
-java -jar build/libs/carematching-0.0.1-SNAPSHOT.jar
+java -jar build/libs/carematching-*-SNAPSHOT.jar
 ```
+
+### Production 환경으로 실행
+
+* Java 명령어를 통해 직접 옵션 주기
+```bash
+`java -Dspring.profiles.active=prod -jar "build/libs/carematching-*-SNAPSHOT.jar"`
+```
+
+* 환경 변수를 통해 옵션 주기
+
+`SPRING_PROFILES_ACTIVE=prod` 를 .env 파일에 추가하거나 환경 변수에 적용해주면 됩니다.
 
 ## API 문서
 
@@ -88,10 +99,3 @@ API 엔드포인트 작성시 엔드포인트 맨 앞에 `/api`를 반드시 포
 
 컨트롤러 코드를 보고 API 엔드포인트를 바로 이해할 수 있도록 코드 가독성을 위해 컨트롤러에 모두 접두사 `/api`를 직접 작성하는 방식으로 작성했습니다.
 
-## Production 환경으로 실행
-
-### Java 명령어를 통해 직접 옵션 주기
-`java -Dspring.profiles.active=prod -jar "app.jar"`
-
-### 환경 변수를 통해 옵션 주기
-`SPRING_PROFILES_ACTIVE=prod` 를 .env 파일에 추가하거나 환경 변수에 적용해주면 됩니다.
