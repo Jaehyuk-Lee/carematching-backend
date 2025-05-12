@@ -6,8 +6,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MessageRequest {
-    private String roomId;   // 채팅방 ID
+public class MessageRequest<T> {
+    private T roomId;   // 채팅방 ID
     private Integer userId;   // 보낸 사람 (User ID)
     private String username;  // 보낸 사람 (Username) - 추가
     private String message;   // 메시지 내용

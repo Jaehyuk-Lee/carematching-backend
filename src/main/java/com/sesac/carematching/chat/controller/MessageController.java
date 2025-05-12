@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MessageController {
 
-    private final MessageService messageService;
+    private final MessageService<String> messageService;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository; // ✅ UserRepository 주입
 
@@ -29,7 +29,8 @@ public class MessageController {
      * 채팅방의 모든 메시지 불러오기
      */
     @GetMapping("/{roomId}")
-    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId) {
+    @ApiVersion(2)
+    public List<MessageResponse<String>> getMessagesByRoom(@PathVariable String roomId) {
         return messageService.getMessagesByRoomId(roomId);
     }
 
@@ -37,7 +38,8 @@ public class MessageController {
      * 실시간 메시지 전송 및 저장
      */
     @MessageMapping("/chat/send")
-    public void sendMessage(MessageRequest messageRequest) {
+    @ApiVersion(2)
+    public void sendMessage(MessageRequest<String> messageRequest) {
         System.out.println("📤 [SEND] 메시지 요청: " + messageRequest);
 
         // 1. username으로 User ID 조회
@@ -48,7 +50,7 @@ public class MessageController {
         messageRequest.setUserId(user.getId());
 
         // 3. 메시지 저장 및 송신
-        MessageResponse savedMessage = messageService.saveMessage(messageRequest);
+        MessageResponse<String> savedMessage = messageService.saveMessage(messageRequest);
         messagingTemplate.convertAndSend("/topic/chat/" + messageRequest.getRoomId(), savedMessage);
     }
 }

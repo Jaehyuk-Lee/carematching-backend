@@ -5,12 +5,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface RoomService {
+public interface RoomService<T> {
 
-    RoomResponse getRoom(String roomId);
+    RoomResponse<T> getRoom(T roomId);
 
     @Transactional(readOnly = true)
-    List<RoomResponse> getUserRooms(String username);
+    List<RoomResponse<T>> getUserRooms(String username);
 
-    RoomResponse createRoom(String requesterUsername, Integer caregiverId);
+    RoomResponse<T> createRoom(String requesterUsername, Integer caregiverId);
 }
