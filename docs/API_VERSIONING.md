@@ -37,10 +37,12 @@ public class CommonController {
 
 Spring의 RequestMappingHandlerMapping을 확장하여 API 버전 정보를 URL 경로에 추가합니다.
 
+`v1`을 지원하는 컨트롤러/메서드의 경우, 하위 호환성을 위해 버전 정보가 URL에 포함되지 않은 주소도 매핑  
+(`v1`은 버전이 없는 것과 동일한 역할)
+
 ### 3. WebConfig 설정
 
-- WebMvcRegistrations 인터페이스를 구현하여 커스텀 핸들러 매핑 등록
-- 버전이 없는 요청을 v1 엔드포인트로 포워딩하는 필터 제공
+WebMvcRegistrations 인터페이스를 구현하여 커스텀 핸들러 매핑 등록
 
 ## 사용 방법
 

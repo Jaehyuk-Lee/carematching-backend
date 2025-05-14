@@ -95,7 +95,7 @@ API 문서는 Swagger UI를 통해 제공됩니다:
 
 API 엔드포인트 작성시 엔드포인트 맨 앞에 `/api`를 반드시 포함해야 합니다.
 
-현재 [WebConfig.java](../src/main/java/com/sesac/carematching/config/WebConfig.java)에서 `new ApiVersionRMHM("/api")`를 실행하기 때문에 모든 엔드포인트에 대해 `/api` prefix가 필요합니다.
+현재 [WebConfig.java](src/main/java/com/sesac/carematching/config/WebConfig.java)에서 `new ApiVersionRMHM("/api")`를 실행하기 때문에 모든 엔드포인트에 대해 `/api` prefix가 필요합니다.
 
 컨트롤러 코드를 보고 API 엔드포인트를 바로 이해할 수 있도록 코드 가독성을 위해 컨트롤러에 모두 접두사 `/api`를 직접 작성하는 방식으로 작성했습니다.
 
