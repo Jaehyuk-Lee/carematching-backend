@@ -1,56 +1,44 @@
 package com.sesac.carematching.chat.message;
 
-import com.sesac.carematching.chat.room.Room;
-import com.sesac.carematching.user.User;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
 
 import java.time.Instant;
 
 @Getter
 @Setter
-@Entity
-@EntityListeners(AuditingEntityListener.class)
-@Table(name = "chat_message")
+@Document(collection = "chat_messages")
 public class Message {
+
     @Id
-    @Column(name = "CMNO", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @NotNull
+    @Field(targetType = FieldType.OBJECT_ID)
+    private String id;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "CRNO", nullable = false)
-    private Room room;
+    @Field(targetType = FieldType.OBJECT_ID)
+    private String roomId;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "UNO", nullable = false)
-    private User user;
+    private Integer userId;
+
+    @NotNull
+    private String username;
 
     @Size(max = 500)
     @NotNull
-    @Column(name = "MESSAGE", nullable = false, length = 500)
     private String message;
 
     @NotNull
-    @ColumnDefault("0")
-    @Column(name = "IS_READ", nullable = false)
-    private Boolean isRead = false;
-
-    @NotNull
-    @CreatedDate
-    @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
+    public Message() {
+        this.createdAt = Instant.now();
+    }
 }

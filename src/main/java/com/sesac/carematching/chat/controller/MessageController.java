@@ -3,6 +3,8 @@ package com.sesac.carematching.chat.controller;
 import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.service.MessageService;
+import com.sesac.carematching.config.ApiVersion;
+import com.sesac.carematching.exception.VersionException;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +30,14 @@ public class MessageController {
      * 채팅방의 모든 메시지 불러오기
      */
     @GetMapping("/{roomId}")
-    public List<MessageResponse> getMessagesByRoom(@PathVariable Integer roomId) {
+    @ApiVersion(2)
+    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId) {
         return messageService.getMessagesByRoomId(roomId);
+    }
+    @GetMapping("/{roomId}")
+    @ApiVersion(1)
+    public void getMessagesByRoomVersionException() {
+        throw new VersionException();
     }
 
     /**
