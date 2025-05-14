@@ -40,7 +40,7 @@ public class RoomController {
     @PostMapping
     @ApiVersion(1)
     public void createRoomVersionException() {
-        throw new VersionException("클라이언트 버전이 낮습니다. 페이지를 새로고침 해주세요.");
+        throw new VersionException();
     }
 
     /**
@@ -62,7 +62,7 @@ public class RoomController {
     @GetMapping
     @ApiVersion(1)
     public void getUserRoomsVersionException() {
-        throw new VersionException("클라이언트 버전이 낮습니다. 페이지를 새로고침 해주세요.");
+        throw new VersionException();
     }
 
     @GetMapping("/{roomId}")
@@ -74,6 +74,6 @@ public class RoomController {
     @GetMapping("/{roomId}")
     @ApiVersion(1)
     public void getRoomVersionException() {
-        throw new VersionException("클라이언트 버전이 낮습니다. 페이지를 새로고침 해주세요.");
+        throw new VersionException();
     }
 }

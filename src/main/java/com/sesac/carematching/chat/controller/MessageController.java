@@ -37,7 +37,7 @@ public class MessageController {
     @GetMapping("/{roomId}")
     @ApiVersion(1)
     public void getMessagesByRoomVersionException() {
-        throw new VersionException("클라이언트 버전이 낮습니다. 페이지를 새로고침 해주세요.");
+        throw new VersionException();
     }
 
     /**
