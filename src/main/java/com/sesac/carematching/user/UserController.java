@@ -1,5 +1,6 @@
 package com.sesac.carematching.user;
 
+import com.sesac.carematching.user.dto.StatusDTO;
 import com.sesac.carematching.user.dto.UserSignupDTO;
 import com.sesac.carematching.user.dto.UserUpdateDTO;
 import com.sesac.carematching.user.dto.UsernameDTO;
@@ -62,21 +63,16 @@ public class UserController {
     }
 
     @PostMapping("/admin/cert")
-    public ResponseEntity<?> createAdminCert(HttpServletRequest request) {
+    public ResponseEntity<?> getCertList(HttpServletRequest request) {
         checkAdminPrivileges(request);
         return ResponseEntity.ok(userService.getCertList());
     }
 
-    @PostMapping("/admin/cert/approve")
-    public ResponseEntity<?> createAdminCertApprove(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
+    @PostMapping("/admin/cert/{username}/pending/update")
+    public ResponseEntity<?> updateCertPending(@RequestBody StatusDTO statusDTO, HttpServletRequest request, @PathVariable String username) {
         checkAdminPrivileges(request);
-        return ResponseEntity.ok(userService.updatePending(usernameDTO, false));
-    }
-
-    @PostMapping("/admin/cert/revoke")
-    public ResponseEntity<?> createAdminCertRevoke(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
-        checkAdminPrivileges(request);
-        return ResponseEntity.ok(userService.updatePending(usernameDTO, true));
+        userService.updatePending(username, statusDTO.isStatus());
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/update/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
