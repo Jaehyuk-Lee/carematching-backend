@@ -142,19 +142,17 @@ public class UserService {
     }
 
     @Transactional
-    public int updatePending(UsernameDTO usernameDTO, boolean pending) {
-        User user = userRepository.findByUsername(usernameDTO.getUsername())
+    public void updatePending(String username, boolean status) {
+        User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
 
-        user.setPending(pending);
-        if (pending)
+        user.setPending(status);
+        if (status)
             user.setRole(roleService.findRoleByName("ROLE_USER"));
         else
             user.setRole(roleService.findRoleByName("ROLE_USER_CAREGIVER"));
 
         userRepository.save(user);
-
-        return 0;
     }
 
     @Transactional
