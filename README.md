@@ -38,6 +38,17 @@ Care Matching은 요양사와 환자를 효율적으로 연결하는 매칭 플�
 ![JWT](https://img.shields.io/badge/JWT-black?style=flat&logo=JSON%20web%20tokens)
 ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=flat)
 
+## 스크린샷
+
+### 메인 페이지
+
+![image](docs/images/readme/main_page.png)
+
+### AWS 아키텍처
+
+![image](docs/images/readme/AWS.png)
+
+* 현재는 프로젝트를 종료하고 프리티어 S3 + EC2로 유지 중입니다.
 
 ### 프론트엔드
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) - [프론트엔드 프로젝트 링크](https://github.com/Jaehyuk-Lee/carematching-front)
