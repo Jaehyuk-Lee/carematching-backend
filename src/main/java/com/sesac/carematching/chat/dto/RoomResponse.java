@@ -12,7 +12,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class RoomResponse {
-    private Integer roomId;
+    private String roomId;
     private String requesterUsername;  // UserId → Username
     private String receiverUsername;   // UserId → Username
     private String createdAt;
@@ -23,7 +23,7 @@ public class RoomResponse {
     private String avatar;
 
     public RoomResponse(
-        @NotNull Integer roomId,
+        @NotNull String roomId,
         @NotNull String requesterUsername,  // 👈 변경된 부분
         @NotNull String receiverUsername,   // 👈 변경된 부분
         @NotNull Instant createdAt,
