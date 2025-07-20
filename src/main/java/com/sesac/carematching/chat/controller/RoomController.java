@@ -4,6 +4,8 @@ import com.sesac.carematching.chat.dto.CreateRoomRequest;
 import com.sesac.carematching.chat.dto.RoomResponse;
 import com.sesac.carematching.chat.service.RoomService;
 import com.sesac.carematching.util.TokenAuth;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Room Controller", description = "채팅방 관리")
 @RestController
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
@@ -20,9 +23,7 @@ public class RoomController {
     private final TokenAuth tokenAuth;
 
 
-    /**
-     * 채팅방 생성 (로그인 사용자는 username, 요양사는 caregiverId로 처리)
-     */
+    @Operation(summary = "채팅방 생성", description = "요청자와 돌봄이 ID로 채팅방을 생성합니다.")
     @PostMapping
     public ResponseEntity<RoomResponse> createRoom(HttpServletRequest request,
                                                    @RequestBody CreateRoomRequest roomRequest) {
@@ -35,9 +36,7 @@ public class RoomController {
         return ResponseEntity.ok(roomResponse);
     }
 
-    /**
-     * 사용자가 참여 중인 채팅방 목록 조회 (username 기반)
-     */
+    @Operation(summary = "내 채팅방 목록 조회", description = "로그인한 사용자가 참여 중인 채팅방 목록을 조회합니다.")
     @GetMapping
     public ResponseEntity<List<RoomResponse>> getUserRooms(HttpServletRequest request) {
         // 1. JWT 토큰에서 사용자 username 추출
@@ -51,6 +50,7 @@ public class RoomController {
         return ResponseEntity.ok(rooms);
     }
 
+    @Operation(summary = "채팅방 단건 조회", description = "채팅방 ID로 채팅방 정보를 조회합니다.")
     @GetMapping("/{roomId}")
     public ResponseEntity<RoomResponse> getRoom(@PathVariable Integer roomId) {
         RoomResponse roomResponse = roomService.getRoom(roomId);

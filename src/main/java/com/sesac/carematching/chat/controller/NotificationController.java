@@ -1,5 +1,7 @@
 package com.sesac.carematching.chat.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 @Slf4j
 @RequiredArgsConstructor
+@Tag(name = "Notification Controller", description = "알림 관리 및 송수신")
 @Controller
 public class NotificationController {
 
@@ -35,6 +38,7 @@ public class NotificationController {
         log.info("Sending notification to {}: {}", userId, message);
         messagingTemplate.convertAndSend(destination, message);
     }
+    @Operation(summary = "테스트 알림 전송", description = "테스트용 알림 메시지를 Redis를 통해 전송합니다.")
     @PostMapping("/test")
     public ResponseEntity<String> sendTestNotification() {
         String message = "테스트 알림 메시지!";
