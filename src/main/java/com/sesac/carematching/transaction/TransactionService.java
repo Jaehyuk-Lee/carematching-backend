@@ -119,6 +119,7 @@ public class TransactionService {
         requestData.put("paymentKey", paymentKey);
 
         HttpHeaders headers = new HttpHeaders();
+        // Toss Payments는 Basic 인증 사용 - "username:password" 형식을 사용함 (password는 필요없어서 맨 뒤에 콜론만 추가)
         String encodedAuth = Base64.getEncoder().encodeToString((tossSecret + ":").getBytes());
         headers.set("Authorization", "Basic " + encodedAuth);
         headers.setContentType(MediaType.APPLICATION_JSON);
