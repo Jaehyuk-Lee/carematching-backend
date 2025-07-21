@@ -1,19 +1,31 @@
 package com.sesac.carematching.transaction;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
+import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
+import com.sesac.carematching.transaction.exception.TossPaymentsException;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
-import com.sesac.carematching.transaction.dto.TransactionOrderAddDTO;
-import com.sesac.carematching.transaction.dto.TransactionSuccessDTO;
+import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Base64;
+import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
@@ -23,6 +35,10 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CaregiverService caregiverService;
     private final UserService userService;
+
+    // 토스 페이먼츠 API 시크릿키
+    @Value("${toss.secret}")
+    private String tossSecret;
 
     @Transactional
     public Transaction saveTransaction(String username, String caregiverUsername) {
@@ -72,8 +88,16 @@ public class TransactionService {
         transactionRepository.save(transaction);
     }
 
-    public TransactionSuccessDTO transactionSuccess(String orderId, Integer price, String username) {
-        UUID transactionId = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("order ID를 찾지 못하였습니다.")).getTransactionId();
+    public TransactionVerifyDTO transactionVerify(String orderId, Integer price, String username, String paymentKey) {
+        // TossPayments 결제 검증
+        boolean isValid = verifyTossPayment(orderId, price, paymentKey);
+        if (!isValid) {
+            throw new IllegalStateException("결제 검증에 실패했습니다.");
+        }
+
+        UUID transactionId = transactionRepository.findByOrderId(orderId)
+            .orElseThrow(() -> new EntityNotFoundException("order ID를 찾지 못하였습니다."))
+            .getTransactionId();
         Transaction transaction = verifyTransaction(transactionId, price, username);
 
         transaction.setStatus(Status.SUCCESS);
@@ -81,11 +105,54 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        TransactionSuccessDTO result = new TransactionSuccessDTO();
-        result.setTransactionId(transactionId);
+        TransactionVerifyDTO result = new TransactionVerifyDTO();
         result.setOrderId(orderId);
         result.setPrice(price);
         return result;
+    }
+
+    private boolean verifyTossPayment(String orderId, Integer price, String paymentKey) {
+        String url = "https://api.tosspayments.com/v1/payments/confirm";
+        RestTemplate restTemplate = new RestTemplate();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 요청 데이터 생성
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("orderId", orderId);
+        requestData.put("amount", price);
+        requestData.put("paymentKey", paymentKey);
+
+        HttpHeaders headers = new HttpHeaders();
+        // Toss Payments는 Basic 인증 사용 - "username:password" 형식을 사용함 (password는 필요없어서 맨 뒤에 콜론만 추가)
+        String encodedAuth = Base64.getEncoder().encodeToString((tossSecret + ":").getBytes());
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestData.toString(), headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+            JsonNode json = objectMapper.readTree(response.getBody());
+            String status = json.has("status") ? json.get("status").asText() : null;
+            log.info(status);
+            return "DONE".equals(status);
+        } catch (RestClientResponseException e) {
+            // TossPayments 에러 메시지 파싱
+            String errorJson = e.getResponseBodyAsString();
+            TossPaymentsErrorResponseDTO errorResponse = null;
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                errorResponse = mapper.readValue(errorJson, TossPaymentsErrorResponseDTO.class);
+            } catch (Exception parseEx) {
+                log.warn("TossPayments 에러 메시지 파싱 실패: {}", errorJson);
+            }
+            if (errorResponse != null) {
+                throw new TossPaymentsException(errorResponse.getCode(), errorResponse.getMessage());
+            }
+            throw new TossPaymentsException("UNKNOWN_ERROR", "TossPayments 결제 검증 중 알 수 없는 오류 발생");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Transaction verifyTransaction(UUID transactionId, Integer price, String username) {

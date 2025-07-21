@@ -3,7 +3,7 @@ package com.sesac.carematching.transaction;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionAddDTO;
 import com.sesac.carematching.transaction.dto.TransactionOrderAddDTO;
-import com.sesac.carematching.transaction.dto.TransactionSuccessDTO;
+import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
 import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -46,11 +46,11 @@ public class TransactionController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/success")
-    public ResponseEntity<TransactionSuccessDTO> tossPaymentSuccess(@RequestBody TransactionSuccessDTO transactionSuccessDTO, HttpServletRequest request) {
+    @PostMapping("/verify/{paymentKey}")
+    public ResponseEntity<TransactionVerifyDTO> tossPaymentVerify(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
-        String orderId = transactionSuccessDTO.getOrderId();
-        Integer price = transactionSuccessDTO.getPrice();
-        return ResponseEntity.ok().body(transactionService.transactionSuccess(orderId, price, username));
+        String orderId = transactionVerifyDTO.getOrderId();
+        Integer price = transactionVerifyDTO.getPrice();
+        return ResponseEntity.ok().body(transactionService.transactionVerify(orderId, price, username, paymentKey));
     }
 }
