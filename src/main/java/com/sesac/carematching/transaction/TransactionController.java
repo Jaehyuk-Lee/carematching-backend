@@ -47,7 +47,8 @@ public class TransactionController {
     }
 
     @PostMapping("/verify/{paymentKey}")
-    public ResponseEntity<TransactionVerifyDTO> tossPaymentVerify(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {        String username = tokenAuth.extractUsernameFromToken(request);
+    public ResponseEntity<TransactionVerifyDTO> tossPaymentVerify(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
         String orderId = transactionVerifyDTO.getOrderId();
         Integer price = transactionVerifyDTO.getPrice();
         return ResponseEntity.ok().body(transactionService.transactionVerify(orderId, price, username, paymentKey));
