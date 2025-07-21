@@ -1,7 +1,10 @@
 package com.sesac.carematching.transaction;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
+import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
+import com.sesac.carematching.transaction.exception.TossPaymentsException;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
 import com.sesac.carematching.user.User;
@@ -20,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Base64;
+import org.springframework.web.client.RestClientResponseException;
 
 @Slf4j
 @Service
@@ -132,8 +136,22 @@ public class TransactionService {
             String status = json.has("status") ? json.get("status").asText() : null;
             log.info(status);
             return "DONE".equals(status);
+        } catch (RestClientResponseException e) {
+            // TossPayments 에러 메시지 파싱
+            String errorJson = e.getResponseBodyAsString();
+            TossPaymentsErrorResponseDTO errorResponse = null;
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                errorResponse = mapper.readValue(errorJson, TossPaymentsErrorResponseDTO.class);
+            } catch (Exception parseEx) {
+                log.warn("TossPayments 에러 메시지 파싱 실패: {}", errorJson);
+            }
+            if (errorResponse != null) {
+                throw new TossPaymentsException(errorResponse.getCode(), errorResponse.getMessage());
+            }
+            throw new TossPaymentsException("UNKNOWN_ERROR", "TossPayments 결제 검증 중 알 수 없는 오류 발생");
         } catch (Exception e) {
-            return false;
+            throw new RuntimeException(e);
         }
     }
 
