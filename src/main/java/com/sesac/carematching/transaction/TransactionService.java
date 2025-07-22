@@ -21,6 +21,7 @@ import java.util.UUID;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -115,7 +116,6 @@ public class TransactionService {
 
     private boolean verifyTossPayment(String orderId, Integer price, String paymentKey) {
         String url = "https://api.tosspayments.com/v1/payments/confirm";
-        RestTemplate restTemplate = new RestTemplate();
         ObjectMapper objectMapper = new ObjectMapper();
 
         // 요청 데이터 생성
@@ -133,7 +133,17 @@ public class TransactionService {
         HttpEntity<String> entity = new HttpEntity<>(requestData.toString(), headers);
 
         int maxAttempts = 3;
+        // 사용자 경험을 고려했을 때는 5초가 적당하지만,
+        // 모든 경우를 커버하기 위해서는 30초를 권장한다.
+        // 토스페이먼츠 개발자 센터 내용: https://techchat.tosspayments.com/m/1261254382864039996
+        int baseTimeout = 5000; // 5초 - UX 기준
+        int maxTimeout = 30000; // 30초 - 모든 경우 커버
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            int timeout = baseTimeout + (int)((maxTimeout - baseTimeout) * (attempt - 1) / (maxAttempts - 1));
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            factory.setConnectTimeout(timeout);
+            factory.setReadTimeout(timeout);
+            RestTemplate restTemplate = new RestTemplate(factory);
             try {
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
                 return isPaymentDone(response.getBody(), objectMapper);
