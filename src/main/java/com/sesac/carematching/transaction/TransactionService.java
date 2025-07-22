@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -130,28 +132,54 @@ public class TransactionService {
 
         HttpEntity<String> entity = new HttpEntity<>(requestData.toString(), headers);
 
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-            JsonNode json = objectMapper.readTree(response.getBody());
-            String status = json.has("status") ? json.get("status").asText() : null;
-            log.info(status);
-            return "DONE".equals(status);
-        } catch (RestClientResponseException e) {
-            // TossPayments 에러 메시지 파싱
-            String errorJson = e.getResponseBodyAsString();
-            TossPaymentsErrorResponseDTO errorResponse = null;
+        int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                errorResponse = mapper.readValue(errorJson, TossPaymentsErrorResponseDTO.class);
-            } catch (Exception parseEx) {
-                log.warn("TossPayments 에러 메시지 파싱 실패: {}", errorJson);
+                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+                return isPaymentDone(response.getBody(), objectMapper);
+            } catch (RestClientResponseException e) {
+                handleTossPaymentsError(e);
+            } catch (ResourceAccessException e) {
+                handleNetworkError(e, attempt, maxAttempts);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-            if (errorResponse != null) {
-                throw new TossPaymentsException(errorResponse.getCode(), errorResponse.getMessage());
-            }
-            throw new TossPaymentsException("UNKNOWN_ERROR", "TossPayments 결제 검증 중 알 수 없는 오류 발생");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        }
+        throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
+    }
+
+    private boolean isPaymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
+        JsonNode json = objectMapper.readTree(responseBody);
+        String status = json.has("status") ? json.get("status").asText() : null;
+        return "DONE".equals(status);
+    }
+
+    private void handleTossPaymentsError(RestClientResponseException e) {
+        TossPaymentsErrorResponseDTO errorResponse = parseTossPaymentsError(e.getResponseBodyAsString());
+        if (errorResponse != null) {
+            throw new TossPaymentsException(errorResponse.getCode(), errorResponse.getMessage());
+        }
+        throw new TossPaymentsException("UNKNOWN_ERROR", "TossPayments 결제 검증 중 알 수 없는 오류 발생");
+    }
+
+    private TossPaymentsErrorResponseDTO parseTossPaymentsError(String errorJson) {
+        try {
+            return new ObjectMapper().readValue(errorJson, TossPaymentsErrorResponseDTO.class);
+        } catch (Exception ex) {
+            log.warn("TossPayments 에러 메시지 파싱 실패: {}", errorJson);
+            return null;
+        }
+    }
+
+    private void handleNetworkError(ResourceAccessException e, int attempt, int maxAttempts) {
+        log.warn("TossPayments 네트워크 오류 발생 ({}회차): {}", attempt, e.getMessage());
+        if (attempt == maxAttempts) {
+            throw new RuntimeException("TossPayments 네트워크 오류: 최대 재시도 횟수 초과", e);
+        }
+        try {
+            Thread.sleep(1000L * attempt);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
     }
 
