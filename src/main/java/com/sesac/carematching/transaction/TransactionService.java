@@ -17,8 +17,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.web.client.ResourceAccessException;
@@ -216,5 +218,33 @@ public class TransactionService {
         pendingPaymentRepository.save(pending);
         log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
         return false;
+    }
+
+    // 자동 재시도 주기 (1분)
+    private final static long RETRY_INTERVAL_MILLIS = 60_000L;
+    // 결제 만료 시간 (10분)
+    private final static long PAYMENT_EXPIRE_MINUTES = 10;
+
+    // 자동 재시도 스케줄러
+    @Scheduled(fixedDelay = RETRY_INTERVAL_MILLIS)
+    public void retryPendingPayments() {
+        Instant expireLimit = Instant.now().minusSeconds(PAYMENT_EXPIRE_MINUTES * 60);
+        var pendings = pendingPaymentRepository.findByConfirmedFalseAndCreatedAtAfter(expireLimit);
+        for (PendingPayment pending : pendings) {
+            try {
+                boolean result = verifyTossPayment(pending.getOrderId(), pending.getPrice(), pending.getPaymentKey());
+                if (result) {
+                    pending.setConfirmed(true);
+                    pending.setFailReason(null);
+                    log.info("PendingPayment confirm 성공: orderId={}", pending.getOrderId());
+                } else {
+                    pending.setFailReason("결제 상태가 DONE이 아님");
+                }
+            } catch (Exception e) {
+                pending.setFailReason(e.getMessage());
+                log.warn("PendingPayment confirm 재시도 실패: orderId={}, reason={}", pending.getOrderId(), e.getMessage());
+            }
+            pendingPaymentRepository.save(pending);
+        }
     }
 }
