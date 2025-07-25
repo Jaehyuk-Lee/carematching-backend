@@ -7,8 +7,11 @@ import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.exception.TossPaymentsException;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
+import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
+import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CaregiverService caregiverService;
     private final UserService userService;
+    private final PendingPaymentRepository pendingPaymentRepository;
 
     // 토스 페이먼츠 API 시크릿키
     @Value("${toss.secret}")
@@ -114,6 +118,7 @@ public class TransactionService {
         return result;
     }
 
+    @CircuitBreaker(name = "tossPaymentsConfirm", fallbackMethod = "tossPaymentsFallback")
     private boolean verifyTossPayment(String orderId, Integer price, String paymentKey) {
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         ObjectMapper objectMapper = new ObjectMapper();
@@ -202,5 +207,14 @@ public class TransactionService {
             throw new IllegalArgumentException("가격 정보가 잘못되었습니다.");
         }
         return transaction;
+    }
+
+    // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
+    private boolean tossPaymentsFallback(String orderId, Integer price, String paymentKey, Throwable t) {
+        // 결제 정보를 PendingPayment에 저장하는 로직 추가
+        PendingPayment pending = new PendingPayment(orderId, paymentKey, price);
+        pendingPaymentRepository.save(pending);
+        log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
+        return false;
     }
 }
