@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -20,23 +21,36 @@ public class PendingPaymentScheduler {
 
     private final PendingPaymentRepository pendingPaymentRepository;
     private final PendingPaymentAsyncProcessor pendingPaymentAsyncProcessor;
+    private final ThreadPoolTaskExecutor pendingPaymentRetryExecutor;
 
     @Scheduled(fixedDelay = RETRY_INTERVAL_MILLIS)
     public void retryPendingPayments() {
         Instant expireLimit = Instant.now().minusSeconds(PAYMENT_EXPIRE_MINUTES * 60);
         int page = 0;
-        Page<PendingPayment> pendings;
-        do {
-            pendings = pendingPaymentRepository.findByConfirmedFalseAndCreatedAtAfter(
+        while (true) {
+            // 스레드풀 대기 큐 상태 확인
+            int queueLeft = pendingPaymentRetryExecutor.getThreadPoolExecutor().getQueue().remainingCapacity();
+            if (queueLeft < BATCH_SIZE) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                continue;
+            }
+
+            Page<PendingPayment> pendings = pendingPaymentRepository.findByConfirmedFalseAndCreatedAtAfter(
                 expireLimit,
                 PageRequest.of(page, BATCH_SIZE)
             );
-            if (pendings != null && !pendings.isEmpty()) {
-                for (PendingPayment pending : pendings) {
-                    pendingPaymentAsyncProcessor.retrySinglePendingPayment(pending);
-                }
-                page++;
+            if (pendings == null || pendings.isEmpty()) {
+                break;
             }
-        } while (pendings != null && !pendings.isEmpty());
+            for (PendingPayment pending : pendings) {
+                pendingPaymentAsyncProcessor.retrySinglePendingPayment(pending);
+            }
+            page++;
+        }
     }
 }
