@@ -71,3 +71,14 @@ redis:
 
 toss:
   secret: ${TOSS_SECRET}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      tossPaymentsConfirm:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
