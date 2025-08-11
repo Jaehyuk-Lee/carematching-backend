@@ -7,34 +7,40 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.exception.TossPaymentsException;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
-import com.sesac.carematching.transaction.pendingPayment.PendingPaymentAsyncProcessor;
 import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TossPaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
+    private final List<RestTemplate> restTemplateList = createRestTemplateList();
+
+    private List<RestTemplate> createRestTemplateList() {
+        int[] timeouts = {5000, 17500, 30000};
+        List<RestTemplate> list = new ArrayList<>();
+        for (int timeout : timeouts) {
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            factory.setConnectTimeout(timeout);
+            factory.setReadTimeout(timeout);
+            list.add(new RestTemplate(factory));
+        }
+        return list;
+    }
 
     // 토스 페이먼츠 API 시크릿키
     @Value("${toss.secret}")
@@ -66,11 +72,8 @@ public class TossPaymentService {
         int baseTimeout = 5000; // 5초 - UX 기준
         int maxTimeout = 30000; // 30초 - 모든 경우 커버
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            int timeout = baseTimeout + (int)((maxTimeout - baseTimeout) * (attempt - 1) / (maxAttempts - 1));
-            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-            factory.setConnectTimeout(timeout);
-            factory.setReadTimeout(timeout);
-            RestTemplate restTemplate = new RestTemplate(factory);
+            int index = Math.max(0, Math.min(attempt - 1, restTemplateList.size() - 1));
+            RestTemplate restTemplate = restTemplateList.get(index);
             try {
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
                 return isPaymentDone(response.getBody(), objectMapper);
