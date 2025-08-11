@@ -1,6 +1,7 @@
 package com.sesac.carematching.config;
 
 import com.sesac.carematching.chat.RoomBuildException;
+import com.sesac.carematching.exception.VersionException;
 import com.sesac.carematching.transaction.exception.TossPaymentsException;
 import com.sesac.carematching.user.AdminAuthException;
 import com.sesac.carematching.util.TokenAuthException;
@@ -71,5 +72,17 @@ public class GlobalExceptionHandler {
         errorResponse.put("message", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * API 버전 관련 예외 처리 (426 Upgrade Required)
+     */
+    @ExceptionHandler(VersionException.class)
+    public ResponseEntity<Map<String, String>> handleVersionException(VersionException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("status", "error");
+        errorResponse.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UPGRADE_REQUIRED).body(errorResponse);
     }
 }

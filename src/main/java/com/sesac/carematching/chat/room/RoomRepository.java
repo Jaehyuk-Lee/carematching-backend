@@ -1,18 +1,19 @@
 package com.sesac.carematching.chat.room;
 
-import com.sesac.carematching.user.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.NonNull;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface RoomRepository extends JpaRepository<Room, Integer> {
+public interface RoomRepository extends MongoRepository<Room, String> {
 
-    List<Room> findByRequesterOrReceiver(User requester, User receiver);
+    @NonNull
+    Optional<Room> findById(@NonNull String id);
 
-    boolean existsByRequesterAndReceiver(User requester, User receiver);
+    List<Room> findByRequesterUserIdOrReceiverUserId(Integer requesterUserId, Integer receiverUserId);
 
-    // 🔒 요청자와 수신자가 바뀐 경우도 중복 체크
-    boolean existsByRequesterAndReceiverOrRequesterAndReceiver(User requester, User receiver, User receiver2, User requester2);
+    boolean existsByRequesterUserIdAndReceiverUserId(Integer requesterUserId, Integer receiverUserId);
 }

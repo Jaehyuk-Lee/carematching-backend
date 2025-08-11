@@ -1,13 +1,13 @@
 package com.sesac.carematching.chat.message;
 
-import com.sesac.carematching.chat.room.Room;
-import com.sesac.carematching.chat.message.Message;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface MessageRepository extends JpaRepository<Message, Integer> {
-    List<Message> findByRoomId(Integer roomId);
-    Optional<Message> findTopByRoomIdOrderByCreatedAtDesc(Integer roomId);
+@Repository
+public interface MessageRepository extends MongoRepository<Message, String> {
+    List<Message> findByRoomId(String roomId);
+    Optional<Message> findTopByRoomIdOrderByCreatedAtDesc(String roomId);
 }
