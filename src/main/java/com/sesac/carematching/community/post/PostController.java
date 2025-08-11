@@ -4,6 +4,8 @@ import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
 import com.sesac.carematching.util.S3UploadService;
 import com.sesac.carematching.util.TokenAuth;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+@Tag(name = "Post Controller", description = "커뮤니티 게시글 관리")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/community")
@@ -28,9 +31,7 @@ public class PostController {
     private final S3UploadService s3UploadService;
     private final PostRepository postRepository;
 
-    /**
-     * 현재 로그인한 사용자의 프로필 이미지, 닉네임, 작성글 수, 댓글 수, 좋아요 수 조회
-     */
+    @Operation(summary = "내 커뮤니티 프로필 정보 조회", description = "로그인한 사용자의 커뮤니티 프로필, 닉네임, 작성글/댓글/좋아요 수를 조회합니다.")
     @GetMapping("/user-info")
     public ResponseEntity<CommunityUserResponse> getUserInfo(HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
@@ -38,11 +39,7 @@ public class PostController {
         return ResponseEntity.ok(userInfo);
     }
 
-    /**
-     * 게시글 목록 조회
-     * access = "ALL", "CAREGIVER"
-     * page, size (무한 스크롤/페이징용)
-     */
+    @Operation(summary = "게시글 목록 조회", description = "커뮤니티 게시글을 access(ALL/CAREGIVER) 기준으로 페이징 조회합니다.")
     @GetMapping("/posts")
     public ResponseEntity<Page<CommunityPostListResponse>> getPosts(
         HttpServletRequest request,
@@ -59,10 +56,7 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 인기글(좋아요 10개 이상) 조회
-     * access = "ALL", "CAREGIVER"
-     */
+    @Operation(summary = "인기 게시글 목록 조회", description = "좋아요가 많은 인기 게시글을 access(ALL/CAREGIVER) 기준으로 조회합니다.")
     @GetMapping("/popular-posts")
     public ResponseEntity<Page<CommunityPostListResponse>> getPopularPosts(
         HttpServletRequest request,
@@ -79,11 +73,7 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 게시글 검색
-     * access = "ALL", "CAREGIVER"
-     * keyword = 제목/내용 검색어
-     */
+    @Operation(summary = "게시글 검색", description = "키워드로 게시글을 검색합니다.")
     @GetMapping("/search")
     public ResponseEntity<Page<CommunityPostListResponse>> searchPosts(
         HttpServletRequest request,
@@ -101,9 +91,7 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * (1) 내가 작성한 게시글 조회 (최신순)
-     */
+    @Operation(summary = "내가 작성한 게시글 목록 조회", description = "로그인한 사용자가 작성한 게시글을 페이징 조회합니다.")
     @GetMapping("/my-posts")
     public ResponseEntity<Page<MyPostListResponse>> getMyPosts(
         HttpServletRequest request,
@@ -121,9 +109,7 @@ public class PostController {
         return ResponseEntity.ok(myPosts);
     }
 
-    /**
-     * 게시글 작성
-     */
+    @Operation(summary = "게시글 작성", description = "게시글을 작성하고 이미지를 업로드할 수 있습니다.")
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommunityPostListResponse> createPost(
             HttpServletRequest request,
@@ -147,9 +133,7 @@ public class PostController {
         return ResponseEntity.ok(createdPost);
     }
 
-    /**
-     * 게시글 상세 조회
-     */
+    @Operation(summary = "게시글 상세 조회", description = "게시글 ID로 상세 정보를 조회합니다.")
     @GetMapping("/posts/{postId}")
     public ResponseEntity<CommunityPostDetailResponse> getPostDetail(
             HttpServletRequest request,

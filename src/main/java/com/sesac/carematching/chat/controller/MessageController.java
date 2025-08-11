@@ -5,6 +5,8 @@ import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.service.MessageService;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Tag(name = "Message Controller", description = "채팅 메시지 관리 및 송수신")
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
@@ -24,9 +27,7 @@ public class MessageController {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository; // ✅ UserRepository 주입
 
-    /**
-     * 채팅방의 모든 메시지 불러오기
-     */
+    @Operation(summary = "채팅방 메시지 전체 조회", description = "특정 채팅방의 모든 메시지를 조회합니다.")
     @GetMapping("/{roomId}")
     public List<MessageResponse> getMessagesByRoom(@PathVariable Integer roomId) {
         return messageService.getMessagesByRoomId(roomId);

@@ -9,6 +9,8 @@ import com.sesac.carematching.caregiver.experience.ExperienceService;
 import com.sesac.carematching.caregiver.review.ReviewService;
 import com.sesac.carematching.util.S3UploadService;
 import com.sesac.carematching.util.TokenAuth;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -25,6 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Tag(name = "Caregiver Controller", description = "돌봄이(케어기버) 관리 및 정보 제공")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/caregivers")
@@ -37,6 +40,7 @@ public class CaregiverController {
     private final TokenAuth tokenAuth;
     private final S3UploadService s3UploadService;
 
+    @Operation(summary = "전체 돌봄이 리스트 조회", description = "공개된 모든 돌봄이의 리스트를 조회합니다.")
     @GetMapping
     public ResponseEntity<List<CaregiverListDto>> getCaregiverList() {
         List<Caregiver> caregivers = caregiverService.findAllOpenCaregiver();
@@ -49,6 +53,7 @@ public class CaregiverController {
         return ResponseEntity.ok(caregiverDtos);
     }
 
+    @Operation(summary = "돌봄이 상세 정보 조회", description = "ID로 돌봄이의 상세 정보를 조회합니다.")
     @GetMapping("/{id}")
     public ResponseEntity<CaregiverDetailDto> findCaregiverById(@PathVariable Integer id) {
         Caregiver caregiver = caregiverService.findById(id);
@@ -57,6 +62,7 @@ public class CaregiverController {
             .body(new CaregiverDetailDto(caregiver, experiences));
     }
 
+    @Operation(summary = "내 돌봄이 정보 조회", description = "로그인한 사용자의 돌봄이 정보를 조회합니다.")
     @GetMapping("/user")
     public ResponseEntity<CaregiverDetailDto> findCaregiverByUser(HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
@@ -68,6 +74,7 @@ public class CaregiverController {
     }
 
 
+    @Operation(summary = "돌봄이의 회원 ID 조회", description = "돌봄이 ID로 회원(User) ID를 조회합니다.")
     @GetMapping("/{caregiverId}/userId")
     public ResponseEntity<Integer> getCaregiverUserId(@PathVariable Integer caregiverId) {
         return caregiverService.findUserIdByCaregiverId(caregiverId)
@@ -75,6 +82,7 @@ public class CaregiverController {
             .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "돌봄이 등록/수정", description = "돌봄이 정보를 등록하거나 수정합니다. (이미지 업로드 포함)")
     @PostMapping(value = "/build", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CaregiverDetailDto> buildCaregiver(HttpServletRequest request,
                                                              @RequestPart("caregiverDto") BuildCaregiverDto dto,
@@ -124,6 +132,7 @@ public class CaregiverController {
         return allExperiences.isEmpty() ? List.of() : allExperiences;
     }
 
+    @Operation(summary = "돌봄이 등록 여부 확인", description = "로그인한 사용자가 돌봄이로 등록되어 있는지 확인합니다.")
     @GetMapping("/check")
     public ResponseEntity<Boolean> checkCaregiver(HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
