@@ -6,7 +6,7 @@
 
 Care Matching은 요양사와 환자를 효율적으로 연결하는 매칭 플랫폼입니다.
 
-* 🏠 서비스 접속: http://43.200.177.234/
+* 🏠 서비스 접속: http://carematching.kro.kr/
 
 (현재는 프로젝트를 종료하고 AWS 프리티어 EC2 + RDS + S3로 유지 중)
 
@@ -38,6 +38,7 @@ Care Matching은 요양사와 환자를 효율적으로 연결하는 매칭 플�
 ![Spring Security](https://img.shields.io/badge/Spring%20Security-6DB33F?style=flat&logo=spring&logoColor=white)
 ![Spring Data JPA](https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=flat)
 ![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=flat&logo=mariadb)
+![Toss Payments](https://img.shields.io/badge/Toss_Payments-0064FF?style=flat)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-black?style=flat&logo=JSON%20web%20tokens)
 ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=flat)
@@ -130,6 +131,7 @@ API 엔드포인트 작성시 엔드포인트 맨 앞에 `/api`를 반드시 포
     - `JWT_` : JWT 설정
     - `S3_` : AWS S3 설정
     - `REDIS_` : Redis 설정
+    - `TOSS_` : Toss Payments API 설정
 
 4. **프로젝트 빌드 및 실행**
     ```bash

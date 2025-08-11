@@ -68,3 +68,17 @@ cloud:
 redis:
   host: ${REDIS_HOST:127.0.0.1}
   port: ${REDIS_PORT:6379}
+
+toss:
+  secret: ${TOSS_SECRET}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      tossPaymentsConfirm:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3

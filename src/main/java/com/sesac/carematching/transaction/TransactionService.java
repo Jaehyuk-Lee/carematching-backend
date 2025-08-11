@@ -3,17 +3,18 @@ package com.sesac.carematching.transaction;
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
-import com.sesac.carematching.transaction.dto.TransactionOrderAddDTO;
-import com.sesac.carematching.transaction.dto.TransactionSuccessDTO;
+import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
@@ -23,6 +24,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CaregiverService caregiverService;
     private final UserService userService;
+    private final TossPaymentService tossPaymentService;
 
     @Transactional
     public Transaction saveTransaction(String username, String caregiverUsername) {
@@ -38,6 +40,7 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
+    @Transactional(readOnly = true)
     public TransactionGetDTO getValidTransaction(UUID id, String username) {
         Transaction transaction = transactionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
 
@@ -65,6 +68,7 @@ public class TransactionService {
         return transactionGetDTO;
     }
 
+    @Transactional
     public void saveOrderId(UUID transactionId, String orderId, Integer price, String username) {
         Transaction transaction = verifyTransaction(transactionId, price, username);
 
@@ -72,8 +76,17 @@ public class TransactionService {
         transactionRepository.save(transaction);
     }
 
-    public TransactionSuccessDTO transactionSuccess(String orderId, Integer price, String username) {
-        UUID transactionId = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("order ID를 찾지 못하였습니다.")).getTransactionId();
+    @Transactional
+    public TransactionVerifyDTO transactionVerify(String orderId, Integer price, String username, String paymentKey) {
+        // TossPayments 결제 검증 - TossPaymentService 사용
+        boolean isValid = tossPaymentService.verifyTossPayment(orderId, price, paymentKey);
+        if (!isValid) {
+            throw new IllegalStateException("결제 검증에 실패했습니다.");
+        }
+
+        UUID transactionId = transactionRepository.findByOrderId(orderId)
+            .orElseThrow(() -> new EntityNotFoundException("order ID를 찾지 못하였습니다."))
+            .getTransactionId();
         Transaction transaction = verifyTransaction(transactionId, price, username);
 
         transaction.setStatus(Status.SUCCESS);
@@ -81,8 +94,7 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        TransactionSuccessDTO result = new TransactionSuccessDTO();
-        result.setTransactionId(transactionId);
+        TransactionVerifyDTO result = new TransactionVerifyDTO();
         result.setOrderId(orderId);
         result.setPrice(price);
         return result;
