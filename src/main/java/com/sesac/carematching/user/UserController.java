@@ -1,10 +1,12 @@
 package com.sesac.carematching.user;
 
+import com.sesac.carematching.user.dto.StatusDTO;
 import com.sesac.carematching.user.dto.UserSignupDTO;
 import com.sesac.carematching.user.dto.UserUpdateDTO;
-import com.sesac.carematching.user.dto.UsernameDTO;
 import com.sesac.carematching.util.S3UploadService;
 import com.sesac.carematching.util.TokenAuth;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Tag(name = "User Controller", description = "사용자 관리")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
@@ -26,6 +29,7 @@ public class UserController {
     private final TokenAuth tokenAuth;
     private final S3UploadService s3UploadService;
 
+    @Operation(summary = "회원 가입", description = "")
     @PostMapping("/signup")
     public ResponseEntity<Void> join(@RequestBody UserSignupDTO user) {
         System.out.println("회원가입 컨트롤러 실행" + user);
@@ -41,6 +45,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "회원 탈퇴")
     @PostMapping("/delete")
     public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
@@ -48,12 +53,14 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "회원 정보 조회")
     @GetMapping("/info")
     public ResponseEntity<?> getUser(HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
         return ResponseEntity.ok(userService.getUser(username));
     }
 
+    @Operation(summary = "회원 정보 업데이트")
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody UserUpdateDTO userUpdateDTO, HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
@@ -61,24 +68,22 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "관리자 - 자격증 리스트 조회")
     @PostMapping("/admin/cert")
-    public ResponseEntity<?> createAdminCert(HttpServletRequest request) {
+    public ResponseEntity<?> getCertList(HttpServletRequest request) {
         checkAdminPrivileges(request);
         return ResponseEntity.ok(userService.getCertList());
     }
 
-    @PostMapping("/admin/cert/approve")
-    public ResponseEntity<?> createAdminCertApprove(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
+    @Operation(summary = "관리자 - 자격증 인증/인증취소")
+    @PostMapping("/admin/cert/{username}/pending/update")
+    public ResponseEntity<?> updateCertPending(@RequestBody StatusDTO statusDTO, HttpServletRequest request, @PathVariable String username) {
         checkAdminPrivileges(request);
-        return ResponseEntity.ok(userService.updatePending(usernameDTO, false));
+        userService.updatePending(username, statusDTO.isStatus());
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/admin/cert/revoke")
-    public ResponseEntity<?> createAdminCertRevoke(@RequestBody UsernameDTO usernameDTO, HttpServletRequest request) {
-        checkAdminPrivileges(request);
-        return ResponseEntity.ok(userService.updatePending(usernameDTO, true));
-    }
-
+    @Operation(summary = "회원 프로필 사진 업로드")
     @PostMapping(value = "/update/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProfileImage(HttpServletRequest request,
                                                 @RequestPart("imageFile") MultipartFile imageFile) {

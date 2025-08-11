@@ -3,11 +3,8 @@ package com.sesac.carematching.transaction.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.util.UUID;
-
 @Data
-public class TransactionSuccessDTO {
-    private UUID transactionId;
+public class TransactionVerifyDTO {
     @NotNull
     private String orderId;
     @NotNull

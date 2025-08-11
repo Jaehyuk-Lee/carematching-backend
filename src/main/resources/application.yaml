@@ -69,6 +69,20 @@ redis:
   host: ${REDIS_HOST:localhost}
   port: ${REDIS_PORT:6379}
 
+toss:
+  secret: ${TOSS_SECRET}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      tossPaymentsConfirm:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
+
 mongodb:
   host: ${MONGODB_HOST:localhost}
   port: ${MONGODB_PORT:27017}
