@@ -40,6 +40,7 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
+    @Transactional(readOnly = true)
     public TransactionGetDTO getValidTransaction(UUID id, String username) {
         Transaction transaction = transactionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
 
@@ -67,6 +68,7 @@ public class TransactionService {
         return transactionGetDTO;
     }
 
+    @Transactional
     public void saveOrderId(UUID transactionId, String orderId, Integer price, String username) {
         Transaction transaction = verifyTransaction(transactionId, price, username);
 
@@ -74,6 +76,7 @@ public class TransactionService {
         transactionRepository.save(transaction);
     }
 
+    @Transactional
     public TransactionVerifyDTO transactionVerify(String orderId, Integer price, String username, String paymentKey) {
         // TossPayments 결제 검증 - TossPaymentService 사용
         boolean isValid = tossPaymentService.verifyTossPayment(orderId, price, paymentKey);
