@@ -85,6 +85,8 @@ public class TossPaymentService {
                 throw new RuntimeException(e);
             }
         }
+        // 결제 정보 임시 저장
+        tossPaymentsFallback(orderId, price, paymentKey, new RuntimeException("3회 재시도 실패"));
         throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
     }
 
