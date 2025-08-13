@@ -1,9 +1,11 @@
 package com.sesac.carematching.chat.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.message.Message;
 import com.sesac.carematching.chat.message.MessageRepository;
+import com.sesac.carematching.chat.pubsub.RedisPublisherService;
 import com.sesac.carematching.chat.room.Room;
 import com.sesac.carematching.chat.room.RoomRepository;
 import com.sesac.carematching.user.User;
@@ -23,6 +25,8 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    private final RedisPublisherService redisPublisherService;
+    private final ObjectMapper objectMapper;
 
     // DateTimeFormatter를 한 번만 생성해두고 재사용
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
@@ -57,7 +61,7 @@ public class MessageServiceImpl implements MessageService {
             .format(timeFormatter);
 
         // 5. 저장된 메시지를 응답 DTO로 변환
-        return new MessageResponse(
+        MessageResponse response = new MessageResponse(
             savedMessage.getRoomId(),
             savedMessage.getUsername(),
             savedMessage.getMessage(),
@@ -65,6 +69,9 @@ public class MessageServiceImpl implements MessageService {
             formattedDate,
             formattedTime
         );
+        // 6. Redis Pub/Sub 발행
+        publishChatMessage(savedMessage.getRoomId(), response);
+        return response;
     }
 
     @Override
@@ -89,5 +96,19 @@ public class MessageServiceImpl implements MessageService {
                 );
             })
             .collect(Collectors.toList());
+    }
+
+    // Redis Pub/Sub 발행
+    private void publishChatMessage(String roomId, MessageResponse message) {
+        try {
+            String json = objectMapper.writeValueAsString(message);
+            redisPublisherService.publish(getTopic(roomId), json);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON 직렬화 실패", e);
+        }
+    }
+
+    private String getTopic(String roomId) {
+        return "chat_room_" + roomId;
     }
 }

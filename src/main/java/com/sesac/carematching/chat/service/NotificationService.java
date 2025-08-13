@@ -2,8 +2,7 @@ package com.sesac.carematching.chat.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
+import com.sesac.carematching.chat.pubsub.RedisPublisherService;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,16 +10,14 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
-    private final StringRedisTemplate redisTemplate;
+    private final RedisPublisherService redisPublisherService;
     private final SimpMessagingTemplate messagingTemplate;
-    private final ChannelTopic topic;
-    private String message;
+    private final String notificationChannel = "chat_notifications";
 
-    // ✅ Redis를 통해 알림 메시지 전송 (username 기반)
-    // ✅ Redis를 통해 알림 메시지 전송 (username 기반)
-        public void sendNotificationToUser(String username, String message) {
-        log.info("📢 Redis 알림 전송 → {}: {}", username, message);
-        redisTemplate.convertAndSend(topic.getTopic(), username + ":" + message);
+    // Redis를 통해 알림 메시지 전송 (username 기반)
+    public void sendNotificationToUser(String username, String message) {
+        log.info("Redis 알림 전송 → {}: {}", username, message);
+        redisPublisherService.publish(notificationChannel, username + ":" + message);
     }
 
 
