@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -32,10 +35,10 @@ public class MessageController {
     private final ChatMessageService chatMessageService;
 
     @Operation(summary = "채팅방 메시지 전체 조회", description = "특정 채팅방의 모든 메시지를 조회합니다.")
-    @GetMapping("/{roomId}")
+    @GetMapping("/{roomId}/{userId}")
     @ApiVersion(2)
-    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId) {
-        return messageService.getMessagesByRoomId(roomId);
+    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId, @PathVariable String userId) {
+        return messageService.getMessagesByRoomId(roomId, userId);
     }
     @GetMapping("/{roomId}")
     @ApiVersion(1)
@@ -63,5 +66,11 @@ public class MessageController {
         messagingTemplate.convertAndSend("/topic/chat/" + messageRequest.getRoomId(), savedMessage);
         // 모든 인스턴스에 메시지 동기화 (Redis Pub/Sub)
         chatMessageService.publishChatMessage(messageRequest.getRoomId(), savedMessage);
+    }
+
+    @PostMapping("/{roomId}/{userId}/read")
+    public ResponseEntity<Void> markAsRead(@PathVariable String roomId, @PathVariable String userId, @RequestBody String lastReadMessageId) {
+        messageService.markAsRead(roomId, userId, lastReadMessageId);
+        return ResponseEntity.ok().build();
     }
 }
