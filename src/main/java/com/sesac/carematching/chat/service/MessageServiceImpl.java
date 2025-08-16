@@ -82,13 +82,13 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MessageResponse> getMessagesByRoomId(String roomId, String userId) {
+    public List<MessageResponse> getMessagesByRoomId(String roomId, String username) {
         // 상대방(파트너)의 username을 찾아 그 사용자의 마지막 읽음 epoch으로 메시지의 read 여부를 판단
         String partnerUsername = null;
         try {
-            com.sesac.carematching.chat.room.Room room = roomRepository.findById(roomId).orElse(null);
+            Room room = roomRepository.findById(roomId).orElse(null);
             if (room != null) {
-                if (room.getRequesterUsername().equals(userId)) {
+                if (room.getRequesterUsername().equals(username)) {
                     partnerUsername = room.getReceiverUsername();
                 } else {
                     partnerUsername = room.getRequesterUsername();
@@ -137,6 +137,43 @@ public class MessageServiceImpl implements MessageService {
             .collect(Collectors.toList());
     }
 
+    // 사용자의 마지막 읽은 메시지(epochMillis)만을 Redis에 저장
+    // 전달된 값이 숫자가 아닌 경우는 무시
+    @Override
+    public void markAsRead(String roomId, String userId, Long lastReadEpochMillis) {
+        if (lastReadEpochMillis == null) return;
+        String key = String.format(READ_KEY_FORMAT, roomId, userId);
+        try {
+            String current = redisTemplate.opsForValue().get(key);
+            if (current == null) {
+                saveLastReadEpochMillis(key, roomId, userId, lastReadEpochMillis);
+                return;
+            }
+            try {
+                long currentEpoch = Long.parseLong(current);
+                if (lastReadEpochMillis > currentEpoch) {
+                    saveLastReadEpochMillis(key, roomId, userId, lastReadEpochMillis);
+                }
+                return;
+            } catch (NumberFormatException ex) {
+                // redis에 저장된 값이 숫자가 아닐경우 최신 데이터를 덮어씌움
+                // 이런 일은 로직상 발생하면 안되며, redis에는 항상 epochTime으로 저장되어 있어야 함
+                saveLastReadEpochMillis(key, roomId, userId, lastReadEpochMillis);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            // redis에 저장된 값이 숫자가 아닐경우 최신 데이터를 덮어씌움
+            saveLastReadEpochMillis(key, roomId, userId, lastReadEpochMillis);
+            return;
+        }
+    }
+
+    private void saveLastReadEpochMillis(String key, String roomId, String userId, Long lastReadEpochMillis) {
+        redisTemplate.opsForValue().set(key, String.valueOf(lastReadEpochMillis));
+        // ZSET에 업데이트 기록
+        redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, lastReadEpochMillis);
+    }
+
     // Redis Pub/Sub 발행
     private void publishChatMessage(String roomId, MessageResponse message) {
         try {
@@ -151,61 +188,9 @@ public class MessageServiceImpl implements MessageService {
         return "chat_room_" + roomId;
     }
 
-    // 사용자의 마지막 읽은 메시지(epochMillis)만을 Redis에 저장
-    // 전달된 값이 숫자가 아닌 경우는 무시
-    private void setLastReadMessageId(String roomId, String userId, String messageId) {
-        String key = String.format(READ_KEY_FORMAT, roomId, userId);
-        if (messageId == null) return;
-        try {
-            long newEpoch = Long.parseLong(messageId);
-            String current = redisTemplate.opsForValue().get(key);
-            if (current == null) {
-                redisTemplate.opsForValue().set(key, String.valueOf(newEpoch));
-                // ZSET에 업데이트 기록
-                redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, newEpoch);
-                return;
-            }
-            try {
-                long currentEpoch = Long.parseLong(current);
-                if (newEpoch > currentEpoch) {
-                    redisTemplate.opsForValue().set(key, String.valueOf(newEpoch));
-                    // ZSET에 업데이트 기록
-                    redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, newEpoch);
-                }
-                return;
-            } catch (NumberFormatException ex) {
-                // 현재 값이 숫자가 아닌 경우(비정상 값)에는 덮어쓰기 하지 않고 무시
-                log.warn("Current lastRead for key {} is not numeric: {}", key, current);
-                return;
-            }
-        } catch (NumberFormatException e) {
-            // 전달된 값이 숫자가 아닐 경우: 하위호환성 미지원이므로 저장하지 않음
-            log.warn("Ignoring non-numeric lastRead value for room {} user {}: {}", roomId, userId, messageId);
-            return;
-        }
-    }
-
     // 사용자의 마지막 읽은 메시지 ID를 Redis에서 조회
     private String getLastReadMessageId(String roomId, String userId) {
         String key = String.format(READ_KEY_FORMAT, roomId, userId);
         return redisTemplate.opsForValue().get(key);
-    }
-
-    @Override
-    public void markAsRead(String roomId, String userId, Long lastReadEpochMillis) {
-        if (lastReadEpochMillis == null) return;
-        String key = String.format(READ_KEY_FORMAT, roomId, userId);
-        String current = redisTemplate.opsForValue().get(key);
-        try {
-            long currentEpoch = current == null ? 0L : Long.parseLong(current);
-            if (lastReadEpochMillis > currentEpoch) {
-                redisTemplate.opsForValue().set(key, String.valueOf(lastReadEpochMillis));
-                redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, lastReadEpochMillis);
-            }
-        } catch (NumberFormatException e) {
-            // 기존 값이 숫자가 아닌 경우 덮어쓰기
-            redisTemplate.opsForValue().set(key, String.valueOf(lastReadEpochMillis));
-            redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, lastReadEpochMillis);
-        }
     }
 }

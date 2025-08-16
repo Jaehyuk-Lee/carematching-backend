@@ -8,8 +8,10 @@ import com.sesac.carematching.config.ApiVersion;
 import com.sesac.carematching.exception.VersionException;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
+import com.sesac.carematching.util.TokenAuth;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -35,12 +37,14 @@ public class MessageController {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
     private final ChatMessageService chatMessageService;
+    private final TokenAuth tokenAuth;
 
     @Operation(summary = "채팅방 메시지 전체 조회", description = "특정 채팅방의 모든 메시지를 조회합니다.")
-    @GetMapping("/{roomId}/{userId}")
+    @GetMapping("/{roomId}")
     @ApiVersion(2)
-    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId, @PathVariable String userId) {
-        return messageService.getMessagesByRoomId(roomId, userId);
+    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId, HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        return messageService.getMessagesByRoomId(roomId, username);
     }
     @GetMapping("/{roomId}")
     @ApiVersion(1)
