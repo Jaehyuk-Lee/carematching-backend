@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 import java.util.List;
 
@@ -69,8 +71,24 @@ public class MessageController {
     }
 
     @PostMapping("/{roomId}/{userId}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable String roomId, @PathVariable String userId, @RequestBody String lastReadMessageId) {
-        messageService.markAsRead(roomId, userId, lastReadMessageId);
+    public ResponseEntity<Void> markAsRead(@PathVariable String roomId, @PathVariable String userId, @RequestBody String lastRead) {
+        if (lastRead == null) return ResponseEntity.badRequest().build();
+        // Strip surrounding JSON quotes if present and trim
+        lastRead = lastRead.replaceAll("^\"|\"$", "").trim();
+        Long epoch = null;
+        try {
+            // Try numeric epoch first
+            epoch = Long.parseLong(lastRead);
+        } catch (NumberFormatException ex) {
+            try {
+                Instant inst = Instant.parse(lastRead);
+                epoch = inst.toEpochMilli();
+            } catch (DateTimeParseException ex2) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        messageService.markAsRead(roomId, userId, epoch);
         return ResponseEntity.ok().build();
     }
 }
