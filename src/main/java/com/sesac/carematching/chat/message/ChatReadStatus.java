@@ -16,6 +16,5 @@ public class ChatReadStatus {
 
     private String roomId;
     private String userId;
-    private String lastReadMessageId;
     private Instant readAt;
 }

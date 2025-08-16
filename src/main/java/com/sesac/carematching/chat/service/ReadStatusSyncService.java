@@ -26,7 +26,6 @@ public class ReadStatusSyncService {
 
     private static final String READ_KEY_FORMAT = "chat:read:%s:%s";
     private static final String UPDATED_SET = "chat:read:updated";
-    private static final String DEAD_SET = "chat:read:dead";
 
     // 매 5분마다 실행
     @Scheduled(fixedDelayString = "PT5M")
@@ -47,9 +46,8 @@ public class ReadStatusSyncService {
                         }
                         String[] parts = member.split(":");
                         if (parts.length < 2) {
-                            log.warn("Malformed member {} moving to dead set", member);
+                            log.warn("Malformed member {} skipped (invalid format)", member);
                             redisTemplate.opsForZSet().remove(UPDATED_SET, member);
-                            redisTemplate.opsForZSet().add(DEAD_SET, member, score == null ? System.currentTimeMillis() : score);
                             continue;
                         }
                         String roomId = parts[0];
@@ -77,9 +75,8 @@ public class ReadStatusSyncService {
                                 shouldSave = true;
                             }
                         } catch (NumberFormatException e) {
-                            // legacy or malformed value — move to dead-letter to avoid infinite retry
-                            log.warn("Non-epoch value for key {} member {} moved to dead set: {}", key, member, value);
-                            redisTemplate.opsForZSet().add(DEAD_SET, member, score == null ? System.currentTimeMillis() : score);
+                            // Non-epoch or malformed value
+                            log.warn("Non-epoch value for key {} member {} ignored: {}", key, member, value);
                             continue;
                         }
 

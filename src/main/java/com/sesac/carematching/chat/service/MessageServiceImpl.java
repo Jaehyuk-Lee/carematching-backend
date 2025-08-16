@@ -151,8 +151,8 @@ public class MessageServiceImpl implements MessageService {
         return "chat_room_" + roomId;
     }
 
-    // 사용자의 마지막 읽은 메시지 ID를 Redis에 저장
-    // 단, 전달된 값이 epochMillis(숫자)라면 기존 값보다 클 때만 갱신합니다.
+    // 사용자의 마지막 읽은 메시지(epochMillis)만을 Redis에 저장
+    // 전달된 값이 숫자가 아닌 경우는 무시
     private void setLastReadMessageId(String roomId, String userId, String messageId) {
         String key = String.format(READ_KEY_FORMAT, roomId, userId);
         if (messageId == null) return;
@@ -174,17 +174,14 @@ public class MessageServiceImpl implements MessageService {
                 }
                 return;
             } catch (NumberFormatException ex) {
-                // 현재 값이 숫자가 아니면 덮어쓰기
-                redisTemplate.opsForValue().set(key, String.valueOf(newEpoch));
-                // ZSET에 업데이트 기록
-                redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, newEpoch);
+                // 현재 값이 숫자가 아닌 경우(비정상 값)에는 덮어쓰기 하지 않고 무시
+                log.warn("Current lastRead for key {} is not numeric: {}", key, current);
                 return;
             }
         } catch (NumberFormatException e) {
-            // 전달된 값이 숫자가 아닐 경우(예: 메시지 id 문자열), 그대로 저장
-            redisTemplate.opsForValue().set(key, messageId);
-            // ZSET에는 현재 시각을 score로 사용
-            redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, System.currentTimeMillis());
+            // 전달된 값이 숫자가 아닐 경우: 하위호환성 미지원이므로 저장하지 않음
+            log.warn("Ignoring non-numeric lastRead value for room {} user {}: {}", roomId, userId, messageId);
+            return;
         }
     }
 
