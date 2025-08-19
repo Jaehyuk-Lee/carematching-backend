@@ -8,8 +8,10 @@ import com.sesac.carematching.config.ApiVersion;
 import com.sesac.carematching.exception.VersionException;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
+import com.sesac.carematching.util.TokenAuth;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -17,6 +19,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 import java.util.List;
 
@@ -30,12 +37,14 @@ public class MessageController {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
     private final ChatMessageService chatMessageService;
+    private final TokenAuth tokenAuth;
 
     @Operation(summary = "채팅방 메시지 전체 조회", description = "특정 채팅방의 모든 메시지를 조회합니다.")
     @GetMapping("/{roomId}")
     @ApiVersion(2)
-    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId) {
-        return messageService.getMessagesByRoomId(roomId);
+    public List<MessageResponse> getMessagesByRoom(@PathVariable String roomId, HttpServletRequest request) {
+        String username = tokenAuth.extractUsernameFromToken(request);
+        return messageService.getMessagesByRoomId(roomId, username);
     }
     @GetMapping("/{roomId}")
     @ApiVersion(1)
@@ -63,5 +72,27 @@ public class MessageController {
         messagingTemplate.convertAndSend("/topic/chat/" + messageRequest.getRoomId(), savedMessage);
         // 모든 인스턴스에 메시지 동기화 (Redis Pub/Sub)
         chatMessageService.publishChatMessage(messageRequest.getRoomId(), savedMessage);
+    }
+
+    @PostMapping("/{roomId}/{userId}/read")
+    public ResponseEntity<Void> markAsRead(@PathVariable String roomId, @PathVariable String userId, @RequestBody String lastRead) {
+        if (lastRead == null) return ResponseEntity.badRequest().build();
+        // Strip surrounding JSON quotes if present and trim
+        lastRead = lastRead.replaceAll("^\"|\"$", "").trim();
+        Long epoch = null;
+        try {
+            // Try numeric epoch first
+            epoch = Long.parseLong(lastRead);
+        } catch (NumberFormatException ex) {
+            try {
+                Instant inst = Instant.parse(lastRead);
+                epoch = inst.toEpochMilli();
+            } catch (DateTimeParseException ex2) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        messageService.markAsRead(roomId, userId, epoch);
+        return ResponseEntity.ok().build();
     }
 }
