@@ -2,15 +2,21 @@ package com.sesac.carematching.chat.config;
 
 import com.sesac.carematching.chat.pubsub.ChatMessageSubscriber;
 import com.sesac.carematching.chat.pubsub.NotificationSubscriber;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+
+import java.time.Duration;
 
 @Configuration
 public class RedisConfig {
@@ -23,7 +29,20 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(redisHost, redisPort); // 환경변수를 통한 Redis 서버 연결
+        RedisStandaloneConfiguration server = new RedisStandaloneConfiguration(redisHost, redisPort);
+
+        LettuceClientConfiguration client = LettuceClientConfiguration.builder()
+            .commandTimeout(Duration.ofSeconds(2))
+            .clientOptions(ClientOptions.builder()
+                .autoReconnect(true)
+                .socketOptions(SocketOptions.builder()
+                    .connectTimeout(Duration.ofSeconds(1))
+                    .build())
+                .build())
+            .shutdownTimeout(Duration.ofMillis(300))
+            .build();
+
+        return new LettuceConnectionFactory(server, client);
     }
 
     @Bean
