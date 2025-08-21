@@ -13,6 +13,7 @@ import com.sesac.carematching.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import com.sesac.carematching.chat.config.ApplicationInstance;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneId;
@@ -31,6 +32,7 @@ public class MessageServiceImpl implements MessageService {
     private final RedisPublisherService redisPublisherService;
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
+    private final ApplicationInstance applicationInstance;
 
     // DateTimeFormatter를 한 번만 생성해두고 재사용
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
@@ -67,7 +69,7 @@ public class MessageServiceImpl implements MessageService {
             .format(timeFormatter);
 
         // 5. 저장된 메시지를 응답 DTO로 변환
-        MessageResponse response = new MessageResponse(
+        return new MessageResponse(
             savedMessage.getRoomId(),
             savedMessage.getUsername(),
             savedMessage.getMessage(),
@@ -75,9 +77,6 @@ public class MessageServiceImpl implements MessageService {
             formattedDate,
             formattedTime
         );
-        // 6. Redis Pub/Sub 발행
-        publishChatMessage(savedMessage.getRoomId(), response);
-        return response;
     }
 
     @Override
@@ -172,20 +171,6 @@ public class MessageServiceImpl implements MessageService {
         redisTemplate.opsForValue().set(key, String.valueOf(lastReadEpochMillis));
         // ZSET에 업데이트 기록
         redisTemplate.opsForZSet().add("chat:read:updated", roomId + ":" + userId, lastReadEpochMillis);
-    }
-
-    // Redis Pub/Sub 발행
-    private void publishChatMessage(String roomId, MessageResponse message) {
-        try {
-            String json = objectMapper.writeValueAsString(message);
-            redisPublisherService.publish(getTopic(roomId), json);
-        } catch (Exception e) {
-            throw new RuntimeException("JSON 직렬화 실패", e);
-        }
-    }
-
-    private String getTopic(String roomId) {
-        return "chat_room_" + roomId;
     }
 
     // 사용자의 마지막 읽은 메시지 ID를 Redis에서 조회
