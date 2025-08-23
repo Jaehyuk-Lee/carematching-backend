@@ -5,7 +5,6 @@ import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.message.Message;
 import com.sesac.carematching.chat.message.MessageRepository;
-import com.sesac.carematching.chat.pubsub.RedisPublisherService;
 import com.sesac.carematching.chat.room.Room;
 import com.sesac.carematching.chat.room.RoomRepository;
 import com.sesac.carematching.user.User;
@@ -13,7 +12,6 @@ import com.sesac.carematching.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import com.sesac.carematching.chat.config.ApplicationInstance;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneId;
@@ -29,10 +27,7 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
-    private final RedisPublisherService redisPublisherService;
-    private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
-    private final ApplicationInstance applicationInstance;
 
     // DateTimeFormatter를 한 번만 생성해두고 재사용
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
