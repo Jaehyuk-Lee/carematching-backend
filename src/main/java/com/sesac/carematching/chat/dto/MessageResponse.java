@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MessageResponse {
+    private String messageId; // MongoDB message id
     private String roomId;
     private String username;
     private String message;

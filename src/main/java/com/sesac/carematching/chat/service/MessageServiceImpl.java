@@ -5,6 +5,8 @@ import com.sesac.carematching.chat.dto.MessageRequest;
 import com.sesac.carematching.chat.dto.MessageResponse;
 import com.sesac.carematching.chat.message.Message;
 import com.sesac.carematching.chat.message.MessageRepository;
+import com.sesac.carematching.chat.message.OutboxMessage;
+import com.sesac.carematching.chat.message.OutboxRepository;
 import com.sesac.carematching.chat.pubsub.RedisPublisherService;
 import com.sesac.carematching.chat.room.Room;
 import com.sesac.carematching.chat.room.RoomRepository;
@@ -31,6 +33,7 @@ public class MessageServiceImpl implements MessageService {
     private final UserRepository userRepository;
     private final RedisPublisherService redisPublisherService;
     private final ObjectMapper objectMapper;
+    private final OutboxRepository outboxRepository;
     private final StringRedisTemplate redisTemplate;
     private final ApplicationInstance applicationInstance;
 
@@ -60,6 +63,37 @@ public class MessageServiceImpl implements MessageService {
 
         Message savedMessage = messageRepository.save(message);
 
+        // Outbox에 발행 항목 생성 (비동기 안전 발행)
+        try {
+            // payload 동일 형태로 유지
+            var payload = objectMapper.createObjectNode()
+                .put("origin", applicationInstance.getInstanceId())
+                .set("message", objectMapper.valueToTree(new com.sesac.carematching.chat.dto.MessageResponse(
+                    savedMessage.getRoomId(),
+                    savedMessage.getUsername(),
+                    savedMessage.getMessage(),
+                    savedMessage.getCreatedAt().toString(),
+                    savedMessage.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).format(dateFormatter),
+                    savedMessage.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).format(timeFormatter)
+                )));
+
+            String json = objectMapper.writeValueAsString(payload);
+
+            OutboxMessage out = new OutboxMessage();
+            out.setMessageId(savedMessage.getId());
+            out.setChannel("chat_room_" + savedMessage.getRoomId());
+            out.setPayload(json);
+            // repository may not be present in all contexts; use try/catch and log
+            try {
+                // using Spring Data repository by type; inject if compilation requires
+                var outboxRepo = org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext()
+                    .getBean(OutboxRepository.class);
+                outboxRepo.save(out);
+            } catch (Exception e) {
+                log.warn("Outbox 저장 실패: {}", e.getMessage());
+            }
+        } catch (Exception ignored) {}
+
         // 4. 생성시간을 각각 "MM/dd"와 "HH:mm" 형식으로 포맷팅
         String formattedDate = savedMessage.getCreatedAt()
             .atZone(ZoneId.systemDefault())
@@ -68,8 +102,32 @@ public class MessageServiceImpl implements MessageService {
             .atZone(ZoneId.systemDefault())
             .format(timeFormatter);
 
-        // 5. 저장된 메시지를 응답 DTO로 변환
-        return new MessageResponse(
+        // 5. Outbox에 발행 항목 생성 (비동기 안전 발행)
+        try {
+            var payload = objectMapper.createObjectNode()
+                .put("origin", applicationInstance.getInstanceId())
+                .set("message", objectMapper.valueToTree(new com.sesac.carematching.chat.dto.MessageResponse(
+                    savedMessage.getRoomId(),
+                    savedMessage.getUsername(),
+                    savedMessage.getMessage(),
+                    savedMessage.getCreatedAt().toString(),
+                    formattedDate,
+                    formattedTime
+                )));
+
+            String json = objectMapper.writeValueAsString(payload);
+
+            OutboxMessage out = new OutboxMessage();
+            out.setMessageId(savedMessage.getId());
+            out.setChannel("chat_room_" + savedMessage.getRoomId());
+            out.setPayload(json);
+            outboxRepository.save(out);
+        } catch (Exception e) {
+            log.warn("Outbox 저장 실패: {}", e.getMessage());
+        }
+
+        // 6. 저장된 메시지를 응답 DTO로 변환 (messageId 포함)
+        com.sesac.carematching.chat.dto.MessageResponse resp = new com.sesac.carematching.chat.dto.MessageResponse(
             savedMessage.getRoomId(),
             savedMessage.getUsername(),
             savedMessage.getMessage(),
@@ -77,6 +135,8 @@ public class MessageServiceImpl implements MessageService {
             formattedDate,
             formattedTime
         );
+        resp.setMessageId(savedMessage.getId());
+        return resp;
     }
 
     @Override
