@@ -37,17 +37,18 @@ spring:
   sql:
     init:
       mode: always
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    timeout: 300ms
-    lettuce:
-      shutdown-timeout: 100ms
-      pool:
-        max-active: 3
-        max-idle: 1
-        min-idle: 1
-        max-wait: 300ms
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 300ms
+      lettuce:
+        shutdown-timeout: 100ms
+        pool:
+          max-active: 3
+          max-idle: 1
+          min-idle: 1
+          max-wait: 300ms
 
 springdoc:
   api-docs:
