@@ -12,7 +12,7 @@ public class AsyncConfig {
     public ThreadPoolTaskExecutor pendingPaymentRetryExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(0);
-        executor.setMaxPoolSize(128);
+        executor.setMaxPoolSize(20);
         executor.setQueueCapacity(1000);
         executor.setThreadNamePrefix("RetryPending-");
         executor.setKeepAliveSeconds(60);
