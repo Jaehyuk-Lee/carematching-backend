@@ -1,0 +1,10 @@
+Using connection pool: maxTotal=20
+Target QPS=700 enabled (refill every 100ms, +70 tokens)
+Reuse-interval stats: count=3380 errors=0 avg=3.528ms min=1.264ms max=45.505ms p50=2.860ms p95=6.075ms p99=7.331ms
+Reuse-interval stats: count=3430 errors=0 avg=2.531ms min=1.286ms max=10.024ms p50=2.269ms p95=4.081ms p99=5.907ms
+Reuse-interval stats: count=3570 errors=0 avg=2.297ms min=1.186ms max=4.450ms p50=2.111ms p95=3.552ms p99=4.133ms
+Reuse-interval stats: count=3430 errors=0 avg=2.322ms min=1.192ms max=5.245ms p50=2.155ms p95=3.507ms p99=4.000ms
+Reuse-interval stats: count=3500 errors=0 avg=2.916ms min=1.246ms max=22.943ms p50=2.304ms p95=6.177ms p99=10.942ms
+Reuse-interval stats: count=3500 errors=0 avg=2.293ms min=1.181ms max=7.970ms p50=2.115ms p95=3.534ms p99=4.220ms
+Reuse-Final stats: count=20830 errors=0 avg=2.644ms min=1.181ms max=45.505ms p50=2.256ms p95=4.641ms p99=7.139ms
+Reuse finished: errors=0 totalLatencyNs=55077249900 totalSamples=20830

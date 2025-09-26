@@ -83,3 +83,21 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// 간단한 부하 테스트를 실행하기 위한 helper tasks
+tasks.register('runLoadTestNoPool', JavaExec) {
+	group = 'verification'
+	description = 'Run LoadTestNoPool (creates new Redis client per operation)'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass.set('com.sesac.carematching.tools.LoadTestNoPool')
+	// 기본 args: host, port, threads, opsPerThread
+	args = ['127.0.0.1','6379','200','200']
+}
+
+tasks.register('runLoadTestReuse', JavaExec) {
+	group = 'verification'
+	description = 'Run LoadTestReuse (reuse single Redis connection)'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass.set('com.sesac.carematching.tools.LoadTestReuse')
+	args = ['127.0.0.1','6379','200','200']
+}
