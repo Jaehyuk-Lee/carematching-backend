@@ -6,6 +6,12 @@ spring:
       idle-timeout: 300000
       connection-timeout: 20000
       max-lifetime: 1200000
+  elasticsearch:
+    uris: ${ES_HOST:http://localhost}:${ES_PORT:9200}
+    # username: ${ES_USERNAME} # 인증이 필요할 경우
+    # password: ${ES_PASSWORD} # 인증이 필요할 경우
+    connection-timeout: 5s
+    socket-timeout: 10s
 
 logging:
   level:
