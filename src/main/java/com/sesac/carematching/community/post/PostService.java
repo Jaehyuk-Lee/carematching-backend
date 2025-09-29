@@ -20,6 +20,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -122,10 +124,19 @@ public class PostService {
         // DB에서 해당 ID 목록으로 Post 조회
         List<Post> posts = postRepository.findAllById(ids);
 
-        // Post를 CommunityPostListResponse DTO로 변환
-        List<CommunityPostListResponse> responseContent = posts.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        // id -> Post 매핑
+        Map<Integer, Post> postMap = posts.stream()
+            .collect(Collectors.toMap(
+                Post::getId,
+                p -> p
+            ));
+
+        // ES 순서(id 순서)에 맞춰 정렬 + DTO 변환까지
+        List<CommunityPostListResponse> responseContent = ids.stream()
+            .map(postMap::get)        // O(1) 조회 -> Post 엔티티
+            .filter(Objects::nonNull) // 혹시 DB에 없는 id 방어
+            .map(this::mapToResponse) // 엔티티 -> DTO
+            .toList();
 
         // Page 객체로 변환하여 반환
         return new PageImpl<>(responseContent, pageable, documentsPage.getTotalElements());
