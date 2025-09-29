@@ -6,6 +6,8 @@ import com.sesac.carematching.community.comment.CommentRepository;
 import com.sesac.carematching.community.like.LikeRepository;
 import com.sesac.carematching.community.viewcount.Viewcount;
 import com.sesac.carematching.community.viewcount.ViewcountRepository;
+import com.sesac.carematching.elasticsearch.document.PostDocument;
+import com.sesac.carematching.elasticsearch.repository.PostSearchRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
 import com.sesac.carematching.util.S3UploadService;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +33,7 @@ public class PostService {
     private final ViewcountRepository viewcountRepository;
     private final CategoryRepository categoryRepository;
     private final S3UploadService s3UploadService;
+    private final PostSearchRepository postSearchRepository;
 
     /**
      * 사용자 정보 + 작성글 수, 댓글 수, 좋아요 수
@@ -107,22 +111,24 @@ public class PostService {
     public Page<CommunityPostListResponse> searchPosts(String access, User user, String keyword, Pageable pageable) {
         checkAccessRole(access, user);
 
-        Category category = categoryRepository.findByAccess(access)
-            .orElseThrow(() -> new IllegalArgumentException("해당 access에 해당하는 카테고리가 존재하지 않습니다."));
+        // Elasticsearch에서 title 또는 content로 검색
+        Page<PostDocument> documentsPage = postSearchRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
+        List<Integer> ids = documentsPage.getContent().stream().map(PostDocument::getId).collect(Collectors.toList());
 
-        // JPA Derived Query 특성상 OR 조건을 쓰려면 메서드가 다소 복잡해질 수 있으므로
-        // 아래처럼 Query Method를 정의해두었다고 가정합니다.
-        Page<Post> posts = postRepository.findByCategoryAndTitleContainingIgnoreCaseOrCategoryAndContentContainingIgnoreCase(
-            category, keyword,
-            category, keyword,
-            PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-            )
-        );
+        if (ids.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
 
-        return posts.map(this::mapToResponse);
+        // DB에서 해당 ID 목록으로 Post 조회
+        List<Post> posts = postRepository.findAllById(ids);
+
+        // Post를 CommunityPostListResponse DTO로 변환
+        List<CommunityPostListResponse> responseContent = posts.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
+        // Page 객체로 변환하여 반환
+        return new PageImpl<>(responseContent, pageable, documentsPage.getTotalElements());
     }
 
     /**
@@ -149,7 +155,16 @@ public class PostService {
         // 4) DB 저장
         Post savedPost = postRepository.save(post);
 
-        // 5) 저장된 Post를 DTO로 변환 후 반환
+        // 5) Elasticsearch에 저장
+        postSearchRepository.save(PostDocument.builder()
+                .id(savedPost.getId())
+                .title(savedPost.getTitle())
+                .content(savedPost.getContent())
+                .userId(savedPost.getUser().getUsername())
+                .createdAt(savedPost.getCreatedAt())
+                .build());
+
+        // 6) 저장된 Post를 DTO로 변환 후 반환
         return mapToResponse(savedPost);
     }
 
@@ -244,6 +259,14 @@ public class PostService {
         }
 
         // 5) 업데이트된 post 기반으로 상세 DTO 생성 및 반환 (영속성 컨텍스트가 flush하며 UPDATE)
+        postSearchRepository.save(PostDocument.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .userId(post.getUser().getUsername())
+                .createdAt(post.getCreatedAt())
+                .build());
+
         int viewCount = viewcountRepository.countByPost(post);
         int likeCount = likeRepository.countByPost(post);
         int commentCount = commentRepository.countByPost(post);
@@ -281,7 +304,10 @@ public class PostService {
             s3UploadService.deleteCommunityImageFile(post.getImage());
         }
 
-        // 4) DB에서 게시글 삭제
+        // 4) Elasticsearch에서 삭제
+        postSearchRepository.deleteById(post.getId());
+
+        // 5) DB에서 게시글 삭제
         postRepository.delete(post);
     }
 
@@ -385,22 +411,4 @@ public class PostService {
         }
     }
 
-    /**
-     * 필터링된 목록을 Page 형태로 변환 (무한 스크롤 대비)
-     */
-    private Page<CommunityPostListResponse> toPage(List<Post> filteredList, Pageable pageable) {
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), filteredList.size());
-
-        // 만약 start가 end보다 크다면 빈 목록
-        List<Post> pageContent = (start > end)
-            ? List.of()
-            : filteredList.subList(start, end);
-
-        List<CommunityPostListResponse> responseContent = pageContent.stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
-
-        return new PageImpl<>(responseContent, pageable, filteredList.size());
-    }
 }
