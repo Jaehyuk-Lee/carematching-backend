@@ -117,9 +117,7 @@ public class PostService {
         Page<PostDocument> documentsPage = postSearchRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
         List<Integer> ids = documentsPage.getContent().stream().map(PostDocument::getId).collect(Collectors.toList());
 
-        if (ids.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
-        }
+        if (ids.isEmpty()) return Page.empty(pageable);
 
         // DB에서 해당 ID 목록으로 Post 조회
         List<Post> posts = postRepository.findAllById(ids);
