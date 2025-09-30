@@ -7,11 +7,20 @@ spring:
       connection-timeout: 20000
       max-lifetime: 1200000
   elasticsearch:
-    uris: ${ES_HOST:http://localhost}:${ES_PORT:9200}
+    uris: ${ES_URIS:http://localhost:9200}
+    restclient:
+      ssl:
+        bundle: es
     username: ${ES_USERNAME} # 인증이 필요할 경우
     password: ${ES_PASSWORD} # 인증이 필요할 경우
     connection-timeout: 5s
     socket-timeout: 10s
+  ssl:
+    bundle:
+      pem:
+        es:
+          truststore:
+            certificate: ${ES_CA_CERT_PATH}  # path to CA cert (PEM or CRT)
 
 logging:
   level:
