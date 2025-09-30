@@ -109,6 +109,7 @@ public class PostService {
      * 검색 (제목/내용)
      * - 해당 access 카테고리에 속한 글만 검색
      */
+    @Transactional(readOnly = true)
     public Page<CommunityPostListResponse> searchPosts(String access, User user, String keyword, Pageable pageable) {
         checkAccessRole(access, user);
 
@@ -142,6 +143,7 @@ public class PostService {
     /**
      * 게시글 생성
      */
+    @Transactional
     public CommunityPostListResponse createPost(CommunityPostRequest dto, String imageUrl, User user) {
         // 1) 카테고리 조회 (access = "ALL" / "CAREGIVER")
         Category category = categoryRepository.findByName(dto.getCategory())
