@@ -98,3 +98,9 @@ mongodb:
   username: ${MONGODB_USERNAME:}
   password: ${MONGODB_PASSWORD:}
   auth-source: ${MONGODB_AUTH_SOURCE:admin}
+
+elasticsearch:
+  index:
+    shards: 1
+    replicas: 0
+
