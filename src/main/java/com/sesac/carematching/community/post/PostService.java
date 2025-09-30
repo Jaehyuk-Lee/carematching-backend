@@ -113,8 +113,8 @@ public class PostService {
     public Page<CommunityPostListResponse> searchPosts(String access, User user, String keyword, Pageable pageable) {
         checkAccessRole(access, user);
 
-        // Elasticsearch에서 title 또는 content로 검색
-        Page<PostES> documentsPage = postSearchRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
+        // Elasticsearch에서 categoryAccess와 title/content로 검색
+        Page<PostES> documentsPage = postSearchRepository.findByCategoryAccessAndTitleContainingIgnoreCaseOrCategoryAccessAndContentContainingIgnoreCase(access, keyword, access, keyword, pageable);
         List<Integer> ids = documentsPage.getContent().stream().map(PostES::getId).collect(Collectors.toList());
 
         if (ids.isEmpty()) return Page.empty(pageable);
@@ -171,6 +171,7 @@ public class PostService {
                 .title(savedPost.getTitle())
                 .content(savedPost.getContent())
                 .userId(savedPost.getUser().getUsername())
+                .categoryAccess(savedPost.getCategory().getAccess())
                 .createdAt(savedPost.getCreatedAt())
                 .build());
 
@@ -274,6 +275,7 @@ public class PostService {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .userId(post.getUser().getUsername())
+                .categoryAccess(post.getCategory().getAccess())
                 .createdAt(post.getCreatedAt())
                 .build());
 

@@ -6,5 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 public interface PostSearchRepository extends ElasticsearchRepository<PostES, Integer> {
-    Page<PostES> findByTitleContainingOrContentContaining(String title, String content, Pageable pageable);
+    Page<PostES> findByCategoryAccessAndTitleContainingIgnoreCaseOrCategoryAccessAndContentContainingIgnoreCase(
+            String categoryAccess, String title, String categoryAccess2, String content, Pageable pageable
+    );
 }

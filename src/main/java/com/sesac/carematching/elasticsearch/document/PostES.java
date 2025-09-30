@@ -1,5 +1,6 @@
 package com.sesac.carematching.elasticsearch.document;
 
+import com.sesac.carematching.community.category.Category;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,6 +30,9 @@ public class PostES {
     @Field(type = FieldType.Keyword, name = "user_id")
     private String userId;
 
+    @Field(type = FieldType.Keyword, name = "category_access")
+    private String categoryAccess;
+
     @Field(type = FieldType.Date, name = "created_at")
     private Instant createdAt;
 
@@ -38,12 +42,14 @@ public class PostES {
             String title,
             String content,
             String userId,
+            String categoryAccess,
             Instant createdAt
     ) {
         this.id = id;
         this.title = title;
         this.content = content;
         this.userId = userId;
+        this.categoryAccess = categoryAccess;
         this.createdAt = createdAt;
     }
 }
