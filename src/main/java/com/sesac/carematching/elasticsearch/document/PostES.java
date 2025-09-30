@@ -15,7 +15,7 @@ import java.time.Instant;
 @ToString
 @NoArgsConstructor
 @Document(indexName = "posts")
-public class PostDocument {
+public class PostES {
 
     @Id
     private Integer id;
@@ -33,7 +33,7 @@ public class PostDocument {
     private Instant createdAt;
 
     @Builder
-    public PostDocument(
+    public PostES(
             Integer id,
             String title,
             String content,

@@ -6,7 +6,7 @@ import com.sesac.carematching.community.comment.CommentRepository;
 import com.sesac.carematching.community.like.LikeRepository;
 import com.sesac.carematching.community.viewcount.Viewcount;
 import com.sesac.carematching.community.viewcount.ViewcountRepository;
-import com.sesac.carematching.elasticsearch.document.PostDocument;
+import com.sesac.carematching.elasticsearch.document.PostES;
 import com.sesac.carematching.elasticsearch.repository.PostSearchRepository;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserRepository;
@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -114,8 +113,8 @@ public class PostService {
         checkAccessRole(access, user);
 
         // Elasticsearch에서 title 또는 content로 검색
-        Page<PostDocument> documentsPage = postSearchRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
-        List<Integer> ids = documentsPage.getContent().stream().map(PostDocument::getId).collect(Collectors.toList());
+        Page<PostES> documentsPage = postSearchRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
+        List<Integer> ids = documentsPage.getContent().stream().map(PostES::getId).collect(Collectors.toList());
 
         if (ids.isEmpty()) return Page.empty(pageable);
 
@@ -165,7 +164,7 @@ public class PostService {
         Post savedPost = postRepository.save(post);
 
         // 5) Elasticsearch에 저장
-        postSearchRepository.save(PostDocument.builder()
+        postSearchRepository.save(PostES.builder()
                 .id(savedPost.getId())
                 .title(savedPost.getTitle())
                 .content(savedPost.getContent())
@@ -268,7 +267,7 @@ public class PostService {
         }
 
         // 5) 업데이트된 post 기반으로 상세 DTO 생성 및 반환 (영속성 컨텍스트가 flush하며 UPDATE)
-        postSearchRepository.save(PostDocument.builder()
+        postSearchRepository.save(PostES.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
