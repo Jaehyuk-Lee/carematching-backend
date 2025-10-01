@@ -316,11 +316,11 @@ public class PostService {
             s3UploadService.deleteCommunityImageFile(post.getImage());
         }
 
-        // 4) Elasticsearch에서 삭제
-        postSearchRepository.deleteById(post.getId());
-
-        // 5) DB에서 게시글 삭제
+        // 4) DB에서 게시글 삭제
         postRepository.delete(post);
+
+        // 5) Elasticsearch에서 삭제
+        postSearchRepository.deleteById(post.getId());
     }
 
 
