@@ -1,0 +1,57 @@
+# MariaDB, Redis, MongoDB, Elasticsearch 구동
+# 프로젝트 루트에 있는 .env 파일의 환경 변수를 활용
+# 애플리케이션은 Docker 외부에서 실행되므로 모든 포트를 호스트로 공개
+
+services:
+  mariadb:
+    image: mariadb:11.6.2
+    container_name: carematching-compose-mariadb
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: carematching-compose-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+
+  mongodb:
+    image: mongo:6
+    container_name: carematching-compose-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
+    container_name: carematching-compose-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+volumes:
+  mariadb_data:
+  redis_data:
+  mongodb_data:
+  es_data:
