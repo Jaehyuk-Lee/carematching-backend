@@ -1,4 +1,4 @@
-module github.com/Jaehyuk-Lee/carematching/services/pending-payment-worker
+module Jaehyuk-Lee/carematching
 
 go 1.21.0
 
