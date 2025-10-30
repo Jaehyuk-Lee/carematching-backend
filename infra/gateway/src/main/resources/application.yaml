@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    gateway:
+      routes:
+        # - id: example-service
+        #   uri: lb://SERVICE-AUTH
+        #   predicates:
+        #     - Path=/auth/**
+        - id: carematching-service
+          uri: "${carematching.backend.uri:http://localhost:8081}"
+          predicates:
+            - Path=/carematching/**
+          filters:
+            - StripPrefix=1 # 경로의 첫 번째 세그먼트 제거 (숫자가 늘어나면 제거하는 경로의 깊이가 늘어남)
+  application:
+    name: gateway
+
