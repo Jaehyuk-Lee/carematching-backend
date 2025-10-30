@@ -1,4 +1,4 @@
 rootProject.name = 'carematching'
 
-// include infra modules for Spring Cloud PoC
+// include infra modules for Spring Cloud Gateway
 include ':infra:gateway'
