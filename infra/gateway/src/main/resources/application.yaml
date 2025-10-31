@@ -4,6 +4,12 @@ server:
 spring:
   cloud:
     gateway:
+      httpclient: # 글로벌 설정
+        connect-timeout: 3000 # 3s
+        response-timeout: 5000 # 5s
+        pool:
+          max-connections: 200
+          acquire-timeout: 45000 # 풀에서 커넥션을 기다리는 최대 시간
       routes:
         # - id: example-service
         #   uri: lb://SERVICE-AUTH
