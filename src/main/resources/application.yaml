@@ -1,5 +1,7 @@
 server:
   port: 8081
+  http2:
+    enabled: true
 
 spring:
   profiles:
@@ -45,6 +47,8 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       timeout: 300ms
+      repositories:
+        enabled: false
       lettuce:
         shutdown-timeout: 100ms
         pool:
@@ -98,9 +102,33 @@ mongodb:
   username: ${MONGODB_USERNAME:}
   password: ${MONGODB_PASSWORD:}
   auth-source: ${MONGODB_AUTH_SOURCE:admin}
+  connect-timeout: ${MONGODB_CONNECT_TIMEOUT:10s}
+  socket-timeout: ${MONGODB_SOCKET_TIMEOUT:30s}
 
 elasticsearch:
   index:
     shards: 1
     replicas: 0
+
+# Actuator configuration: expose health and info endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  server:
+    port: ${server.port:8081}
+
+# Enable readiness/liveness probe groups (useful for k8s)
+health:
+  probes:
+    enabled: true
+
+info:
+  app:
+    name: carematching
+    version: ${project.version:0.0.1-SNAPSHOT}
 
