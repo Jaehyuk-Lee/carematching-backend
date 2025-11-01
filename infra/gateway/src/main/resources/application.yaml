@@ -5,11 +5,12 @@ spring:
   cloud:
     gateway:
       httpclient: # 글로벌 설정
-        connect-timeout: 3000 # 3s
-        response-timeout: 5000 # 5s
+        connect-timeout: 1000 # 1s
+        response-timeout: 10000 # 10s
         pool:
+          max-idle-time: 65s # 커넥션 유지할 시간 (keep-alive)
           max-connections: 200
-          acquire-timeout: 45000 # 풀에서 커넥션을 기다리는 최대 시간
+          acquire-timeout: 2000 # 풀의 여유 커넥션을 기다리는 최대 시간
       routes:
         # - id: example-service
         #   uri: lb://SERVICE-AUTH
@@ -23,4 +24,3 @@ spring:
             - StripPrefix=1 # 경로의 첫 번째 세그먼트 제거 (숫자가 늘어나면 제거하는 경로의 깊이가 늘어남)
   application:
     name: gateway
-
