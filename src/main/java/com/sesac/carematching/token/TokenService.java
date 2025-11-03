@@ -35,8 +35,10 @@ public class TokenService {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        String newAccessToken = jwtUtil.generateAccessToken(username, user.getRole().getRname());
-        String newRefreshToken = jwtUtil.generateRefreshToken(username);
+    Integer userId = user.getId();
+
+    String newAccessToken = jwtUtil.generateAccessToken(username, user.getRole().getRname(), userId);
+    String newRefreshToken = jwtUtil.generateRefreshToken(username, userId);
 
         savedRefreshToken.setToken(newRefreshToken);
         refreshTokenRepository.save(savedRefreshToken);

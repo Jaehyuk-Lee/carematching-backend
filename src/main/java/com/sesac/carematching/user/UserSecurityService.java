@@ -33,6 +33,6 @@ public class UserSecurityService implements UserDetailsService {
 
         authorities.add(new SimpleGrantedAuthority(user.getRole().getRname()));
 
-        return new CustomUserDetails(user.getUsername(), user.getPassword(), user.getNickname(), authorities);
+        return new CustomUserDetails(user.getUsername(), user.getPassword(), user.getId(), authorities);
     }
 }

@@ -35,8 +35,8 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
             .map(GrantedAuthority::getAuthority)
             .orElse("ROLE_USER");
 
-        String accessToken = jwtUtil.generateAccessToken(userDetails.getUsername(), role);
-        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername());
+        String accessToken = jwtUtil.generateAccessToken(userDetails.getUsername(), role, userDetails.getUserId());
+        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername(), userDetails.getUserId());
 
         tokenService.saveRefreshToken(userDetails.getUsername(), refreshToken);
 
