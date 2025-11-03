@@ -45,6 +45,9 @@ public class JwtUtil {
         claims.put("role", role);
         claims.put("username", username);
         claims.put("userId", userId);
+        if (userId == null) {
+            throw new IllegalArgumentException("userId cannot be null.");
+        }
         return createToken(claims, userId.toString(), accessExpirationTime);
     }
 
@@ -52,6 +55,9 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("username", username);
         claims.put("userId", userId);
+        if (userId == null) {
+            throw new IllegalArgumentException("userId cannot be null.");
+        }
         return createToken(claims, userId.toString(), refreshExpirationTime);
     }
 

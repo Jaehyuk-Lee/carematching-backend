@@ -29,6 +29,10 @@ public class UserSecurityService implements UserDetailsService {
             throw new UsernameNotFoundException("사용자를 찾을 수 없습니다.");
         }
         User user = _user.get();
+
+        if (user.getId() == null) {
+            throw new UsernameNotFoundException("userId가 존재하지 않습니다.");
+        }
         List<GrantedAuthority> authorities = new ArrayList<>();
 
         authorities.add(new SimpleGrantedAuthority(user.getRole().getRname()));

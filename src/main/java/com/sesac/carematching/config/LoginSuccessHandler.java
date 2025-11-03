@@ -35,8 +35,13 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
             .map(GrantedAuthority::getAuthority)
             .orElse("ROLE_USER");
 
-        String accessToken = jwtUtil.generateAccessToken(userDetails.getUsername(), role, userDetails.getUserId());
-        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername(), userDetails.getUserId());
+        Integer userId = userDetails.getUserId();
+        if (userId == null) {
+            throw new RuntimeException("userId가 존재하지 않습니다.");
+        }
+
+        String accessToken = jwtUtil.generateAccessToken(userDetails.getUsername(), role, userId);
+        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername(), userId);
 
         tokenService.saveRefreshToken(userDetails.getUsername(), refreshToken);
 
