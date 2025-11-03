@@ -9,34 +9,25 @@ import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
 
-    private String username;
-    private String password;
+    @Getter
+    private final String username;
+    @Getter
+    private final String password;
+    @Getter
+    private final Integer userId;
 
     @Getter
-    private String nickname;
-    private Collection<? extends GrantedAuthority> authorities;
+    private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(String username, String password, String nickname,
+    public CustomUserDetails(String username, String password, Integer userId,
                              List<GrantedAuthority> authorities) {
         this.username = username;
         this.password = password;
-        this.nickname = nickname;
+        this.userId = userId;
         this.authorities = authorities;
     }
 
     // UserDetails 메서드 구현
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
-    @Override
-    public String getPassword() {
-        return password;
-    }
-    @Override
-    public String getUsername() {
-        return username;
-    }
     @Override
     public boolean isAccountNonExpired() {
         return UserDetails.super.isAccountNonExpired();

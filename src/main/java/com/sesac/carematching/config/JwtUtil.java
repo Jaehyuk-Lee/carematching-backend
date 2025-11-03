@@ -40,17 +40,25 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateAccessToken(String username, String role) {
+    public String generateAccessToken(String username, String role, Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId cannot be null.");
+        }
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("username", username);
-        return createToken(claims, username, accessExpirationTime);
+        claims.put("userId", userId);
+        return createToken(claims, userId.toString(), accessExpirationTime);
     }
 
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(String username, Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId cannot be null.");
+        }
         Map<String, Object> claims = new HashMap<>();
         claims.put("username", username);
-        return createToken(claims, username, refreshExpirationTime);
+        claims.put("userId", userId);
+        return createToken(claims, userId.toString(), refreshExpirationTime);
     }
 
     public boolean validateToken(String token) {
@@ -66,7 +74,19 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        return extractClaims(token).getSubject();
+        Object val = extractClaims(token).get("username");
+        if (val == null) return null;
+        return val.toString();
+    }
+
+    public Integer extractUserId(String token) {
+        String val = extractClaims(token).getSubject();
+        if (val == null) return null;
+        try {
+            return Integer.valueOf(val);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private Claims extractClaims(String token) {
