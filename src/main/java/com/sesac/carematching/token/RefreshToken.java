@@ -13,6 +13,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class RefreshToken {
     @Id
+    @Column(name = "ID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(name = "USERNAME")
     private String username;
 

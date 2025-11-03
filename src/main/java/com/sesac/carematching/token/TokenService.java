@@ -25,20 +25,20 @@ public class TokenService {
             throw new RuntimeException("토큰에서 사용자 정보를 찾을 수 없습니다.");
         }
 
-        RefreshToken savedRefreshToken = refreshTokenRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("로그아웃된 사용자입니다."));
-
-        if (!savedRefreshToken.getToken().equals(refreshToken)) {
-            throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
-        }
-
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-    Integer userId = user.getId();
+        RefreshToken savedRefreshToken = refreshTokenRepository.findByToken(refreshToken)
+            .orElseThrow(() -> new RuntimeException("RefreshToken 정보가 서버에 존재하지 않습니다."));
 
-    String newAccessToken = jwtUtil.generateAccessToken(username, user.getRole().getRname(), userId);
-    String newRefreshToken = jwtUtil.generateRefreshToken(username, userId);
+        if (!savedRefreshToken.getUsername().equals(username)) {
+            throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
+        }
+
+        Integer userId = user.getId();
+
+        String newAccessToken = jwtUtil.generateAccessToken(username, user.getRole().getRname(), userId);
+        String newRefreshToken = jwtUtil.generateRefreshToken(username, userId);
 
         savedRefreshToken.setToken(newRefreshToken);
         refreshTokenRepository.save(savedRefreshToken);
