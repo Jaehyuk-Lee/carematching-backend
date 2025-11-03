@@ -41,23 +41,23 @@ public class JwtUtil {
     }
 
     public String generateAccessToken(String username, String role, Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId cannot be null.");
+        }
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("username", username);
         claims.put("userId", userId);
-        if (userId == null) {
-            throw new IllegalArgumentException("userId cannot be null.");
-        }
         return createToken(claims, userId.toString(), accessExpirationTime);
     }
 
     public String generateRefreshToken(String username, Integer userId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("username", username);
-        claims.put("userId", userId);
         if (userId == null) {
             throw new IllegalArgumentException("userId cannot be null.");
         }
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", username);
+        claims.put("userId", userId);
         return createToken(claims, userId.toString(), refreshExpirationTime);
     }
 
