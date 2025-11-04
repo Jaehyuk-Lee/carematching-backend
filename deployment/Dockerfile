@@ -1,4 +1,4 @@
-FROM openjdk:21-slim
+FROM ubuntu/jre:21-24.04_stable
 
 WORKDIR /app
 COPY build/libs/*.jar app.jar
