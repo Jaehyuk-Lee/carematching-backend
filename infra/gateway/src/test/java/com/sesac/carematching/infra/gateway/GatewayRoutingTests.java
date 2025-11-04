@@ -30,7 +30,7 @@ public class GatewayRoutingTests {
         wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wireMockServer.start();
         // application.yaml에서 사용하는 프로퍼티에 WireMock 포트를 주입
-        registry.add("carematching.backend.uri", () -> "http://localhost:" + wireMockServer.port());
+        registry.add("carematching.platform.uri", () -> "localhost:" + wireMockServer.port());
     }
 
     @AfterAll
@@ -41,19 +41,19 @@ public class GatewayRoutingTests {
     }
 
     @Test
-    void gateway_should_route_to_backend() {
-        // Gateway 설정: Path=/carematching/** + StripPrefix=1 이므로
-        // Gateway로 /carematching/hello 요청 시 backend에는 /hello 로 전달되어야 함
+    void gateway_should_route_to_platform() {
+        // Gateway 설정: Path=/platform/** + StripPrefix=1 이므로
+        // Gateway로 /platform/hello 요청 시 backend에는 /hello 로 전달되어야 함
         wireMockServer.stubFor(get(urlEqualTo("/hello"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "text/plain")
-                        .withBody("hello from backend")));
+                        .withBody("hello from platform")));
 
-        webTestClient.get().uri("/carematching/hello")
+        webTestClient.get().uri("/platform/hello")
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(String.class).isEqualTo("hello from backend");
+                .expectBody(String.class).isEqualTo("hello from platform");
 
         wireMockServer.verify(getRequestedFor(urlEqualTo("/hello")));
     }
