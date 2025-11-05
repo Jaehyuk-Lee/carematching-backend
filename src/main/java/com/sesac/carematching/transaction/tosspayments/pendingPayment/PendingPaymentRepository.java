@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.pendingPayment;
+package com.sesac.carematching.transaction.tosspayments.pendingPayment;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

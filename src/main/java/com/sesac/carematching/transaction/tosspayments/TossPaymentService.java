@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction;
+package com.sesac.carematching.transaction.tosspayments;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.exception.TossPaymentsException;
-import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
-import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
+import com.sesac.carematching.transaction.tosspayments.pendingPayment.PendingPayment;
+import com.sesac.carematching.transaction.tosspayments.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

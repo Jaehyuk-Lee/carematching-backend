@@ -1,6 +1,6 @@
-package com.sesac.carematching.transaction.pendingPayment;
+package com.sesac.carematching.transaction.tosspayments.pendingPayment;
 
-import com.sesac.carematching.transaction.TossPaymentService;
+import com.sesac.carematching.transaction.tosspayments.TossPaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

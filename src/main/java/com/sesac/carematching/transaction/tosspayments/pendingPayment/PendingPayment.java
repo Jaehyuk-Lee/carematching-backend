@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.pendingPayment;
+package com.sesac.carematching.transaction.tosspayments.pendingPayment;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

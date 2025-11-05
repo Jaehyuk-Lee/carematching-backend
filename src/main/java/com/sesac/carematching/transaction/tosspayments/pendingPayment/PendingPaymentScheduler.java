@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.pendingPayment;
+package com.sesac.carematching.transaction.tosspayments.pendingPayment;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
