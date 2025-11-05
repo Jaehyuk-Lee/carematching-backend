@@ -20,6 +20,10 @@ import java.util.UUID;
 public class Transaction {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "TNO", nullable = false)
+    private Integer id;
+
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "TRANSACTION_ID")
     private UUID transactionId;
