@@ -4,20 +4,6 @@ server:
 spring:
   cloud:
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: # 허용하려는 도메인
-              - 'http://localhost:3000'
-              - 'https://carematching.kro.kr'
-            allow-credentials: true # 요청 시 인증 정보를 전송하도록 허가
-            allowedHeaders: '*' # 허용하려는 헤더
-            allowedMethods: # 허용하려는 HTTP 메서드
-              - PUT
-              - GET
-              - POST
-              - DELETE
-              - OPTIONS
       httpclient: # 글로벌 설정
         connect-timeout: 1000 # 1s
         response-timeout: 10000 # 10s
