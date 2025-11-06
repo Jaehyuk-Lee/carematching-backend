@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransactionService {
     // 결제 가능 시간 (분)
-    private final static long MAX_PAYMENT_TIME = 30;
+    private final static long MAX_PAYMENT_MINUTE = 30;
 
     private final TransactionRepository transactionRepository;
     private final CaregiverService caregiverService;
@@ -59,7 +59,7 @@ public class TransactionService {
             transaction.getCreatedAt(),
             java.time.Instant.now()
         ).toMinutes();
-        if (minutesDifference > MAX_PAYMENT_TIME) {
+        if (minutesDifference > MAX_PAYMENT_MINUTE) {
             throw new IllegalStateException("결제 가능 시간이 만료되었습니다. 새로운 결제를 시도해주세요.");
         }
 
