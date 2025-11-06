@@ -1,6 +1,6 @@
 package com.sesac.carematching.transaction.tosspayments.pendingPayment;
 
-import com.sesac.carematching.transaction.tosspayments.TossPaymentService;
+import com.sesac.carematching.transaction.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -12,13 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PendingPaymentAsyncProcessor {
     private final PendingPaymentRepository pendingPaymentRepository;
-    private final TossPaymentService tossPaymentService;
+    private final PaymentService paymentService;
 
     @Transactional
     @Async("pendingPaymentRetryExecutor")
     public void retrySinglePendingPayment(PendingPayment pending) {
         try {
-            boolean result = tossPaymentService.verifyTossPayment(pending.getOrderId(), pending.getPrice(), pending.getPaymentKey());
+            boolean result = paymentService.confirmPayment(pending.getOrderId(), pending.getPrice(), pending.getPgPaymentKey());
             if (result) {
                 pending.setConfirmed(true);
                 pending.setFailReason(null);

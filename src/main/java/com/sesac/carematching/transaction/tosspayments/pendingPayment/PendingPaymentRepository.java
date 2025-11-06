@@ -6,6 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
 
+import com.sesac.carematching.transaction.PaymentProvider;
+
 public interface PendingPaymentRepository extends JpaRepository<PendingPayment, Integer> {
     Page<PendingPayment> findByConfirmedFalseAndCreatedAtAfter(Instant expireLimit, Pageable pageable);
+
+    Page<PendingPayment> findByPaymentProviderAndConfirmedFalseAndCreatedAtAfter(PaymentProvider provider, Instant expireLimit, Pageable pageable);
 }

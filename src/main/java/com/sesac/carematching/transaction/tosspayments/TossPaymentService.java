@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.exception.TossPaymentsException;
 import com.sesac.carematching.transaction.tosspayments.pendingPayment.PendingPayment;
+import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.tosspayments.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +24,12 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TossPaymentService {
+public class TossPaymentService implements PaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
     private final List<RestTemplate> restTemplateList = createRestTemplateList();
 
@@ -46,8 +49,9 @@ public class TossPaymentService {
     @Value("${toss.secret}")
     private String tossSecret;
 
-    @CircuitBreaker(name = "tossPaymentsConfirm", fallbackMethod = "tossPaymentsFallback")
-    public boolean verifyTossPayment(String orderId, Integer price, String paymentKey) {
+    @Override
+    @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
+    public boolean confirmPayment(String orderId, Integer price, String paymentKey) {
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -86,7 +90,7 @@ public class TossPaymentService {
             }
         }
         // 결제 정보 임시 저장
-        tossPaymentsFallback(orderId, price, paymentKey, new RuntimeException("3회 재시도 실패"));
+        fallbackForConfirm(orderId, price, paymentKey, new RuntimeException("3회 재시도 실패"));
         throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
     }
 
@@ -126,9 +130,9 @@ public class TossPaymentService {
     }
 
     // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
-    private boolean tossPaymentsFallback(String orderId, Integer price, String paymentKey, Throwable t) {
+    private boolean fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
         // 결제 정보를 PendingPayment에 저장하는 로직 추가
-        PendingPayment pending = new PendingPayment(orderId, paymentKey, price);
+        PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.TOSS);
         pendingPaymentRepository.save(pending);
         log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
         return false;

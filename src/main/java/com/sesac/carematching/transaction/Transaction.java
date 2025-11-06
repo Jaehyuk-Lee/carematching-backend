@@ -24,9 +24,8 @@ public class Transaction {
     @Column(name = "TNO", nullable = false)
     private Integer id;
 
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "TRANSACTION_ID")
-    private UUID transactionId;
+    @Column(name = "TRANSACTION_ID", nullable = false, unique = true, updatable = false)
+    private String transactionId;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -37,9 +36,6 @@ public class Transaction {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "UNO", nullable = false)
     private User uno;
-
-    @Column(name = "ORDER_ID", length = 50)
-    private String orderId;
 
     @NotNull
     @Column(name = "PRICE", nullable = false)
@@ -58,4 +54,22 @@ public class Transaction {
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PAYMENT_PROVIDER", nullable = false)
+    private PaymentProvider paymentProvider;
+
+    // PG사에서 발급한 고유 거래 ID
+    // (PG사마다 부르는 이름이 다름)
+    // 토스페이먼츠: paymentKey
+    // 카카오페이: tid
+    @Column(name = "PG_PAYMENT_KEY")
+    private String pgPaymentKey;
+
+    @PrePersist
+    public void generateUuid() {
+        if (this.transactionId == null) {
+            this.transactionId = UUID.randomUUID().toString();
+        }
+    }
 }

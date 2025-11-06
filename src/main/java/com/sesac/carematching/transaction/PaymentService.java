@@ -1,0 +1,17 @@
+package com.sesac.carematching.transaction;
+
+/**
+ * 결제 제공자(예: TossPayments, 다른 PG)들을 추상화한 서비스 인터페이스.
+ * 현재는 결제 검증(verify)만 추상화합니다.
+ */
+public interface PaymentService {
+    /**
+     * 외부 PG에 결제 검증을 요청합니다.
+     *
+     * @param orderId   주문 ID
+     * @param price     결제 금액
+     * @param paymentKey PG에서 발급한 결제 키
+     * @return 결제 승인이 완료(DONE)된다면 true (중복 승인 불가)
+     */
+    boolean confirmPayment(String orderId, Integer price, String paymentKey);
+}

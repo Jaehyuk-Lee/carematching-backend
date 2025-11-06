@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class TransactionVerifyDTO {
     @NotNull
-    private String orderId;
+    private String transactionId;
     @NotNull
     private Integer price;
 }
