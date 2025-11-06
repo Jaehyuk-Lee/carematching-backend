@@ -134,10 +134,11 @@ public class TossPaymentService implements PaymentService {
     }
 
     // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
-    private void fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
+    private TransactionDetailDTO fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
         // 결제 정보를 PendingPayment에 저장하는 로직 추가
         PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.TOSS);
         pendingPaymentRepository.save(pending);
         log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
+        throw new RuntimeException("TossPayments 결제 검증 실패: PendingPayment에 보관", t);
     }
 }
