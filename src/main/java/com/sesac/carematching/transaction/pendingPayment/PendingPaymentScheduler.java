@@ -34,15 +34,18 @@ public class PendingPaymentScheduler {
         // Pageable 객체는 '정렬 순서'를 지정하기 위해 사용 (페이지 번호는 항상 0)
         Pageable pageable = PageRequest.of(0, BATCH_SIZE, Sort.by(Sort.Direction.ASC, "id"));
 
-        // 스레드풀 대기 큐 상태 확인
-        while (pendingPaymentRetryExecutor.getThreadPoolExecutor().getQueue().remainingCapacity() < BATCH_SIZE) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
+        while (true) {
+            // 스레드풀 대기 큐 상태 확인
+            int queueLeft = pendingPaymentRetryExecutor.getThreadPoolExecutor().getQueue().remainingCapacity();
+            if (queueLeft < BATCH_SIZE) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                continue;
             }
-
 
             List<PendingPayment> pendings = pendingPaymentRepository.findByPaymentProviderAndConfirmedFalseAndCreatedAtAfterAndIdGreaterThan(
                 PaymentProvider.TOSS, // PG사 이름
