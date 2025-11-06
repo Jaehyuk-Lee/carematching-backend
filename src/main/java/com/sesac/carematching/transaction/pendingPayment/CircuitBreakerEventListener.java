@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.tosspayments.pendingPayment;
+package com.sesac.carematching.transaction.pendingPayment;
 
 import com.sesac.carematching.transaction.PaymentProvider;
 import io.github.resilience4j.circuitbreaker.event.CircuitBreakerOnStateTransitionEvent;

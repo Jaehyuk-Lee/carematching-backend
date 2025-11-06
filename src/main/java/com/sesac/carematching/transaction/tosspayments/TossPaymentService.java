@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.exception.TossPaymentsException;
-import com.sesac.carematching.transaction.tosspayments.pendingPayment.PendingPayment;
+import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.PaymentService;
-import com.sesac.carematching.transaction.tosspayments.pendingPayment.PendingPaymentRepository;
+import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
