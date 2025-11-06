@@ -2,7 +2,7 @@ package com.sesac.carematching.config;
 
 import com.sesac.carematching.chat.RoomBuildException;
 import com.sesac.carematching.exception.VersionException;
-import com.sesac.carematching.transaction.exception.TossPaymentsException;
+import com.sesac.carematching.transaction.tosspayments.TossPaymentsException;
 import com.sesac.carematching.user.AdminAuthException;
 import com.sesac.carematching.util.TokenAuthException;
 import org.springframework.http.HttpStatus;

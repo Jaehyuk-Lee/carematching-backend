@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
-import com.sesac.carematching.transaction.exception.TossPaymentsException;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;

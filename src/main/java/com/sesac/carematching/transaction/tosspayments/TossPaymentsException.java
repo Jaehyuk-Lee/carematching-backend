@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.exception;
+package com.sesac.carematching.transaction.tosspayments;
 
 public class TossPaymentsException extends RuntimeException {
     private final String code;
