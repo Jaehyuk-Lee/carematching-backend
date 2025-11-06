@@ -1,13 +1,16 @@
 package com.sesac.carematching.transaction.pendingPayment;
 
+import com.sesac.carematching.transaction.PaymentProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -26,23 +29,26 @@ public class PendingPaymentScheduler {
     @Scheduled(fixedDelay = RETRY_INTERVAL_MILLIS)
     public void retryPendingPayments() {
         Instant expireLimit = Instant.now().minusSeconds(PAYMENT_EXPIRE_MINUTES * 60);
-        int page = 0;
-        while (true) {
-            // 스레드풀 대기 큐 상태 확인
-            int queueLeft = pendingPaymentRetryExecutor.getThreadPoolExecutor().getQueue().remainingCapacity();
-            if (queueLeft < BATCH_SIZE) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-                continue;
+        long lastId = 0L; // 처리 중인 데이터의 마지막 ID를 추적
+
+        // Pageable 객체는 '정렬 순서'를 지정하기 위해 사용 (페이지 번호는 항상 0)
+        Pageable pageable = PageRequest.of(0, BATCH_SIZE, Sort.by(Sort.Direction.ASC, "id"));
+
+        // 스레드풀 대기 큐 상태 확인
+        while (pendingPaymentRetryExecutor.getThreadPoolExecutor().getQueue().remainingCapacity() < BATCH_SIZE) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
             }
 
-            Page<PendingPayment> pendings = pendingPaymentRepository.findByConfirmedFalseAndCreatedAtAfter(
-                expireLimit,
-                PageRequest.of(page, BATCH_SIZE)
+
+            List<PendingPayment> pendings = pendingPaymentRepository.findByPaymentProviderAndConfirmedFalseAndCreatedAtAfterAndIdGreaterThan(
+                PaymentProvider.TOSS, // PG사 이름
+                expireLimit, // 시간이 만료된 결제는 처리하지 않음
+                lastId,      // 마지막 처리한 ID
+                pageable     // (page=0, size=200, sort=id,ASC)
             );
             if (pendings == null || pendings.isEmpty()) {
                 break;
@@ -50,7 +56,9 @@ public class PendingPaymentScheduler {
             for (PendingPayment pending : pendings) {
                 pendingPaymentAsyncProcessor.retrySinglePendingPayment(pending);
             }
-            page++;
+
+            // 다음 조회를 위해 현재 배치의 가장 마지막 ID를 저장
+            lastId = pendings.getLast().getId();
         }
     }
 }
