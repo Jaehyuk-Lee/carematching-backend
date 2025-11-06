@@ -1,11 +1,13 @@
-package com.sesac.carematching.transaction;
+package com.sesac.carematching.transaction.tosspayments;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sesac.carematching.transaction.PaymentProvider;
+import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
-import com.sesac.carematching.transaction.exception.TossPaymentsException;
+import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -26,7 +28,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TossPaymentService {
+public class TossPaymentService implements PaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
     private final List<RestTemplate> restTemplateList = createRestTemplateList();
 
@@ -46,8 +48,9 @@ public class TossPaymentService {
     @Value("${toss.secret}")
     private String tossSecret;
 
-    @CircuitBreaker(name = "tossPaymentsConfirm", fallbackMethod = "tossPaymentsFallback")
-    public boolean verifyTossPayment(String orderId, Integer price, String paymentKey) {
+    @Override
+    @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
+    public TransactionDetailDTO confirmPayment(String orderId, Integer price, String paymentKey) {
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -76,8 +79,8 @@ public class TossPaymentService {
             RestTemplate restTemplate = restTemplateList.get(index);
             try {
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-                return isPaymentDone(response.getBody(), objectMapper);
-            } catch (RestClientResponseException e) {
+                return paymentDone(response.getBody(), objectMapper);
+            } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 4xx, 5xx이면 터짐
                 handleTossPaymentsError(e);
             } catch (ResourceAccessException e) {
                 handleNetworkError(e, attempt, maxAttempts);
@@ -85,15 +88,27 @@ public class TossPaymentService {
                 throw new RuntimeException(e);
             }
         }
-        // 결제 정보 임시 저장
-        tossPaymentsFallback(orderId, price, paymentKey, new RuntimeException("3회 재시도 실패"));
         throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
     }
 
-    private boolean isPaymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
+    private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
         JsonNode json = objectMapper.readTree(responseBody);
-        String status = json.has("status") ? json.get("status").asText() : null;
-        return "DONE".equals(status);
+        JsonNode paymentKeyNode = json.get("paymentKey");
+        JsonNode statusNode = json.get("status");
+        JsonNode orderIdNode = json.get("orderId");
+        JsonNode orderNameNode = json.get("orderName");
+
+        if (paymentKeyNode == null || statusNode == null || orderIdNode == null || orderNameNode == null) {
+            throw new TossPaymentsException("INVALID_RESPONSE", "TossPayments 응답에 필수 필드가 누락되었습니다");
+        }
+
+        TransactionDetailDTO transactionDetailDTO = new TransactionDetailDTO();
+        transactionDetailDTO.setPaymentProvider(PaymentProvider.TOSS);
+        transactionDetailDTO.setPaymentKey(paymentKeyNode.asText());
+        transactionDetailDTO.setStatus(statusNode.asText());
+        transactionDetailDTO.setOrderId(orderIdNode.asText());
+        transactionDetailDTO.setOrderName(orderNameNode.asText());
+        return transactionDetailDTO;
     }
 
     private void handleTossPaymentsError(RestClientResponseException e) {
@@ -126,11 +141,11 @@ public class TossPaymentService {
     }
 
     // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
-    private boolean tossPaymentsFallback(String orderId, Integer price, String paymentKey, Throwable t) {
+    private TransactionDetailDTO fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
         // 결제 정보를 PendingPayment에 저장하는 로직 추가
-        PendingPayment pending = new PendingPayment(orderId, paymentKey, price);
+        PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.TOSS);
         pendingPaymentRepository.save(pending);
         log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
-        return false;
+        throw new RuntimeException("TossPayments 결제 검증 실패: PendingPayment에 보관", t);
     }
 }

@@ -2,7 +2,6 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionAddDTO;
-import com.sesac.carematching.transaction.dto.TransactionOrderAddDTO;
 import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
 import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +10,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -27,37 +25,26 @@ public class TransactionController {
 
     @Operation(summary = "거래 생성", description = "돌봄이와 회원 간의 거래를 생성합니다.")
     @PostMapping("/add")
-    public ResponseEntity<UUID> addTransaction(@RequestBody TransactionAddDTO transactionAddDTO, HttpServletRequest request) {
+    public ResponseEntity<String> addTransaction(@RequestBody TransactionAddDTO transactionAddDTO, HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
         String caregiverUsername = transactionAddDTO.getReceiverUsername();
         Transaction transaction = transactionService.saveTransaction(username, caregiverUsername);
-        return ResponseEntity.ok(transaction.getTransactionId());
+        return ResponseEntity.ok(transaction.getOrderId());
     }
 
     @Operation(summary = "거래 단건 조회", description = "거래 ID로 거래 정보를 조회합니다.")
-    @GetMapping("/{id}")
-    public ResponseEntity<TransactionGetDTO> getTransactionById(@PathVariable UUID id, HttpServletRequest request) {
+    @GetMapping("/{orderId}")
+    public ResponseEntity<TransactionGetDTO> getTransactionById(@PathVariable String orderId, HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
-        return ResponseEntity.ok(transactionService.getValidTransaction(id, username));
-    }
-
-    @Operation(summary = "주문번호 저장", description = "거래에 주문번호와 결제 금액을 저장합니다.")
-    @PostMapping("/save-orderid")
-    public ResponseEntity<?> saveOrderId(@RequestBody TransactionOrderAddDTO transactionOrderAddDTO, HttpServletRequest request) {
-        String username = tokenAuth.extractUsernameFromToken(request);
-        UUID transactionId = transactionOrderAddDTO.getTransactionId();
-        String orderId = transactionOrderAddDTO.getOrderId();
-        Integer price = transactionOrderAddDTO.getPrice();
-        transactionService.saveOrderId(transactionId, orderId, price, username);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(transactionService.getValidTransaction(orderId, username));
     }
 
     @Operation(summary = "결제 성공 처리", description = "결제 성공 시 거래를 완료 처리합니다.")
     @PostMapping("/verify/{paymentKey}")
-    public ResponseEntity<TransactionVerifyDTO> tossPaymentVerify(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {
-        String username = tokenAuth.extractUsernameFromToken(request);
+    public ResponseEntity<TransactionVerifyDTO> confirmPayment(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {
+        Integer userId = tokenAuth.extractUserIdFromToken(request);
         String orderId = transactionVerifyDTO.getOrderId();
         Integer price = transactionVerifyDTO.getPrice();
-        return ResponseEntity.ok().body(transactionService.transactionVerify(orderId, price, username, paymentKey));
+        return ResponseEntity.ok().body(transactionService.confirmTransaction(orderId, price, userId, paymentKey));
     }
 }
