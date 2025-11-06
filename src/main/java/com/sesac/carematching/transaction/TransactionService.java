@@ -69,8 +69,8 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionVerifyDTO transactionVerify(String orderId, Integer price, Integer userId, String paymentKey) {
-        Transaction transaction = confirmTransaction(orderId, price, userId);
+    public TransactionVerifyDTO confirmTransaction(String orderId, Integer price, Integer userId, String paymentKey) {
+        Transaction transaction = verifyTransaction(orderId, price, userId);
 
         // 결제 검증 - 추상화된 PaymentService 사용
         TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(orderId, price, paymentKey);
@@ -89,7 +89,7 @@ public class TransactionService {
         return result;
     }
 
-    private Transaction confirmTransaction(String orderId, Integer paidPrice, Integer paidUserId) {
+    private Transaction verifyTransaction(String orderId, Integer paidPrice, Integer paidUserId) {
         Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("Order ID를 찾을 수 없습니다."));
         Integer shouldId = transaction.getUno().getId();
         Integer shouldPrice = transaction.getPrice();

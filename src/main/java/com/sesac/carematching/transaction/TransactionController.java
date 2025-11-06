@@ -45,6 +45,6 @@ public class TransactionController {
         Integer userId = tokenAuth.extractUserIdFromToken(request);
         String orderId = transactionVerifyDTO.getOrderId();
         Integer price = transactionVerifyDTO.getPrice();
-        return ResponseEntity.ok().body(transactionService.transactionVerify(orderId, price, userId, paymentKey));
+        return ResponseEntity.ok().body(transactionService.confirmTransaction(orderId, price, userId, paymentKey));
     }
 }
