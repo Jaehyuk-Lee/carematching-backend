@@ -43,8 +43,8 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public TransactionGetDTO getValidTransaction(String transactionId, String username) {
-        Transaction transaction = transactionRepository.findByTransactionId(transactionId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
+    public TransactionGetDTO getValidTransaction(String orderId, String username) {
+        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
 
         if (!transaction.getUno().getUsername().equals(username)) {
             throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
@@ -71,14 +71,14 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionVerifyDTO transactionVerify(String transactionId, Integer price, String username, String paymentKey) {
+    public TransactionVerifyDTO transactionVerify(String orderId, Integer price, String username, String paymentKey) {
         // 결제 검증 - 추상화된 PaymentService 사용
-        boolean isValid = paymentService.confirmPayment(transactionId, price, paymentKey);
+        boolean isValid = paymentService.confirmPayment(orderId, price, paymentKey);
         if (!isValid) {
             throw new IllegalStateException("결제 검증에 실패했습니다.");
         }
 
-        Transaction transaction = verifyTransaction(transactionId, price, username);
+        Transaction transaction = verifyTransaction(orderId, price, username);
 
         transaction.setStatus(Status.SUCCESS);
         transaction.setPaidPrice(price);
@@ -90,8 +90,8 @@ public class TransactionService {
         return result;
     }
 
-    private Transaction verifyTransaction(String transactionId, Integer price, String username) {
-        Transaction transaction = transactionRepository.findByTransactionId(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction ID를 찾을 수 없습니다."));
+    private Transaction verifyTransaction(String orderId, Integer price, String username) {
+        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("Transaction ID를 찾을 수 없습니다."));
         if (!transaction.getUno().getUsername().equals(username)) {
             throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
         }

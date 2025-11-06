@@ -4,6 +4,7 @@ import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -24,8 +25,9 @@ public class Transaction {
     @Column(name = "TNO", nullable = false)
     private Integer id;
 
-    @Column(name = "TRANSACTION_ID", nullable = false, unique = true, updatable = false)
-    private String transactionId;
+    @Size(max = 64)
+    @Column(name = "ORDER_ID", nullable = false, unique = true, updatable = false, length = 64)
+    private String orderId;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -68,8 +70,8 @@ public class Transaction {
 
     @PrePersist
     public void generateUuid() {
-        if (this.transactionId == null) {
-            this.transactionId = UUID.randomUUID().toString();
+        if (this.orderId == null) {
+            this.orderId = UUID.randomUUID().toString();
         }
     }
 }

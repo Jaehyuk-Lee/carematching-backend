@@ -24,9 +24,9 @@ public class PendingPayment {
     @Column(name = "ID", nullable = false)
     private Long id;
 
-    @Size(max = 100)
+    @Size(max = 64)
     @NotNull
-    @Column(name = "ORDER_ID", nullable = false, length = 100)
+    @Column(name = "ORDER_ID", nullable = false, length = 64)
     private String orderId;
 
     @NotNull
