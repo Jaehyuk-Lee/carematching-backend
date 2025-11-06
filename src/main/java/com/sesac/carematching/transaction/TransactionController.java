@@ -41,10 +41,10 @@ public class TransactionController {
 
     @Operation(summary = "결제 성공 처리", description = "결제 성공 시 거래를 완료 처리합니다.")
     @PostMapping("/verify/{paymentKey}")
-    public ResponseEntity<TransactionVerifyDTO> tossPaymentVerify(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {
-        String username = tokenAuth.extractUsernameFromToken(request);
+    public ResponseEntity<TransactionVerifyDTO> confirmPayment(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {
+        Integer userId = tokenAuth.extractUserIdFromToken(request);
         String orderId = transactionVerifyDTO.getOrderId();
         Integer price = transactionVerifyDTO.getPrice();
-        return ResponseEntity.ok().body(transactionService.transactionVerify(orderId, price, username, paymentKey));
+        return ResponseEntity.ok().body(transactionService.transactionVerify(orderId, price, userId, paymentKey));
     }
 }

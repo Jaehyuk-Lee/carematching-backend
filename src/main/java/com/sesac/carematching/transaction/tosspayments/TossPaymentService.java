@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.PaymentProvider;
-import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
-import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.PaymentService;
+import com.sesac.carematching.transaction.TransactionRepository;
+import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
+import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
+import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ import java.util.List;
 public class TossPaymentService implements PaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
     private final List<RestTemplate> restTemplateList = createRestTemplateList();
+    private final TransactionRepository transactionRepository;
 
     private List<RestTemplate> createRestTemplateList() {
         int[] timeouts = {5000, 17500, 30000};
@@ -49,7 +52,7 @@ public class TossPaymentService implements PaymentService {
 
     @Override
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
-    public boolean confirmPayment(String orderId, Integer price, String paymentKey) {
+    public TransactionDetailDTO confirmPayment(String orderId, Integer price, String paymentKey) {
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -78,8 +81,8 @@ public class TossPaymentService implements PaymentService {
             RestTemplate restTemplate = restTemplateList.get(index);
             try {
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-                return isPaymentDone(response.getBody(), objectMapper);
-            } catch (RestClientResponseException e) {
+                return paymentDone(response.getBody(), objectMapper);
+            } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 4xx, 5xx이면 터짐
                 handleTossPaymentsError(e);
             } catch (ResourceAccessException e) {
                 handleNetworkError(e, attempt, maxAttempts);
@@ -92,10 +95,15 @@ public class TossPaymentService implements PaymentService {
         throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
     }
 
-    private boolean isPaymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
+    private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
         JsonNode json = objectMapper.readTree(responseBody);
-        String status = json.has("status") ? json.get("status").asText() : null;
-        return "DONE".equals(status);
+        TransactionDetailDTO transactionDetailDTO = new TransactionDetailDTO();
+        transactionDetailDTO.setPaymentProvider(PaymentProvider.TOSS);
+        transactionDetailDTO.setPaymentKey(json.get("paymentKey").asText());
+        transactionDetailDTO.setStatus(json.get("status").asText());
+        transactionDetailDTO.setOrderId(json.get("orderId").asText());
+        transactionDetailDTO.setOrderName(json.get("orderName").asText());
+        return transactionDetailDTO;
     }
 
     private void handleTossPaymentsError(RestClientResponseException e) {
@@ -128,11 +136,10 @@ public class TossPaymentService implements PaymentService {
     }
 
     // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
-    private boolean fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
+    private void fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
         // 결제 정보를 PendingPayment에 저장하는 로직 추가
         PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.TOSS);
         pendingPaymentRepository.save(pending);
         log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
-        return false;
     }
 }

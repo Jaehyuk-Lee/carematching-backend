@@ -25,10 +25,6 @@ public class Transaction {
     @Column(name = "TNO", nullable = false)
     private Integer id;
 
-    @Size(max = 64)
-    @Column(name = "ORDER_ID", nullable = false, unique = true, updatable = false, length = 64)
-    private String orderId;
-
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "CNO", nullable = false)
@@ -39,12 +35,16 @@ public class Transaction {
     @JoinColumn(name = "UNO", nullable = false)
     private User uno;
 
+    @Size(max = 64)
+    @Column(name = "ORDER_ID", nullable = false, unique = true, updatable = false, length = 64)
+    private String orderId;
+
+    @Column(name = "ORDER_NAME")
+    private String orderName;
+
     @NotNull
     @Column(name = "PRICE", nullable = false)
     private Integer price;
-
-    @Column(name = "PAID_PRICE")
-    private Integer paidPrice;
 
     @NotNull
     @Enumerated(EnumType.STRING)

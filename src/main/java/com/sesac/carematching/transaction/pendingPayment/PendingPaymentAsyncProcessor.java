@@ -1,6 +1,7 @@
 package com.sesac.carematching.transaction.pendingPayment;
 
 import com.sesac.carematching.transaction.PaymentService;
+import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -18,13 +19,14 @@ public class PendingPaymentAsyncProcessor {
     @Async("pendingPaymentRetryExecutor")
     public void retrySinglePendingPayment(PendingPayment pending) {
         try {
-            boolean result = paymentService.confirmPayment(pending.getOrderId(), pending.getPrice(), pending.getPgPaymentKey());
+            TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(pending.getOrderId(), pending.getPrice(), pending.getPgPaymentKey());
+            boolean result = transactionDetailDTO.getStatus().equals("DONE");
             if (result) {
                 pending.setConfirmed(true);
                 pending.setFailReason(null);
                 log.info("PendingPayment confirm 성공: orderId={}", pending.getOrderId());
             } else {
-                pending.setFailReason("결제 상태가 DONE이 아님");
+                pending.setFailReason("결제 상태가 DONE이 아님 (confirm 실패)");
             }
         } catch (Exception e) {
             pending.setFailReason(e.getMessage());

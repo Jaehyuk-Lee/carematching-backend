@@ -2,9 +2,9 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
+import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
-import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -71,32 +69,37 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionVerifyDTO transactionVerify(String orderId, Integer price, String username, String paymentKey) {
+    public TransactionVerifyDTO transactionVerify(String orderId, Integer price, Integer userId, String paymentKey) {
+        Transaction transaction = confirmTransaction(orderId, price, userId);
+
         // 결제 검증 - 추상화된 PaymentService 사용
-        boolean isValid = paymentService.confirmPayment(orderId, price, paymentKey);
-        if (!isValid) {
-            throw new IllegalStateException("결제 검증에 실패했습니다.");
-        }
+        TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(orderId, price, paymentKey);
+        // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
+        if (!"DONE".equals(transactionDetailDTO.getStatus()))
+            throw new RuntimeException("결제 승인에 실패했습니다.");
 
-        Transaction transaction = verifyTransaction(orderId, price, username);
-
+        transaction.setPgPaymentKey(paymentKey);
+        transaction.setOrderName(transactionDetailDTO.getOrderName());
         transaction.setStatus(Status.SUCCESS);
-        transaction.setPaidPrice(price);
-
         transactionRepository.save(transaction);
 
         TransactionVerifyDTO result = new TransactionVerifyDTO();
+        result.setOrderId(orderId);
         result.setPrice(price);
         return result;
     }
 
-    private Transaction verifyTransaction(String orderId, Integer price, String username) {
-        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("Transaction ID를 찾을 수 없습니다."));
-        if (!transaction.getUno().getUsername().equals(username)) {
+    private Transaction confirmTransaction(String orderId, Integer paidPrice, Integer paidUserId) {
+        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("Order ID를 찾을 수 없습니다."));
+        Integer shouldId = transaction.getUno().getId();
+        Integer shouldPrice = transaction.getPrice();
+        if (!shouldId.equals(paidUserId)) {
+            log.warn("결제한 사용자 ID: {} | 결제 해야하는 사용자 ID: {}", paidUserId, shouldId);
             throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
         }
-        if (!transaction.getPrice().equals(price)) {
-            throw new IllegalArgumentException("가격 정보가 잘못되었습니다.");
+        if (!shouldPrice.equals(paidPrice)) {
+            log.warn("사용자가 결제한 금액: {} | 결제 해야하는 금액: {}", paidPrice, shouldPrice);
+            throw new IllegalArgumentException("잘못된 가격이 결제되었습니다.");
         }
         return transaction;
     }
