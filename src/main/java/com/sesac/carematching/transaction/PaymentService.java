@@ -12,7 +12,7 @@ public interface PaymentService {
      * @param orderId   주문 ID
      * @param price     결제 금액
      * @param paymentKey PG에서 발급한 결제 키
-     * @return 결제 승인이 완료(DONE)된다면 true (중복 승인 불가)
+     * @return 결제 상세 정보 (status가 DONE이면 승인 완료)
      */
     TransactionDetailDTO confirmPayment(String orderId, Integer price, String paymentKey);
 }

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
-import com.sesac.carematching.transaction.TransactionRepository;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
@@ -32,7 +31,6 @@ import java.util.List;
 public class TossPaymentService implements PaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
     private final List<RestTemplate> restTemplateList = createRestTemplateList();
-    private final TransactionRepository transactionRepository;
 
     private List<RestTemplate> createRestTemplateList() {
         int[] timeouts = {5000, 17500, 30000};
