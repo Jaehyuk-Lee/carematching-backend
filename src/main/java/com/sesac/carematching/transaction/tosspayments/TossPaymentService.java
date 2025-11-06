@@ -95,12 +95,21 @@ public class TossPaymentService implements PaymentService {
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
         JsonNode json = objectMapper.readTree(responseBody);
+        JsonNode paymentKeyNode = json.get("paymentKey");
+        JsonNode statusNode = json.get("status");
+        JsonNode orderIdNode = json.get("orderId");
+        JsonNode orderNameNode = json.get("orderName");
+
+        if (paymentKeyNode == null || statusNode == null || orderIdNode == null || orderNameNode == null) {
+            throw new TossPaymentsException("INVALID_RESPONSE", "TossPayments 응답에 필수 필드가 누락되었습니다");
+        }
+
         TransactionDetailDTO transactionDetailDTO = new TransactionDetailDTO();
         transactionDetailDTO.setPaymentProvider(PaymentProvider.TOSS);
-        transactionDetailDTO.setPaymentKey(json.get("paymentKey").asText());
-        transactionDetailDTO.setStatus(json.get("status").asText());
-        transactionDetailDTO.setOrderId(json.get("orderId").asText());
-        transactionDetailDTO.setOrderName(json.get("orderName").asText());
+        transactionDetailDTO.setPaymentKey(paymentKeyNode.asText());
+        transactionDetailDTO.setStatus(statusNode.asText());
+        transactionDetailDTO.setOrderId(orderIdNode.asText());
+        transactionDetailDTO.setOrderName(orderNameNode.asText());
         return transactionDetailDTO;
     }
 
