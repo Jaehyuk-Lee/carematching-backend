@@ -136,7 +136,7 @@ public class TransactionService {
         TransactionDetailDTO transactionDetailDTO = paymentServices.get(nowPg).confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
         // KakaoPay 응답도 Status
-        if (transactionDetailDTO.getPgStatus() == PgStatus.DONE)
+        if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)
             throw new RuntimeException("결제 승인에 실패했습니다.");
 
         transaction.setPgPaymentKey(paymentKey);
