@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.kakaopay;
+package com.sesac.carematching.transaction.payment.provider.kakao;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

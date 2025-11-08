@@ -1,7 +1,7 @@
 package com.sesac.carematching.transaction.dto;
 
-import com.sesac.carematching.transaction.enums.PaymentProvider;
-import com.sesac.carematching.transaction.enums.PgStatus;
+import com.sesac.carematching.transaction.payment.PaymentProvider;
+import com.sesac.carematching.transaction.payment.PgStatus;
 import lombok.Data;
 
 @Data

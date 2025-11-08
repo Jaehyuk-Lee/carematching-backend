@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.tosspayments;
+package com.sesac.carematching.transaction.payment.provider.toss;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

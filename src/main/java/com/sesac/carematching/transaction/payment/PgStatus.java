@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.enums;
+package com.sesac.carematching.transaction.payment;
 
 public enum PgStatus {
     READY,

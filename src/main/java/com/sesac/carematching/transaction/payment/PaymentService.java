@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction;
+package com.sesac.carematching.transaction.payment;
 
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;

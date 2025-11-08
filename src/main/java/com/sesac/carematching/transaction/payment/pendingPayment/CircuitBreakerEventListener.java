@@ -1,6 +1,6 @@
-package com.sesac.carematching.transaction.pendingPayment;
+package com.sesac.carematching.transaction.payment.pendingPayment;
 
-import com.sesac.carematching.transaction.enums.PaymentProvider;
+import com.sesac.carematching.transaction.payment.PaymentProvider;
 import io.github.resilience4j.circuitbreaker.event.CircuitBreakerOnStateTransitionEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
