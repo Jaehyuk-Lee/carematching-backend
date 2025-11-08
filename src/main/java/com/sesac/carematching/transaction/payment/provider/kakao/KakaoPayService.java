@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sesac.carematching.transaction.TransactionRepository;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.AbstractPaymentService;
@@ -11,7 +12,6 @@ import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.client.PaymentClient;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
-import com.sesac.carematching.transaction.payment.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,8 +35,8 @@ public class KakaoPayService extends AbstractPaymentService {
     @Value("${kakao.secret}")
     private String kakao_secret;
 
-    public KakaoPayService(PendingPaymentRepository pendingPaymentRepository, PaymentClient paymentClient) {
-        super(pendingPaymentRepository);
+    public KakaoPayService(TransactionRepository transactionRepository, PaymentClient paymentClient) {
+        super(transactionRepository);
         this.paymentClient = paymentClient;
     }
 

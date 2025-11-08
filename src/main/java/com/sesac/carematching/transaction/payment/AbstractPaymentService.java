@@ -2,10 +2,12 @@ package com.sesac.carematching.transaction.payment;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sesac.carematching.transaction.Transaction;
+import com.sesac.carematching.transaction.TransactionRepository;
+import com.sesac.carematching.transaction.TransactionStatus;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
-import com.sesac.carematching.transaction.payment.pendingPayment.PendingPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractPaymentService implements PaymentService{
-    private final PendingPaymentRepository pendingPaymentRepository;
+    private final TransactionRepository transactionRepository;
 
     @Override
     public abstract TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request);
@@ -40,24 +42,28 @@ public abstract class AbstractPaymentService implements PaymentService{
 
     /**
      * confirmPayment 서킷브레이커 OPEN시 실행할 공통 fallback 메서드
+     * 기본적으로 Transaction 엔티티의 TransactionStatus를 PENDING_RETRY로 변경
      * 각 PG사에 알맞게 PendingPayment에 추가 저장 가능 (필요시 customizePendingPayment 구현)
      */
     protected TransactionDetailDTO fallbackForConfirm(PaymentConfirmRequestDTO paymentConfirmRequestDTO, Throwable t) {
         PaymentProvider provider = getPaymentProvider();
 
-        PendingPayment pending = new PendingPayment(
-            paymentConfirmRequestDTO.getOrderId(),
-            paymentConfirmRequestDTO.getPaymentKey(),
-            paymentConfirmRequestDTO.getAmount(),
-            provider
-        );
+        Transaction transaction = transactionRepository.findByOrderId(paymentConfirmRequestDTO.getOrderId())
+                .orElseThrow(() -> new IllegalStateException("Fallback: 존재하지 않는 주문 ID에 대한 승인 요청입니다. orderId=" + paymentConfirmRequestDTO.getOrderId()));
+
+        transaction.setTransactionStatus(TransactionStatus.PENDING_RETRY);
+        transaction.setPaymentProvider(provider);
+        transaction.setPgPaymentKey(paymentConfirmRequestDTO.getPaymentKey());
+
+        PendingPayment pending = new PendingPayment();
 
         // 각 PG사에 알맞게 PendingPayment에 추가 저장 (필요시 customizePendingPayment 구현)
         customizePendingPayment(pending, paymentConfirmRequestDTO);
 
-        pendingPaymentRepository.save(pending);
+        transaction.setPendingPayment(pending);
+        transactionRepository.save(transaction);
 
-        log.warn("{} confirm fallback: 결제 임시 저장. orderId={}, reason={}",
+        log.warn("{} confirm fallback: 결제 재시도 상태로 전환. orderId={}, reason={}",
             provider, paymentConfirmRequestDTO.getOrderId(), t.getMessage());
 
         throw new ResponseStatusException(

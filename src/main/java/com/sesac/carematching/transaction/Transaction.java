@@ -2,6 +2,7 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
+import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -18,7 +19,10 @@ import java.util.UUID;
 @Setter
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "transaction")
+@Table(name = "transaction",
+        indexes = @Index(name = "idx_transaction_status", columnList = "STATUS"),
+        uniqueConstraints = @UniqueConstraint(name = "uk_payment_provider_pg_payment_key", columnNames = {"PAYMENT_PROVIDER", "PG_PAYMENT_KEY"})
+)
 public class Transaction {
 
     @Id
@@ -68,6 +72,10 @@ public class Transaction {
     // 카카오페이: tid
     @Column(name = "PG_PAYMENT_KEY")
     private String pgPaymentKey;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "PPNO")
+    private PendingPayment pendingPayment;
 
     @PrePersist
     public void generateUuid() {

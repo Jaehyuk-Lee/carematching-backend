@@ -1,5 +1,5 @@
 package com.sesac.carematching.transaction;
 
 public enum TransactionStatus {
-    PENDING, SUCCESS, FAILED, REFUNDED, CANCELED
+    PENDING, PENDING_RETRY, SUCCESS, FAILED, REFUNDED, CANCELED
 }

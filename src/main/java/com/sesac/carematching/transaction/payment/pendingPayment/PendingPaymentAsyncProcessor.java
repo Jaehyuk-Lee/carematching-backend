@@ -15,62 +15,70 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Component
 public class PendingPaymentAsyncProcessor {
     private final TransactionRepository transactionRepository;
-    private final PendingPaymentRepository pendingPaymentRepository;
     private final Map<PaymentProvider, PaymentService> paymentServices = new EnumMap<>(PaymentProvider.class);
 
-    public PendingPaymentAsyncProcessor(TransactionRepository transactionRepository, PendingPaymentRepository pendingPaymentRepository, PaymentService tossPaymentService, PaymentService kakaoPayService) {
+    public PendingPaymentAsyncProcessor(TransactionRepository transactionRepository, PaymentService tossPaymentService, PaymentService kakaoPayService) {
         this.transactionRepository = transactionRepository;
-        this.pendingPaymentRepository = pendingPaymentRepository;
         this.paymentServices.put(PaymentProvider.TOSS, tossPaymentService);
         this.paymentServices.put(PaymentProvider.KAKAO, kakaoPayService);
     }
 
     @Transactional
     @Async("pendingPaymentRetryExecutor")
-    public void retrySinglePendingPayment(PendingPayment pending) {
-        // Transaction 존재 확인
-        Optional<Transaction> transactionOpt = transactionRepository.findByOrderId(pending.getOrderId());
-        if (transactionOpt.isEmpty()) {
-            log.warn("Transaction 테이블에서 제거된 PendingPayment는 재시도하지 않고 제거합니다. PendingPayment: {}", pending);
-            pendingPaymentRepository.delete(pending);
+    public void retrySinglePendingPayment(Transaction transaction) {
+        // 이미 처리된 건이면 재시도하지 않음 (멱등성)
+        if (transaction.getTransactionStatus() != TransactionStatus.PENDING_RETRY) {
+            log.info("이미 처리된 트랜잭션입니다: orderId={}", transaction.getOrderId());
             return;
         }
 
-        Transaction transaction = transactionOpt.get();
-
-        PaymentConfirmRequestDTO request = PaymentConfirmRequestDTO.builder()
-            .orderId(pending.getOrderId())
-            .amount(pending.getPrice())
-            .paymentKey(pending.getPgPaymentKey())
-            .build();
-        PaymentProvider nowPg = pending.getPaymentProvider();
-        if (nowPg == PaymentProvider.KAKAO) {
-            request.setPgToken(pending.getPgToken());
-            request.setPartnerUserId(pending.getPartnerUserId());
+        PendingPayment pendingPayment = transaction.getPendingPayment();
+        if (pendingPayment == null) {
+            log.error("재시도 대상 트랜잭션에 PendingPayment 정보가 없습니다. orderId: {}", transaction.getOrderId());
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            return;
         }
+
+        PaymentProvider nowPg = transaction.getPaymentProvider();
+        PaymentConfirmRequestDTO request = PaymentConfirmRequestDTO.builder()
+                .orderId(transaction.getOrderId())
+                .amount(transaction.getPrice())
+                .paymentKey(transaction.getPgPaymentKey()) // 초기 결제 시도 시 저장된 paymentKey 사용
+                .build();
+
+        if (nowPg == PaymentProvider.KAKAO) {
+            request.setPgToken(pendingPayment.getPgToken());
+            request.setPartnerUserId(pendingPayment.getPartnerUserId());
+        }
+
         try {
             PaymentService paymentService = this.paymentServices.get(nowPg);
             TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
 
             if (transactionDetailDTO.getPgStatus() == PgStatus.DONE) {
-                pending.setConfirmed(true);
-                pending.setFailReason(null);
                 transaction.setTransactionStatus(TransactionStatus.SUCCESS);
-                transactionRepository.save(transaction);
-                log.info("{} PendingPayment confirm 성공: orderId={}", nowPg, pending.getOrderId());
+                // PG사로부터 받은 최종 paymentKey로 업데이트
+                transaction.setPgPaymentKey(transactionDetailDTO.getPaymentKey());
+                pendingPayment.setFailReason(null);
+                log.info("{} PendingPayment confirm 성공: orderId={}", nowPg, transaction.getOrderId());
             } else {
-                pending.setFailReason("PendingPayment confirm 재시도 실패: 결제 상태 " + transactionDetailDTO.getPgStatus());
+                transaction.setTransactionStatus(TransactionStatus.FAILED);
+                pendingPayment.setFailReason("결제 상태가 DONE이 아님 (confirm 실패): " + transactionDetailDTO.getPgStatus());
+                log.warn("PendingPayment confirm 재시도 실패: orderId={}, pgStatus={}", transaction.getOrderId(), transactionDetailDTO.getPgStatus());
             }
         } catch (Exception e) {
-            pending.setFailReason(e.getMessage());
-            log.warn("PendingPayment confirm 재시도 실패: orderId={}, reason={}", pending.getOrderId(), e.getMessage());
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            pendingPayment.setFailReason(e.getMessage());
+            log.warn("PendingPayment confirm 재시도 중 예외 발생: orderId={}, reason={}", transaction.getOrderId(), e.getMessage());
         }
-        pendingPaymentRepository.save(pending);
+
+        // Transaction 저장 시 PendingPayment도 함께 저장됨 (Cascade)
+        transactionRepository.save(transaction);
     }
 }

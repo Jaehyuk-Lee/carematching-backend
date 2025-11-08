@@ -1,7 +1,7 @@
 package com.sesac.carematching.transaction.payment.pendingPayment;
 
+import com.sesac.carematching.transaction.Transaction;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +10,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import com.sesac.carematching.transaction.payment.PaymentProvider;
 
 @Getter
 @Setter
@@ -21,56 +20,25 @@ import com.sesac.carematching.transaction.payment.PaymentProvider;
 public class PendingPayment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID", nullable = false)
-    private Long id;
+    @Column(name = "PPNO", nullable = false)
+    private Integer id;
 
-    @Size(max = 64)
-    @NotNull
-    @Column(name = "ORDER_ID", nullable = false, length = 64)
-    private String orderId;
-
-    @NotNull
-    @Column(name = "PRICE", nullable = false)
-    private Integer price;
-
-    @NotNull
-    @Column(name = "CONFIRMED", nullable = false)
-    private Boolean confirmed = false;
+    @OneToOne(mappedBy = "pendingPayment")
+    private Transaction transaction;
 
     @Size(max = 255)
     @Column(name = "FAIL_REASON")
     private String failReason;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "PAYMENT_PROVIDER", nullable = false)
-    private PaymentProvider paymentProvider;
-
-    // PG사에서 발급한 고유 거래 ID
-    // (PG사마다 부르는 이름이 다름)
-    // 토스페이먼츠: paymentKey
-    // 카카오페이: tid
-    @Column(name = "PG_PAYMENT_KEY")
-    private String pgPaymentKey;
-
-    // 카카오페이 전용
+    // 카카오페이 "단건 결제 승인" (confirm) 전용
     @Column(name = "PARTNER_USER_ID")
     private Integer partnerUserId;
 
-    // 카카오페이 전용
+    // 카카오페이 "단건 결제 승인" (confirm) 전용
     @Column(name = "PG_TOKEN")
     private String pgToken;
 
-    @NotNull
     @CreatedDate
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
-
-    public PendingPayment(String orderId, String pgPaymentKey, Integer price, PaymentProvider paymentProvider) {
-        this.orderId = orderId;
-        this.pgPaymentKey = pgPaymentKey;
-        this.price = price;
-        this.confirmed = false;
-        this.paymentProvider = paymentProvider;
-    }
 }

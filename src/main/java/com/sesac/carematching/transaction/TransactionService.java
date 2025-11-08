@@ -104,17 +104,17 @@ public class TransactionService {
         String orderId = transactionConfirmDTO.getOrderId();
         Integer price = transactionConfirmDTO.getPrice();
         Transaction transaction = verifyTransaction(orderId, price, userId);
-        PaymentProvider nowPg = transaction.getPaymentProvider();
+        PaymentProvider pg = transaction.getPaymentProvider();
 
         // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
         PaymentConfirmRequestDTO request;
-        if (nowPg == PaymentProvider.TOSS) {
+        if (pg == PaymentProvider.TOSS) {
             request = PaymentConfirmRequestDTO.builder()
                 .orderId(orderId)
                 .amount(price)
                 .paymentKey(paymentKey)
                 .build();
-        } else if (nowPg == PaymentProvider.KAKAO) {
+        } else if (pg == PaymentProvider.KAKAO) {
             String pgToken = transactionConfirmDTO.getPgToken();
             if (pgToken == null) {
                 throw new ResponseStatusException(
@@ -126,16 +126,16 @@ public class TransactionService {
                 .orderId(orderId)
                 .amount(price)
                 .paymentKey(paymentKey)
-                .partnerUserId(userId)
-                .pgToken(pgToken)
+                .partnerUserId(userId) // 카카오: userId 추가 필요
+                .pgToken(pgToken) // 카카오: pgToken 추가 필요
                 .build();
         } else {
-            throw new RuntimeException("confirm이 지원되지 않는 PG사: " + nowPg);
+            throw new RuntimeException("confirm이 지원되지 않는 PG사: " + pg);
         }
 
-        TransactionDetailDTO transactionDetailDTO = paymentServices.get(nowPg).confirmPayment(request);
+        TransactionDetailDTO transactionDetailDTO = paymentServices.get(pg).confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
-        // KakaoPay 응답도 Status
+        // KakaoPay 응답도 승인 성공시 자체적으로 Status를 DONE으로 설정하였음
         if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)
             throw new RuntimeException("결제 승인에 실패했습니다.");
 
@@ -161,6 +161,11 @@ public class TransactionService {
         if (!shouldPrice.equals(paidPrice)) {
             log.warn("사용자가 결제한 금액: {} | 결제 해야하는 금액: {}", paidPrice, shouldPrice);
             throw new IllegalArgumentException("잘못된 가격이 결제되었습니다.");
+        }
+        if (transaction.getTransactionStatus() == TransactionStatus.SUCCESS ||
+            transaction.getTransactionStatus() == TransactionStatus.CANCELED ||
+            transaction.getTransactionStatus() == TransactionStatus.REFUNDED) {
+            throw new IllegalStateException("이미 한 번 승인된 거래 입니다.");
         }
         return transaction;
     }
