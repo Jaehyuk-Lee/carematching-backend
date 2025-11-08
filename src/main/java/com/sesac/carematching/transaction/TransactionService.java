@@ -3,18 +3,18 @@ package com.sesac.carematching.transaction;
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
-import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
+import com.sesac.carematching.transaction.payment.PaymentGatewayRouter;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
+import com.sesac.carematching.transaction.payment.PaymentService;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.provider.kakao.KakaoPayService;
-import com.sesac.carematching.transaction.payment.PaymentService;
 import com.sesac.carematching.transaction.payment.provider.toss.TossPaymentService;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,26 +34,22 @@ public class TransactionService {
     private final CaregiverService caregiverService;
     private final UserService userService;
     private final Map<PaymentProvider, PaymentService> paymentServices = new EnumMap<>(PaymentProvider.class);
-
-    // 유사시 런타임 도중에 PG사 교체해주는 필드
-    @Setter
-    private PaymentProvider nowPg;
+    private final PaymentGatewayRouter paymentGatewayRouter;
 
     public TransactionService(TransactionRepository transactionRepository,
                               CaregiverService caregiverService,
                               UserService userService,
                               TossPaymentService tossPaymentService,
-                              KakaoPayService kakaoPayService) {
+                              KakaoPayService kakaoPayService,
+                              PaymentGatewayRouter paymentGatewayRouter) {
 
         this.transactionRepository = transactionRepository;
         this.caregiverService = caregiverService;
         this.userService = userService;
+        this.paymentGatewayRouter = paymentGatewayRouter;
 
         this.paymentServices.put(PaymentProvider.TOSS, tossPaymentService);
         this.paymentServices.put(PaymentProvider.KAKAO, kakaoPayService);
-
-        // 기본 PG사 설정
-        this.nowPg = PaymentProvider.TOSS;
     }
 
     @Transactional
@@ -66,7 +62,7 @@ public class TransactionService {
         transaction.setUno(user);
         transaction.setPrice(caregiver.getSalary());
         transaction.setTransactionStatus(TransactionStatus.PENDING);
-        transaction.setPaymentProvider(nowPg);
+        transaction.setPaymentProvider(paymentGatewayRouter.getActiveProvider());
 
         return transactionRepository.save(transaction);
     }
