@@ -55,7 +55,12 @@ public class TossPaymentService extends AbstractPaymentService {
         headers.set("Authorization", "Basic " + encodedAuth);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> entity = new HttpEntity<>(requestData.toString(), headers);
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             ResponseEntity<String> response = paymentClient.send(url, entity);
