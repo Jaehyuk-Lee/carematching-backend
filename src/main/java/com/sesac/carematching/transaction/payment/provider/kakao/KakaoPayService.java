@@ -98,8 +98,9 @@ public class KakaoPayService extends AbstractPaymentService {
         transactionDetailDTO.setOrderName(orderNameNode.asText());
         // KakaoPay는 TossPayments API와 달리 Status를 직접 전달해주지 않음.
         // approved_at 필드가 있으면 승인된 것으로 간주
-        // NULL인 경우, 승인되지 않았는데 HTTP 200 메시지가 온 것이 이상하니 UNKNOWN 처리
-        if (approvedAtNode.isNull()) {
+        // 비어있는 경우, 승인되지 않았는데 HTTP 200 메시지가 온 것이 이상하니 UNKNOWN 처리
+        if (approvedAtNode.asText().isEmpty()) {
+            log.warn("KakaoPay 응답에서 approved_at 필드가 비어있습니다.");
             transactionDetailDTO.setPgStatus(PgStatus.UNKNOWN);
         } else {
             transactionDetailDTO.setPgStatus(PgStatus.DONE);
