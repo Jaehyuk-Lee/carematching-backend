@@ -1,5 +1,6 @@
 package com.sesac.carematching.transaction.payment;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
@@ -18,12 +19,14 @@ public abstract class AbstractPaymentService implements PaymentService{
     @Override
     public abstract TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request);
 
-    protected <T> T parsePaymentError(String errorJson, Class<T> valueType) {
+    protected <T extends RuntimeException> T parsePaymentError(String errorJson, Class<T> valueType) {
         try {
             return new ObjectMapper().readValue(errorJson, valueType);
-        } catch (Exception ex) {
-            log.warn("{} 파싱 실패: {}", valueType.getSimpleName(), errorJson, ex);
-            return null;
+        } catch (JsonProcessingException e) {
+            log.warn("{} 파싱 실패: {}", valueType.getSimpleName(), errorJson, e);
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(valueType.getSimpleName() + " 파싱 실패: " + errorJson);
         }
     }
 
