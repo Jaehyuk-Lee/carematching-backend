@@ -21,7 +21,7 @@ PG사에서 결제한 거래의 고유한 값
 
 ## KakaoPay 고유 값 정보
 ### pgToken
-결제할 때, `tid`와 함께 `pgToken`이 같이 날아옴. 둘 다 보내야 함.
+사용자가 결제할 때, `tid`와 함께 `pgToken`이 같이 날아옴. 승인할 때 둘 다 보내야 함.
 
 ### partnerUserId
 내부 시스템의 사용자 ID
