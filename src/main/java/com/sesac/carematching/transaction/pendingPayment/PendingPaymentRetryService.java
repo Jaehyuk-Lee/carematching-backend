@@ -27,7 +27,7 @@ public class PendingPaymentRetryService {
     private final PendingPaymentAsyncProcessor pendingPaymentAsyncProcessor;
     private final ThreadPoolTaskExecutor pendingPaymentRetryExecutor;
 
-    public void retryPendingPaymentsForProvider(PaymentProvider provider) {
+    public void retryPendingPaymentsForProvider(PaymentProvider paymentProvider) {
         Instant expireLimit = Instant.now().minusSeconds(PAYMENT_EXPIRE_MINUTES * 60);
         // 상태 변화에 따른 페이징 깨짐 방지 (Executor가 엔티티의 상태를 변화시킴)
         // lastId로 처리 상태 저장 + Pageable로 정렬
@@ -50,7 +50,7 @@ public class PendingPaymentRetryService {
             }
 
             List<PendingPayment> pendings = pendingPaymentRepository.findByPaymentProviderAndConfirmedFalseAndCreatedAtAfterAndIdGreaterThan(
-                provider,    // PG사 이름
+                paymentProvider, // PG사 이름
                 expireLimit, // 시간이 만료된 결제는 처리하지 않음
                 lastId,      // 마지막 처리한 ID
                 pageable     // (page=0, size=200, sort=id,ASC)

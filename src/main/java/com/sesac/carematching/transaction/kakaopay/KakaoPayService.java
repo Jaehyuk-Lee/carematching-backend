@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction.tosspayments;
+package com.sesac.carematching.transaction.kakaopay;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
-import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
@@ -23,15 +22,22 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TossPaymentService implements PaymentService {
+public class KakaoPayService implements PaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
     private final List<RestTemplate> restTemplateList = createRestTemplateList();
+
+    // 카카오페이 API CID
+    @Value("${kakao.cid}")
+    private String kakao_cid;
+
+    // 카카오페이 API 시크릿키
+    @Value("${kakao.secret}")
+    private String kakao_secret;
 
     private List<RestTemplate> createRestTemplateList() {
         int[] timeouts = {5000, 17500, 30000};
@@ -45,36 +51,31 @@ public class TossPaymentService implements PaymentService {
         return list;
     }
 
-    // 토스 페이먼츠 API 시크릿키
-    @Value("${toss.secret}")
-    private String tossSecret;
-
     @Override
-    @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
+    @CircuitBreaker(name = "KakaoPay_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
-        String url = "https://api.tosspayments.com/v1/payments/confirm";
+        // 카카오페이API 승인 문서: https://developers.kakaopay.com/docs/payment/online/single-payment#payment-approve-request
+        String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
         ObjectMapper objectMapper = new ObjectMapper();
 
         // 요청 데이터 생성
         ObjectNode requestData = objectMapper.createObjectNode();
-        requestData.put("orderId", request.getOrderId());
-        requestData.put("amount", request.getAmount());
-        requestData.put("paymentKey", request.getPaymentKey());
+        requestData.put("cid", kakao_cid);
+        requestData.put("partner_order_id", request.getOrderId());
+        requestData.put("total_amount", request.getAmount());
+        requestData.put("tid", request.getPaymentKey());
+        requestData.put("pg_Token", request.getPgToken());
 
         HttpHeaders headers = new HttpHeaders();
-        // Toss Payments는 Basic 인증 사용 - "username:password" 형식을 사용함 (password는 필요없어서 맨 뒤에 콜론만 추가)
-        String encodedAuth = Base64.getEncoder().encodeToString((tossSecret + ":").getBytes());
-        headers.set("Authorization", "Basic " + encodedAuth);
+        // KakaoPay 인증 헤더 구조 - Authorization: SECRET_KEY ${SECRET_KEY}
+        headers.set("Authorization", "SECRET_KEY " + kakao_secret);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> entity = new HttpEntity<>(requestData.toString(), headers);
 
         int maxAttempts = 3;
-        // 사용자 경험을 고려했을 때는 5초가 적당하지만,
-        // 모든 경우를 커버하기 위해서는 30초를 권장한다.
-        // 토스페이먼츠 개발자 센터 내용: https://techchat.tosspayments.com/m/1261254382864039996
-        int baseTimeout = 5000; // 5초 - UX 기준
-        int maxTimeout = 30000; // 30초 - 모든 경우 커버
+        // 카카오페이에서는 특별히 권장하는 timeout이 없어, 토스페이먼츠 API의 timeout을 그대로 사용함
+        // 3회 시도 중: 5초 / 17.5초 / 30초
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             int index = Math.max(0, Math.min(attempt - 1, restTemplateList.size() - 1));
             RestTemplate restTemplate = restTemplateList.get(index);
@@ -82,57 +83,66 @@ public class TossPaymentService implements PaymentService {
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
                 return paymentDone(response.getBody(), objectMapper);
             } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 4xx, 5xx이면 터짐
-                handleTossPaymentsError(e);
+                handleKakaoPayError(e);
             } catch (ResourceAccessException e) {
                 handleNetworkError(e, attempt, maxAttempts);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
-        throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
+        throw new RuntimeException("KakaoPay 결제 검증 중 알 수 없는 오류 발생");
     }
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
         JsonNode json = objectMapper.readTree(responseBody);
-        JsonNode paymentKeyNode = json.get("paymentKey");
-        JsonNode statusNode = json.get("status");
-        JsonNode orderIdNode = json.get("orderId");
-        JsonNode orderNameNode = json.get("orderName");
+        // 변수명은 가능하면 TossPayments API 기준으로 작성함
+        // 각 PG사에 대응하는 항목 이름은 docs/PG/values.md 참고
+        JsonNode paymentKeyNode = json.get("tid");
+        JsonNode approvedAtNode = json.get("approved_at");
+        JsonNode orderIdNode = json.get("partner_order_id");
+        JsonNode orderNameNode = json.get("item_name");
 
-        if (paymentKeyNode == null || statusNode == null || orderIdNode == null || orderNameNode == null) {
-            throw new TossPaymentsException("INVALID_RESPONSE", "TossPayments 응답에 필수 필드가 누락되었습니다");
+        if (paymentKeyNode == null || approvedAtNode == null || orderIdNode == null || orderNameNode == null) {
+            throw new RuntimeException("KakaoPay 응답에 필수 필드가 누락되었습니다");
         }
 
         TransactionDetailDTO transactionDetailDTO = new TransactionDetailDTO();
-        transactionDetailDTO.setPaymentProvider(PaymentProvider.TOSS);
+        transactionDetailDTO.setPaymentProvider(PaymentProvider.KAKAO);
         transactionDetailDTO.setPaymentKey(paymentKeyNode.asText());
-        transactionDetailDTO.setStatus(statusNode.asText());
         transactionDetailDTO.setOrderId(orderIdNode.asText());
         transactionDetailDTO.setOrderName(orderNameNode.asText());
+        // KakaoPay는 TossPayments API와 달리 Status를 직접 전달해주지 않음.
+        // approved_at 필드가 있으면 승인된 것으로 간주
+        // NULL인 경우, 승인되지 않았는데 HTTP 200 메시지가 온 것이 이상하니 UNKNOWN_ERROR 처리
+        if (approvedAtNode.isNull()) {
+            transactionDetailDTO.setStatus("UNKNOWN_ERROR");
+        } else {
+            transactionDetailDTO.setStatus("DONE");
+        }
         return transactionDetailDTO;
     }
 
-    private void handleTossPaymentsError(RestClientResponseException e) {
-        TossPaymentsErrorResponseDTO errorResponse = parseTossPaymentsError(e.getResponseBodyAsString());
+    private void handleKakaoPayError(RestClientResponseException e) {
+        KakaoPayException errorResponse = parseKakaoPayError(e.getResponseBodyAsString());
         if (errorResponse != null) {
-            throw new TossPaymentsException(errorResponse.getCode(), errorResponse.getMessage());
+            throw new KakaoPayException(errorResponse.getCode(), errorResponse.getMessage());
         }
-        throw new TossPaymentsException("UNKNOWN_ERROR", "TossPayments 결제 검증 중 알 수 없는 오류 발생");
+        throw new KakaoPayException("UNKNOWN_ERROR", "KakaoPay 결제 검증 중 알 수 없는 오류 발생");
     }
 
-    private TossPaymentsErrorResponseDTO parseTossPaymentsError(String errorJson) {
+    private KakaoPayException parseKakaoPayError(String errorJson) {
         try {
-            return new ObjectMapper().readValue(errorJson, TossPaymentsErrorResponseDTO.class);
+            return new ObjectMapper().readValue(errorJson, KakaoPayException.class);
         } catch (Exception ex) {
-            log.warn("TossPayments 에러 메시지 파싱 실패: {}", errorJson);
+            log.warn("KakaoPay 에러 메시지 파싱 실패: {}", errorJson);
             return null;
         }
     }
 
     private void handleNetworkError(ResourceAccessException e, int attempt, int maxAttempts) {
-        log.warn("TossPayments 네트워크 오류 발생 ({}회차): {}", attempt, e.getMessage());
+        log.warn("KakaoPay 네트워크 오류 발생 ({}회차): {}", attempt, e.getMessage());
         if (attempt == maxAttempts) {
-            throw new RuntimeException("TossPayments 네트워크 오류: 최대 재시도 횟수 초과", e);
+            throw new RuntimeException("KakaoPay 네트워크 오류: 최대 재시도 횟수 초과", e);
         }
         try {
             Thread.sleep(1000L * attempt);
@@ -144,9 +154,9 @@ public class TossPaymentService implements PaymentService {
     // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
     private TransactionDetailDTO fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
         // 결제 정보를 PendingPayment에 저장하는 로직 추가
-        PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.TOSS);
+        PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.KAKAO);
         pendingPaymentRepository.save(pending);
-        log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
-        throw new RuntimeException("TossPayments 결제 승인 실패: PendingPayment에 보관", t);
+        log.warn("KakaoPay confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
+        throw new RuntimeException("KakaoPay 결제 승인 실패: PendingPayment에 보관", t);
     }
 }

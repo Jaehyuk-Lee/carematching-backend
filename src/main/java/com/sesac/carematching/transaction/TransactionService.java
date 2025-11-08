@@ -2,20 +2,28 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
+import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
-import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
+import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
+import com.sesac.carematching.transaction.kakaopay.KakaoPayService;
+import com.sesac.carematching.transaction.tosspayments.TossPaymentService;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.security.Provider;
+import java.util.EnumMap;
+import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TransactionService {
     // 결제 가능 시간 (분)
     private final static long MAX_PAYMENT_MINUTE = 30;
@@ -23,7 +31,28 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CaregiverService caregiverService;
     private final UserService userService;
-    private final PaymentService paymentService;
+    private final Map<PaymentProvider, PaymentService> paymentServices = new EnumMap<>(PaymentProvider.class);
+
+    // 유사시 런타임 도중에 PG사 교체해주는 필드
+    @Setter
+    private PaymentProvider nowPg;
+
+    public TransactionService(TransactionRepository transactionRepository,
+                              CaregiverService caregiverService,
+                              UserService userService,
+                              TossPaymentService tossPaymentService,
+                              KakaoPayService kakaoPayService) {
+
+        this.transactionRepository = transactionRepository;
+        this.caregiverService = caregiverService;
+        this.userService = userService;
+
+        this.paymentServices.put(PaymentProvider.TOSS, tossPaymentService);
+        this.paymentServices.put(PaymentProvider.KAKAO, kakaoPayService);
+
+        // 기본 PG사 설정
+        this.nowPg = PaymentProvider.TOSS;
+    }
 
     @Transactional
     public Transaction saveTransaction(String username, String caregiverUsername) {
@@ -35,7 +64,7 @@ public class TransactionService {
         transaction.setUno(user);
         transaction.setPrice(caregiver.getSalary());
         transaction.setStatus(Status.PENDING);
-        transaction.setPaymentProvider(PaymentProvider.TOSS);
+        transaction.setPaymentProvider(nowPg);
 
         return transactionRepository.save(transaction);
     }
@@ -69,12 +98,42 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionVerifyDTO confirmTransaction(String orderId, Integer price, Integer userId, String paymentKey) {
+    public TransactionConfirmDTO confirmTransaction(TransactionConfirmDTO transactionConfirmDTO, Integer userId, String paymentKey) {
+        String orderId = transactionConfirmDTO.getOrderId();
+        Integer price = transactionConfirmDTO.getPrice();
         Transaction transaction = verifyTransaction(orderId, price, userId);
+        PaymentProvider nowPg = transaction.getPaymentProvider();
 
-        // 결제 검증 - 추상화된 PaymentService 사용
-        TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(orderId, price, paymentKey);
+        // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
+        PaymentConfirmRequestDTO request;
+        if (nowPg == PaymentProvider.TOSS) {
+            request = PaymentConfirmRequestDTO.builder()
+                .orderId(orderId)
+                .amount(price)
+                .paymentKey(paymentKey)
+                .build();
+        } else if (nowPg == PaymentProvider.KAKAO) {
+            String pgToken = transactionConfirmDTO.getPgToken();
+            if (pgToken == null) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "KakaoPay 결제시 pgToken은 필수값입니다. pgToken이 비어 있습니다"
+                );
+            }
+            request = PaymentConfirmRequestDTO.builder()
+                .orderId(orderId)
+                .amount(price)
+                .paymentKey(paymentKey)
+                .partnerUserId(userId)
+                .pgToken(pgToken)
+                .build();
+        } else {
+            throw new RuntimeException("confirm이 지원되지 않는 PG사: " + nowPg);
+        }
+
+        TransactionDetailDTO transactionDetailDTO = paymentServices.get(nowPg).confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
+        // KakaoPay 응답도 Status
         if (!"DONE".equals(transactionDetailDTO.getStatus()))
             throw new RuntimeException("결제 승인에 실패했습니다.");
 
@@ -83,7 +142,7 @@ public class TransactionService {
         transaction.setStatus(Status.SUCCESS);
         transactionRepository.save(transaction);
 
-        TransactionVerifyDTO result = new TransactionVerifyDTO();
+        TransactionConfirmDTO result = new TransactionConfirmDTO();
         result.setOrderId(orderId);
         result.setPrice(price);
         return result;

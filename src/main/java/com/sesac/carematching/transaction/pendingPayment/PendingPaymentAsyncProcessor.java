@@ -1,26 +1,43 @@
 package com.sesac.carematching.transaction.pendingPayment;
 
+import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
+import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class PendingPaymentAsyncProcessor {
     private final PendingPaymentRepository pendingPaymentRepository;
-    private final PaymentService paymentService;
+    private final Map<PaymentProvider, PaymentService> paymentServices = new EnumMap<>(PaymentProvider.class);
+
+    public PendingPaymentAsyncProcessor(PendingPaymentRepository pendingPaymentRepository, PaymentService tossPaymentService, PaymentService kakaoPayService) {
+        this.pendingPaymentRepository = pendingPaymentRepository;
+        this.paymentServices.put(PaymentProvider.TOSS, tossPaymentService);
+        this.paymentServices.put(PaymentProvider.KAKAO, kakaoPayService);
+    }
 
     @Transactional
     @Async("pendingPaymentRetryExecutor")
     public void retrySinglePendingPayment(PendingPayment pending) {
+        PaymentConfirmRequestDTO request = PaymentConfirmRequestDTO.builder()
+            .orderId(pending.getOrderId())
+            .amount(pending.getPrice())
+            .paymentKey(pending.getPgPaymentKey())
+            .build();
+        PaymentProvider nowPg = pending.getPaymentProvider();
         try {
-            TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(pending.getOrderId(), pending.getPrice(), pending.getPgPaymentKey());
+            PaymentService paymentService = this.paymentServices.get(nowPg);
+            TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
             boolean result = transactionDetailDTO.getStatus().equals("DONE");
+
             if (result) {
                 pending.setConfirmed(true);
                 pending.setFailReason(null);

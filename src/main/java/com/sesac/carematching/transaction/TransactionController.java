@@ -43,8 +43,6 @@ public class TransactionController {
     @PostMapping("/verify/{paymentKey}")
     public ResponseEntity<TransactionConfirmDTO> confirmPayment(@RequestBody TransactionConfirmDTO transactionConfirmDTO, @PathVariable String paymentKey, HttpServletRequest request) {
         Integer userId = tokenAuth.extractUserIdFromToken(request);
-        String orderId = transactionVerifyDTO.getOrderId();
-        Integer price = transactionVerifyDTO.getPrice();
-        return ResponseEntity.ok().body(transactionService.confirmTransaction(orderId, price, userId, paymentKey));
+        return ResponseEntity.ok().body(transactionService.confirmTransaction(transactionConfirmDTO, userId, paymentKey));
     }
 }
