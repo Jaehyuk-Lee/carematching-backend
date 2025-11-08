@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -31,14 +32,17 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TossPaymentService extends AbstractPaymentService {
-    private final PendingPaymentRepository pendingPaymentRepository;
     private final PaymentClient paymentClient;
 
     // 토스 페이먼츠 API 시크릿키
     @Value("${toss.secret}")
     private String tossSecret;
+
+    public TossPaymentService(PendingPaymentRepository pendingPaymentRepository, PaymentClient paymentClient) {
+        super(pendingPaymentRepository);
+        this.paymentClient = paymentClient;
+    }
 
     @Override
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
@@ -70,6 +74,11 @@ public class TossPaymentService extends AbstractPaymentService {
         }
     }
 
+    @Override
+    protected PaymentProvider getPaymentProvider() {
+        return PaymentProvider.TOSS;
+    }
+
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
         JsonNode json = objectMapper.readTree(responseBody);
         JsonNode paymentKeyNode = json.get("paymentKey");
@@ -88,14 +97,5 @@ public class TossPaymentService extends AbstractPaymentService {
         transactionDetailDTO.setOrderId(orderIdNode.asText());
         transactionDetailDTO.setOrderName(orderNameNode.asText());
         return transactionDetailDTO;
-    }
-
-    // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
-    private TransactionDetailDTO fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
-        // 결제 정보를 PendingPayment에 저장하는 로직 추가
-        PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.TOSS);
-        pendingPaymentRepository.save(pending);
-        log.warn("TossPayments confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
-        throw new RuntimeException("TossPayments 결제 승인 실패: PendingPayment에 보관", t);
     }
 }

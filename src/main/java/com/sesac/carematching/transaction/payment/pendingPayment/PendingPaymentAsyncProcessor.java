@@ -34,6 +34,10 @@ public class PendingPaymentAsyncProcessor {
             .paymentKey(pending.getPgPaymentKey())
             .build();
         PaymentProvider nowPg = pending.getPaymentProvider();
+        if (nowPg == PaymentProvider.KAKAO) {
+            request.setPgToken(pending.getPgToken());
+            request.setPartnerUserId(pending.getPartnerUserId());
+        }
         try {
             PaymentService paymentService = this.paymentServices.get(nowPg);
             TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);

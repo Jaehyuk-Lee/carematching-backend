@@ -2,8 +2,10 @@ package com.sesac.carematching.transaction.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
 public class PaymentConfirmRequestDTO {
     // 필드명은 Toss 가능하면 Toss 기준으로 작성하였으며,

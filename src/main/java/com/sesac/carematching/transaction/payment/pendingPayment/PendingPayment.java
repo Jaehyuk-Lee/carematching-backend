@@ -53,6 +53,14 @@ public class PendingPayment {
     @Column(name = "PG_PAYMENT_KEY")
     private String pgPaymentKey;
 
+    // 카카오페이 전용
+    @Column(name = "PARTNER_USER_ID")
+    private Integer partnerUserId;
+
+    // 카카오페이 전용
+    @Column(name = "PG_TOKEN")
+    private String pgToken;
+
     @NotNull
     @CreatedDate
     @Column(name = "CREATED_AT", nullable = false)

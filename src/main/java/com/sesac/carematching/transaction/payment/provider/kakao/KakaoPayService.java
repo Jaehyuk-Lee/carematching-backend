@@ -24,15 +24,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KakaoPayService extends AbstractPaymentService {
-    private final PendingPaymentRepository pendingPaymentRepository;
     private final PaymentClient paymentClient;
 
     // 카카오페이 API CID
@@ -42,6 +41,11 @@ public class KakaoPayService extends AbstractPaymentService {
     // 카카오페이 API 시크릿키
     @Value("${kakao.secret}")
     private String kakao_secret;
+
+    public KakaoPayService(PendingPaymentRepository pendingPaymentRepository, PaymentClient paymentClient) {
+        super(pendingPaymentRepository);
+        this.paymentClient = paymentClient;
+    }
 
     @Override
     @CircuitBreaker(name = "KakaoPay_Confirm", fallbackMethod = "fallbackForConfirm")
@@ -75,6 +79,11 @@ public class KakaoPayService extends AbstractPaymentService {
         }
     }
 
+    @Override
+    protected PaymentProvider getPaymentProvider() {
+        return PaymentProvider.KAKAO;
+    }
+
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
         JsonNode json = objectMapper.readTree(responseBody);
         // 변수명은 가능하면 TossPayments API 기준으로 작성함
@@ -104,12 +113,8 @@ public class KakaoPayService extends AbstractPaymentService {
         return transactionDetailDTO;
     }
 
-    // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
-    private TransactionDetailDTO fallbackForConfirm(String orderId, Integer price, String paymentKey, Throwable t) {
-        // 결제 정보를 PendingPayment에 저장하는 로직 추가
-        PendingPayment pending = new PendingPayment(orderId, paymentKey, price, PaymentProvider.KAKAO);
-        pendingPaymentRepository.save(pending);
-        log.warn("KakaoPay confirm fallback: 결제 임시 저장. orderId={}, reason={}", orderId, t.getMessage());
-        throw new RuntimeException("KakaoPay 결제 승인 실패: PendingPayment에 보관", t);
+    protected void customizePendingPayment(PendingPayment pending, PaymentConfirmRequestDTO request) {
+        pending.setPgToken(request.getPgToken());
+        pending.setPartnerUserId(request.getPartnerUserId());
     }
 }
