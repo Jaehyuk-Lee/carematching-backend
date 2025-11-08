@@ -1,27 +1,13 @@
-각 값의 이름은 TossPayments API의 이름을 기준으로 작성되었으며,  
-타 PG사에서는 다른 이름으로 사용하는 경우 각 항목 아래 추가로 이름을 작성함
+# PG사별 필드명 비교
 
-## PG사 공통 값 정보
-### orderId
-내부 시스템의 결제 번호 (unique)
+각 값의 이름은 TossPayments API를 기준으로 작성되었으며, 타 PG사에서는 다른 이름으로 사용하는 경우를 함께 표기합니다.
 
-* KakaoPay - `partner_order_id`
+### PG사 필드 정보
 
-### amount
-결제한 총 금액
-
-* KakaoPay - `total_amount`
-
-### paymentKey
-PG사에서 결제한 거래의 고유한 값
-
-결제 건 마다 고유한 값을 갖기에 결제를 구분하는데 중요함
-
-* KakaoPay - `tid`
-
-## KakaoPay 고유 값 정보
-### pgToken
-사용자가 결제할 때, `tid`와 함께 `pgToken`이 같이 날아옴. 승인할 때 둘 다 보내야 함.
-
-### partnerUserId
-내부 시스템의 사용자 ID
+| 기준 필드명 (Toss) | 설명 | 카카오페이 필드명 | 비고 |
+| :--- | :--- | :--- | :--- |
+| **`orderId`** | 내부 시스템의 고유 결제 번호 | `partner_order_id` | |
+| **`amount`** | 결제 총액 | `total_amount` | |
+| **`paymentKey`** | PG사의 고유 거래 키 | `tid` | 결제 건을 구분하는 중요 값 |
+| (없음) | 결제 승인용 임시 토큰 | `pg_token` | 카카오페이 단건 결제 승인에만 필요 |
+| (없음) | 내부 시스템의 사용자 ID | `partner_user_id` | 카카오페이 단건 결제 승인에만 필요 |
