@@ -3,6 +3,7 @@ package com.sesac.carematching.transaction.pendingPayment;
 import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.PgStatus;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -36,12 +37,11 @@ public class PendingPaymentAsyncProcessor {
         try {
             PaymentService paymentService = this.paymentServices.get(nowPg);
             TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
-            boolean result = transactionDetailDTO.getStatus().equals("DONE");
 
-            if (result) {
+            if (transactionDetailDTO.getStatus() == PgStatus.DONE) {
                 pending.setConfirmed(true);
                 pending.setFailReason(null);
-                log.info("PendingPayment confirm 성공: orderId={}", pending.getOrderId());
+                log.info("{} PendingPayment confirm 성공: orderId={}", nowPg, pending.getOrderId());
             } else {
                 pending.setFailReason("결제 상태가 DONE이 아님 (confirm 실패)");
             }

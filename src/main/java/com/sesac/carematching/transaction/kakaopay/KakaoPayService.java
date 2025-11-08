@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.PgStatus;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
@@ -113,11 +114,11 @@ public class KakaoPayService implements PaymentService {
         transactionDetailDTO.setOrderName(orderNameNode.asText());
         // KakaoPay는 TossPayments API와 달리 Status를 직접 전달해주지 않음.
         // approved_at 필드가 있으면 승인된 것으로 간주
-        // NULL인 경우, 승인되지 않았는데 HTTP 200 메시지가 온 것이 이상하니 UNKNOWN_ERROR 처리
+        // NULL인 경우, 승인되지 않았는데 HTTP 200 메시지가 온 것이 이상하니 UNKNOWN 처리
         if (approvedAtNode.isNull()) {
-            transactionDetailDTO.setStatus("UNKNOWN_ERROR");
+            transactionDetailDTO.setStatus(PgStatus.UNKNOWN);
         } else {
-            transactionDetailDTO.setStatus("DONE");
+            transactionDetailDTO.setStatus(PgStatus.DONE);
         }
         return transactionDetailDTO;
     }

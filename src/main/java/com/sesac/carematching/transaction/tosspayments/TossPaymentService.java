@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.PgStatus;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
@@ -106,7 +107,7 @@ public class TossPaymentService implements PaymentService {
         TransactionDetailDTO transactionDetailDTO = new TransactionDetailDTO();
         transactionDetailDTO.setPaymentProvider(PaymentProvider.TOSS);
         transactionDetailDTO.setPaymentKey(paymentKeyNode.asText());
-        transactionDetailDTO.setStatus(statusNode.asText());
+        transactionDetailDTO.setStatus(PgStatus.valueOf(statusNode.asText()));
         transactionDetailDTO.setOrderId(orderIdNode.asText());
         transactionDetailDTO.setOrderName(orderNameNode.asText());
         return transactionDetailDTO;
