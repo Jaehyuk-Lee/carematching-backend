@@ -60,6 +60,7 @@ public class KakaoPayService extends AbstractPaymentService {
         requestData.put("partner_order_id", request.getOrderId());
         requestData.put("total_amount", request.getAmount());
         requestData.put("tid", request.getPaymentKey());
+        requestData.put("partner_user_id", request.getPartnerUserId());
         requestData.put("pg_Token", request.getPgToken());
 
         HttpHeaders headers = new HttpHeaders();
