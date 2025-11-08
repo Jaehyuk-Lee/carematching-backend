@@ -18,6 +18,9 @@ public class PaymentGatewayRouter {
     }
 
     public synchronized void switchActiveProvider(PaymentProvider newProvider) {
+        if (newProvider == null) {
+            throw new IllegalArgumentException("PaymentProvider는 null일 수 없습니다.");
+        }
         if (this.activeProvider != newProvider) {
             log.warn("[PG사 라우팅 변경] 이전: {} -> 신규: {}.", this.activeProvider, newProvider);
             this.activeProvider = newProvider;

@@ -73,6 +73,11 @@ public class PendingPaymentAsyncProcessor {
                 log.warn("PendingPayment confirm 재시도 실패: orderId={}, pgStatus={}", transaction.getOrderId(), transactionDetailDTO.getPgStatus());
             }
         } catch (Exception e) {
+            if (transaction.getTransactionStatus() != TransactionStatus.PENDING_RETRY) {
+                log.warn("재시도 중 예외 발생했으나 트랜잭션 상태가 이미 변경됨. orderId={}, 현재 상태={}",
+                    transaction.getOrderId(), transaction.getTransactionStatus());
+                return;
+            }
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             pendingPayment.setFailReason(e.getMessage());
             log.warn("PendingPayment confirm 재시도 중 예외 발생: orderId={}, reason={}", transaction.getOrderId(), e.getMessage());

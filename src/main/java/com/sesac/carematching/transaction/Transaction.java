@@ -20,7 +20,7 @@ import java.util.UUID;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "transaction",
-        indexes = @Index(name = "idx_transaction_status", columnList = "STATUS"),
+        indexes = @Index(name = "idx_transaction_status_provider_created", columnList = "STATUS, PAYMENT_PROVIDER, CREATED_AT"),
         uniqueConstraints = @UniqueConstraint(name = "uk_payment_provider_pg_payment_key", columnNames = {"PAYMENT_PROVIDER", "PG_PAYMENT_KEY"})
 )
 public class Transaction {

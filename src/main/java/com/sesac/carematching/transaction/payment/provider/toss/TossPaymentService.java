@@ -86,7 +86,12 @@ public class TossPaymentService extends AbstractPaymentService {
         TransactionDetailDTO transactionDetailDTO = new TransactionDetailDTO();
         transactionDetailDTO.setPaymentProvider(PaymentProvider.TOSS);
         transactionDetailDTO.setPaymentKey(paymentKeyNode.asText());
-        transactionDetailDTO.setPgStatus(PgStatus.valueOf(statusNode.asText()));
+        try {
+            transactionDetailDTO.setPgStatus(PgStatus.valueOf(statusNode.asText()));
+        } catch (IllegalArgumentException e) {
+            log.warn("알 수 없는 TossPayments 상태값: {}", statusNode.asText());
+            transactionDetailDTO.setPgStatus(PgStatus.UNKNOWN);
+        }
         transactionDetailDTO.setOrderId(orderIdNode.asText());
         transactionDetailDTO.setOrderName(orderNameNode.asText());
         return transactionDetailDTO;
