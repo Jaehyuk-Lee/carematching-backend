@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
@@ -15,6 +16,7 @@ import com.sesac.carematching.transaction.payment.pendingPayment.PendingPaymentR
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.ajp.AbstractAjpProtocol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -29,7 +31,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class KakaoPayService implements PaymentService {
+public class KakaoPayService extends AbstractPaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
     private final PaymentClient paymentClient;
 
@@ -67,11 +69,10 @@ public class KakaoPayService implements PaymentService {
             ResponseEntity<String> response = paymentClient.send(url, entity);
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
-            handleKakaoPayError(e);
+            throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        throw new RuntimeException("KakaoPay 결제 검증 중 알 수 없는 오류 발생");
     }
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
@@ -101,23 +102,6 @@ public class KakaoPayService implements PaymentService {
             transactionDetailDTO.setPgStatus(PgStatus.DONE);
         }
         return transactionDetailDTO;
-    }
-
-    private void handleKakaoPayError(RestClientResponseException e) {
-        KakaoPayException errorResponse = parseKakaoPayError(e.getResponseBodyAsString());
-        if (errorResponse != null) {
-            throw new KakaoPayException(errorResponse.getCode(), errorResponse.getMessage());
-        }
-        throw new KakaoPayException("UNKNOWN_ERROR", "KakaoPay 결제 검증 중 알 수 없는 오류 발생");
-    }
-
-    private KakaoPayException parseKakaoPayError(String errorJson) {
-        try {
-            return new ObjectMapper().readValue(errorJson, KakaoPayException.class);
-        } catch (Exception ex) {
-            log.warn("KakaoPay 에러 메시지 파싱 실패: {}", errorJson);
-            return null;
-        }
     }
 
     // fallbackMethod는 서킷 브레이커가 open일 때 호출됨

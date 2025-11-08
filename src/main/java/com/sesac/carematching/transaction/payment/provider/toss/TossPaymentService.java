@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
@@ -31,7 +32,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TossPaymentService implements PaymentService {
+public class TossPaymentService extends AbstractPaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
     private final PaymentClient paymentClient;
 
@@ -63,11 +64,10 @@ public class TossPaymentService implements PaymentService {
             ResponseEntity<String> response = paymentClient.send(url, entity);
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
-            handleTossPaymentsError(e);
+            throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
     }
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
@@ -88,23 +88,6 @@ public class TossPaymentService implements PaymentService {
         transactionDetailDTO.setOrderId(orderIdNode.asText());
         transactionDetailDTO.setOrderName(orderNameNode.asText());
         return transactionDetailDTO;
-    }
-
-    private void handleTossPaymentsError(RestClientResponseException e) {
-        TossPaymentsErrorResponseDTO errorResponse = parseTossPaymentsError(e.getResponseBodyAsString());
-        if (errorResponse != null) {
-            throw new TossPaymentsException(errorResponse.getCode(), errorResponse.getMessage());
-        }
-        throw new TossPaymentsException("UNKNOWN_ERROR", "TossPayments 결제 검증 중 알 수 없는 오류 발생");
-    }
-
-    private TossPaymentsErrorResponseDTO parseTossPaymentsError(String errorJson) {
-        try {
-            return new ObjectMapper().readValue(errorJson, TossPaymentsErrorResponseDTO.class);
-        } catch (Exception ex) {
-            log.warn("TossPayments 에러 메시지 파싱 실패: {}", errorJson);
-            return null;
-        }
     }
 
     // fallbackMethod는 서킷 브레이커가 open일 때 호출됨
