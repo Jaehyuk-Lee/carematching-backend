@@ -1,6 +1,8 @@
 package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
+import com.sesac.carematching.transaction.enums.PaymentProvider;
+import com.sesac.carematching.transaction.enums.TransactionStatus;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -49,7 +51,7 @@ public class Transaction {
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "STATUS", nullable = false)
-    private Status status = Status.PENDING;
+    private TransactionStatus transactionStatus = TransactionStatus.PENDING;
 
     @NotNull
     @CreatedDate

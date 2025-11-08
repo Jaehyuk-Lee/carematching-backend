@@ -1,6 +1,6 @@
 package com.sesac.carematching.transaction.pendingPayment;
 
-import com.sesac.carematching.transaction.PaymentProvider;
+import com.sesac.carematching.transaction.enums.PaymentProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

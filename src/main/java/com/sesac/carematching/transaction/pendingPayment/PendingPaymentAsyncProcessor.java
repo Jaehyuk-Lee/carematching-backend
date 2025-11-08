@@ -1,9 +1,9 @@
 package com.sesac.carematching.transaction.pendingPayment;
 
-import com.sesac.carematching.transaction.PaymentProvider;
+import com.sesac.carematching.transaction.enums.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
-import com.sesac.carematching.transaction.dto.PgStatus;
+import com.sesac.carematching.transaction.enums.PgStatus;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -38,7 +38,7 @@ public class PendingPaymentAsyncProcessor {
             PaymentService paymentService = this.paymentServices.get(nowPg);
             TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
 
-            if (transactionDetailDTO.getStatus() == PgStatus.DONE) {
+            if (transactionDetailDTO.getPgStatus() == PgStatus.DONE) {
                 pending.setConfirmed(true);
                 pending.setFailReason(null);
                 log.info("{} PendingPayment confirm 성공: orderId={}", nowPg, pending.getOrderId());

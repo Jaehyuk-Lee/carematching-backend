@@ -1,6 +1,6 @@
 package com.sesac.carematching.transaction.pendingPayment;
 
-import com.sesac.carematching.transaction.PaymentProvider;
+import com.sesac.carematching.transaction.enums.PaymentProvider;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 

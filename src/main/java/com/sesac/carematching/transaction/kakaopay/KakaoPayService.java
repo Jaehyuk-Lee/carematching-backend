@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.sesac.carematching.transaction.PaymentProvider;
+import com.sesac.carematching.transaction.enums.PaymentProvider;
 import com.sesac.carematching.transaction.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
-import com.sesac.carematching.transaction.dto.PgStatus;
+import com.sesac.carematching.transaction.enums.PgStatus;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.pendingPayment.PendingPaymentRepository;
@@ -116,9 +116,9 @@ public class KakaoPayService implements PaymentService {
         // approved_at 필드가 있으면 승인된 것으로 간주
         // NULL인 경우, 승인되지 않았는데 HTTP 200 메시지가 온 것이 이상하니 UNKNOWN 처리
         if (approvedAtNode.isNull()) {
-            transactionDetailDTO.setStatus(PgStatus.UNKNOWN);
+            transactionDetailDTO.setPgStatus(PgStatus.UNKNOWN);
         } else {
-            transactionDetailDTO.setStatus(PgStatus.DONE);
+            transactionDetailDTO.setPgStatus(PgStatus.DONE);
         }
         return transactionDetailDTO;
     }

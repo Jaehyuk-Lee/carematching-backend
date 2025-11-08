@@ -6,6 +6,9 @@ import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
+import com.sesac.carematching.transaction.enums.PaymentProvider;
+import com.sesac.carematching.transaction.enums.PgStatus;
+import com.sesac.carematching.transaction.enums.TransactionStatus;
 import com.sesac.carematching.transaction.kakaopay.KakaoPayService;
 import com.sesac.carematching.transaction.tosspayments.TossPaymentService;
 import com.sesac.carematching.user.User;
@@ -18,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.Provider;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -63,7 +65,7 @@ public class TransactionService {
         transaction.setCno(caregiver);
         transaction.setUno(user);
         transaction.setPrice(caregiver.getSalary());
-        transaction.setStatus(Status.PENDING);
+        transaction.setTransactionStatus(TransactionStatus.PENDING);
         transaction.setPaymentProvider(nowPg);
 
         return transactionRepository.save(transaction);
@@ -77,7 +79,7 @@ public class TransactionService {
             throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
         }
 
-        if (transaction.getStatus() != Status.PENDING) {
+        if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
             throw new IllegalStateException("결제 대기 중인 주문이 아닙니다.");
         }
 
@@ -134,12 +136,12 @@ public class TransactionService {
         TransactionDetailDTO transactionDetailDTO = paymentServices.get(nowPg).confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
         // KakaoPay 응답도 Status
-        if (!"DONE".equals(transactionDetailDTO.getStatus()))
+        if (transactionDetailDTO.getPgStatus() == PgStatus.DONE)
             throw new RuntimeException("결제 승인에 실패했습니다.");
 
         transaction.setPgPaymentKey(paymentKey);
         transaction.setOrderName(transactionDetailDTO.getOrderName());
-        transaction.setStatus(Status.SUCCESS);
+        transaction.setTransactionStatus(TransactionStatus.SUCCESS);
         transactionRepository.save(transaction);
 
         TransactionConfirmDTO result = new TransactionConfirmDTO();
