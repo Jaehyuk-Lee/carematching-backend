@@ -9,6 +9,7 @@ import com.sesac.carematching.transaction.payment.PaymentService;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
+import com.sesac.carematching.transaction.payment.client.PaymentClient;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -30,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KakaoPayService implements PaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
-    private final List<RestTemplate> restTemplateList = createRestTemplateList();
+    private final PaymentClient paymentClient;
 
     // 카카오페이 API CID
     @Value("${kakao.cid}")
@@ -39,18 +40,6 @@ public class KakaoPayService implements PaymentService {
     // 카카오페이 API 시크릿키
     @Value("${kakao.secret}")
     private String kakao_secret;
-
-    private List<RestTemplate> createRestTemplateList() {
-        int[] timeouts = {5000, 17500, 30000};
-        List<RestTemplate> list = new ArrayList<>();
-        for (int timeout : timeouts) {
-            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-            factory.setConnectTimeout(timeout);
-            factory.setReadTimeout(timeout);
-            list.add(new RestTemplate(factory));
-        }
-        return list;
-    }
 
     @Override
     @CircuitBreaker(name = "KakaoPay_Confirm", fallbackMethod = "fallbackForConfirm")
@@ -74,22 +63,13 @@ public class KakaoPayService implements PaymentService {
 
         HttpEntity<String> entity = new HttpEntity<>(requestData.toString(), headers);
 
-        int maxAttempts = 3;
-        // 카카오페이에서는 특별히 권장하는 timeout이 없어, 토스페이먼츠 API의 timeout을 그대로 사용함
-        // 3회 시도 중: 5초 / 17.5초 / 30초
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            int index = Math.max(0, Math.min(attempt - 1, restTemplateList.size() - 1));
-            RestTemplate restTemplate = restTemplateList.get(index);
-            try {
-                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-                return paymentDone(response.getBody(), objectMapper);
-            } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 4xx, 5xx이면 터짐
-                handleKakaoPayError(e);
-            } catch (ResourceAccessException e) {
-                handleNetworkError(e, attempt, maxAttempts);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            ResponseEntity<String> response = paymentClient.send(url, entity);
+            return paymentDone(response.getBody(), objectMapper);
+        } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
+            handleKakaoPayError(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         throw new RuntimeException("KakaoPay 결제 검증 중 알 수 없는 오류 발생");
     }
@@ -137,18 +117,6 @@ public class KakaoPayService implements PaymentService {
         } catch (Exception ex) {
             log.warn("KakaoPay 에러 메시지 파싱 실패: {}", errorJson);
             return null;
-        }
-    }
-
-    private void handleNetworkError(ResourceAccessException e, int attempt, int maxAttempts) {
-        log.warn("KakaoPay 네트워크 오류 발생 ({}회차): {}", attempt, e.getMessage());
-        if (attempt == maxAttempts) {
-            throw new RuntimeException("KakaoPay 네트워크 오류: 최대 재시도 횟수 초과", e);
-        }
-        try {
-            Thread.sleep(1000L * attempt);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
         }
     }
 

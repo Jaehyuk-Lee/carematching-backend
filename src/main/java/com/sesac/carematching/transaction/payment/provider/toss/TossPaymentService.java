@@ -10,6 +10,7 @@ import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.dto.TossPaymentsErrorResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
+import com.sesac.carematching.transaction.payment.client.PaymentClient;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPaymentRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -32,19 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TossPaymentService implements PaymentService {
     private final PendingPaymentRepository pendingPaymentRepository;
-    private final List<RestTemplate> restTemplateList = createRestTemplateList();
-
-    private List<RestTemplate> createRestTemplateList() {
-        int[] timeouts = {5000, 17500, 30000};
-        List<RestTemplate> list = new ArrayList<>();
-        for (int timeout : timeouts) {
-            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-            factory.setConnectTimeout(timeout);
-            factory.setReadTimeout(timeout);
-            list.add(new RestTemplate(factory));
-        }
-        return list;
-    }
+    private final PaymentClient paymentClient;
 
     // 토스 페이먼츠 API 시크릿키
     @Value("${toss.secret}")
@@ -70,25 +59,13 @@ public class TossPaymentService implements PaymentService {
 
         HttpEntity<String> entity = new HttpEntity<>(requestData.toString(), headers);
 
-        int maxAttempts = 3;
-        // 사용자 경험을 고려했을 때는 5초가 적당하지만,
-        // 모든 경우를 커버하기 위해서는 30초를 권장한다.
-        // 토스페이먼츠 개발자 센터 내용: https://techchat.tosspayments.com/m/1261254382864039996
-        int baseTimeout = 5000; // 5초 - UX 기준
-        int maxTimeout = 30000; // 30초 - 모든 경우 커버
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            int index = Math.max(0, Math.min(attempt - 1, restTemplateList.size() - 1));
-            RestTemplate restTemplate = restTemplateList.get(index);
-            try {
-                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-                return paymentDone(response.getBody(), objectMapper);
-            } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 4xx, 5xx이면 터짐
-                handleTossPaymentsError(e);
-            } catch (ResourceAccessException e) {
-                handleNetworkError(e, attempt, maxAttempts);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            ResponseEntity<String> response = paymentClient.send(url, entity);
+            return paymentDone(response.getBody(), objectMapper);
+        } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
+            handleTossPaymentsError(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         throw new RuntimeException("TossPayments 결제 검증 중 알 수 없는 오류 발생");
     }
@@ -127,18 +104,6 @@ public class TossPaymentService implements PaymentService {
         } catch (Exception ex) {
             log.warn("TossPayments 에러 메시지 파싱 실패: {}", errorJson);
             return null;
-        }
-    }
-
-    private void handleNetworkError(ResourceAccessException e, int attempt, int maxAttempts) {
-        log.warn("TossPayments 네트워크 오류 발생 ({}회차): {}", attempt, e.getMessage());
-        if (attempt == maxAttempts) {
-            throw new RuntimeException("TossPayments 네트워크 오류: 최대 재시도 횟수 초과", e);
-        }
-        try {
-            Thread.sleep(1000L * attempt);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
         }
     }
 
