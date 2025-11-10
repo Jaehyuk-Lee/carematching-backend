@@ -32,7 +32,7 @@ public class PendingPayment {
 
     // 카카오페이 "단건 결제 승인" (confirm) 전용
     @Column(name = "PARTNER_USER_ID")
-    private Integer partnerUserId;
+    private String partnerUserId;
 
     // 카카오페이 "단건 결제 승인" (confirm) 전용
     @Column(name = "PG_TOKEN")

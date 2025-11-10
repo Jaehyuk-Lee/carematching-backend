@@ -24,5 +24,5 @@ public class PaymentConfirmRequestDTO {
 
     // PG사별 필드 - Kakao
     private String pgToken;
-    private Integer partnerUserId;
+    private String partnerUserId;
 }

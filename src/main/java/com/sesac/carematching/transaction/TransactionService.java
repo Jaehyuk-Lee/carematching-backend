@@ -122,7 +122,7 @@ public class TransactionService {
                 .orderId(orderId)
                 .amount(price)
                 .paymentKey(paymentKey)
-                .partnerUserId(userId) // 카카오: userId 추가 필요
+                .partnerUserId(userId.toString()) // 카카오: userId 추가 필요
                 .pgToken(pgToken) // 카카오: pgToken 추가 필요
                 .build();
         } else {
