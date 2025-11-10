@@ -91,7 +91,21 @@ kakao:
 resilience4j:
   circuitbreaker:
     instances:
-      tossPaymentsConfirm:
+      tossPayments_Confirm:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
+      KakaoPay_Ready:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
+      KakaoPay_Confirm:
         registerHealthIndicator: true
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
