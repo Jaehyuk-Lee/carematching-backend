@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractPaymentService implements PaymentService{
-    private final TransactionRepository transactionRepository;
+    protected final TransactionRepository transactionRepository;
 
     @Override
     public abstract TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request);

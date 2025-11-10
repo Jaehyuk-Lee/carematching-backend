@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.TransactionRepository;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
@@ -35,6 +37,11 @@ public class TossPaymentService extends AbstractPaymentService {
     public TossPaymentService(TransactionRepository transactionRepository, PaymentClient paymentClient) {
         super(transactionRepository);
         this.paymentClient = paymentClient;
+    }
+
+    @Override
+    public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
+        throw new UnsupportedOperationException("Payment Ready is not supported on Toss Payments");
     }
 
     @Override
