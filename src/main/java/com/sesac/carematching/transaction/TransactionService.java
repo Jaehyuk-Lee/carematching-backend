@@ -135,14 +135,14 @@ public class TransactionService {
         if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)
             throw new RuntimeException("결제 승인에 실패했습니다.");
 
-        transaction.setPgPaymentKey(paymentKey);
+        transaction.setPgPaymentKey(transactionDetailDTO.getPaymentKey());
         transaction.setOrderName(transactionDetailDTO.getOrderName());
         transaction.setTransactionStatus(TransactionStatus.SUCCESS);
         transactionRepository.save(transaction);
 
         TransactionConfirmDTO result = new TransactionConfirmDTO();
-        result.setOrderId(orderId);
-        result.setPrice(price);
+        result.setOrderId(transaction.getOrderId());
+        result.setPrice(transaction.getPrice());
         return result;
     }
 
