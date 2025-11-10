@@ -104,12 +104,14 @@ public class TransactionService {
 
         // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
         PaymentConfirmRequestDTO request;
+        TransactionDetailDTO transactionDetailDTO;
         if (pg == PaymentProvider.TOSS) {
             request = PaymentConfirmRequestDTO.builder()
                 .orderId(orderId)
                 .amount(price)
                 .paymentKey(paymentKey)
                 .build();
+            transactionDetailDTO = paymentServices.get(pg).confirmPayment(request);
         } else if (pg == PaymentProvider.KAKAO) {
             String pgToken = transactionConfirmDTO.getPgToken();
             if (pgToken == null) {
@@ -125,11 +127,11 @@ public class TransactionService {
                 .partnerUserId(userId.toString()) // 카카오: userId 추가 필요
                 .pgToken(pgToken) // 카카오: pgToken 추가 필요
                 .build();
+            transactionDetailDTO = paymentServices.get(pg).confirmPayment(request);
         } else {
             throw new RuntimeException("confirm이 지원되지 않는 PG사: " + pg);
         }
 
-        TransactionDetailDTO transactionDetailDTO = paymentServices.get(pg).confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
         // KakaoPay 응답도 승인 성공시 자체적으로 Status를 DONE으로 설정하였음
         if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)
