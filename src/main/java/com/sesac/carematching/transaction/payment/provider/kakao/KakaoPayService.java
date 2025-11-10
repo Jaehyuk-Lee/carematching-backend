@@ -123,7 +123,7 @@ public class KakaoPayService extends AbstractPaymentService {
         requestData.put("total_amount", request.getAmount());
         requestData.put("tid", request.getPaymentKey());
         requestData.put("partner_user_id", request.getPartnerUserId());
-        requestData.put("pg_Token", request.getPgToken());
+        requestData.put("pg_token", request.getPgToken());
 
         HttpHeaders headers = new HttpHeaders();
         // KakaoPay 인증 헤더 구조 - Authorization: SECRET_KEY ${SECRET_KEY}
