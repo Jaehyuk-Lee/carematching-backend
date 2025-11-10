@@ -132,20 +132,33 @@ public class TransactionService {
         throw new RuntimeException("Ready가 지원되지 않는 PG사: " + pg);
     }
 
+    public String getPaymentKey(String orderId) {
+        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
+        return transaction.getPgPaymentKey();
+    }
+
     @Transactional
     public TransactionConfirmDTO confirmTransaction(TransactionConfirmDTO transactionConfirmDTO, Integer userId, String paymentKey) {
         String orderId = transactionConfirmDTO.getOrderId();
-        Integer price = transactionConfirmDTO.getPrice();
-        Transaction transaction = verifyTransaction(orderId, price, userId);
+        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
         PaymentProvider pg = transaction.getPaymentProvider();
+
+        if (!isConfirmableTransaction(transaction)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 한 번 승인된 거래입니다.");
+        }
 
         // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
         PaymentConfirmRequestDTO request;
         TransactionDetailDTO transactionDetailDTO;
         if (pg == PaymentProvider.TOSS) {
+            // 토스페이먼츠는 자체적으로 결제 가격 확인 과정 추가
+            if (!transactionConfirmDTO.getPrice().equals(transaction.getPrice())) {
+                transaction.setTransactionStatus(TransactionStatus.FAILED);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
+            }
             request = PaymentConfirmRequestDTO.builder()
                 .orderId(orderId)
-                .amount(price)
+                .amount(transaction.getPrice())
                 .paymentKey(paymentKey)
                 .build();
             transactionDetailDTO = paymentServices.get(pg).confirmPayment(request);
@@ -159,7 +172,7 @@ public class TransactionService {
             }
             request = PaymentConfirmRequestDTO.builder()
                 .orderId(orderId)
-                .amount(price)
+                .amount(transaction.getPrice())
                 .paymentKey(paymentKey)
                 .partnerUserId(userId.toString()) // 카카오: userId 추가 필요
                 .pgToken(pgToken) // 카카오: pgToken 추가 필요
@@ -185,23 +198,9 @@ public class TransactionService {
         return result;
     }
 
-    private Transaction verifyTransaction(String orderId, Integer paidPrice, Integer paidUserId) {
-        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("Order ID를 찾을 수 없습니다."));
-        Integer shouldId = transaction.getUno().getId();
-        Integer shouldPrice = transaction.getPrice();
-        if (!shouldId.equals(paidUserId)) {
-            log.warn("결제한 사용자 ID: {} | 결제 해야하는 사용자 ID: {}", paidUserId, shouldId);
-            throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
-        }
-        if (!shouldPrice.equals(paidPrice)) {
-            log.warn("사용자가 결제한 금액: {} | 결제 해야하는 금액: {}", paidPrice, shouldPrice);
-            throw new IllegalArgumentException("잘못된 가격이 결제되었습니다.");
-        }
-        if (transaction.getTransactionStatus() == TransactionStatus.SUCCESS ||
-            transaction.getTransactionStatus() == TransactionStatus.CANCELED ||
-            transaction.getTransactionStatus() == TransactionStatus.REFUNDED) {
-            throw new IllegalStateException("이미 한 번 승인된 거래 입니다.");
-        }
-        return transaction;
+    private boolean isConfirmableTransaction(Transaction transaction) {
+        return transaction.getTransactionStatus() != TransactionStatus.SUCCESS &&
+            transaction.getTransactionStatus() != TransactionStatus.CANCELED &&
+            transaction.getTransactionStatus() != TransactionStatus.REFUNDED;
     }
 }

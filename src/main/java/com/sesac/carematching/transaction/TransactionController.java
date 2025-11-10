@@ -54,6 +54,12 @@ public class TransactionController {
         return ResponseEntity.ok().body(transactionService.selectPg(orderId, userId));
     }
 
+    @Operation(summary = "paymentKey(tid) 조회", description = "orderId를 기반으로 paymentKey(tid)를 응답합니다.")
+    @GetMapping("/kakao/getPaymentKey/{orderId}")
+    public ResponseEntity<String> getPaymentKey(@PathVariable String orderId) {
+        return ResponseEntity.ok().body(transactionService.getPaymentKey(orderId));
+    }
+
     @Operation(summary = "결제 성공 처리", description = "결제 성공 시 거래를 완료 처리합니다.")
     @PostMapping("/verify/{paymentKey}")
     public ResponseEntity<TransactionConfirmDTO> confirmPayment(@RequestBody TransactionConfirmDTO transactionConfirmDTO, @PathVariable String paymentKey, HttpServletRequest request) {
