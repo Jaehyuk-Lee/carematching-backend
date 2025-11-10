@@ -4,9 +4,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class TransactionVerifyDTO {
+public class TransactionConfirmDTO {
     @NotNull
     private String orderId;
     @NotNull
     private Integer price;
+    // Nullable (KakaoPay에서만 사용)
+    private String pgToken;
 }

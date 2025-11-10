@@ -1,4 +1,4 @@
-package com.sesac.carematching.transaction;
+package com.sesac.carematching.transaction.payment;
 
 /**
  * 결제 제공자 식별자

@@ -2,7 +2,7 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.transaction.dto.TransactionGetDTO;
 import com.sesac.carematching.transaction.dto.TransactionAddDTO;
-import com.sesac.carematching.transaction.dto.TransactionVerifyDTO;
+import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
 import com.sesac.carematching.util.TokenAuth;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -41,10 +41,8 @@ public class TransactionController {
 
     @Operation(summary = "결제 성공 처리", description = "결제 성공 시 거래를 완료 처리합니다.")
     @PostMapping("/verify/{paymentKey}")
-    public ResponseEntity<TransactionVerifyDTO> confirmPayment(@RequestBody TransactionVerifyDTO transactionVerifyDTO, @PathVariable String paymentKey, HttpServletRequest request) {
+    public ResponseEntity<TransactionConfirmDTO> confirmPayment(@RequestBody TransactionConfirmDTO transactionConfirmDTO, @PathVariable String paymentKey, HttpServletRequest request) {
         Integer userId = tokenAuth.extractUserIdFromToken(request);
-        String orderId = transactionVerifyDTO.getOrderId();
-        Integer price = transactionVerifyDTO.getPrice();
-        return ResponseEntity.ok().body(transactionService.confirmTransaction(orderId, price, userId, paymentKey));
+        return ResponseEntity.ok().body(transactionService.confirmTransaction(transactionConfirmDTO, userId, paymentKey));
     }
 }

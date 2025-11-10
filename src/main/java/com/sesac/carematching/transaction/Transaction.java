@@ -1,6 +1,8 @@
 package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
+import com.sesac.carematching.transaction.payment.PaymentProvider;
+import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +19,10 @@ import java.util.UUID;
 @Setter
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "transaction")
+@Table(name = "transaction",
+        indexes = @Index(name = "idx_transaction_status_provider_created", columnList = "STATUS, PAYMENT_PROVIDER, CREATED_AT"),
+        uniqueConstraints = @UniqueConstraint(name = "uk_payment_provider_pg_payment_key", columnNames = {"PAYMENT_PROVIDER", "PG_PAYMENT_KEY"})
+)
 public class Transaction {
 
     @Id
@@ -49,7 +54,7 @@ public class Transaction {
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "STATUS", nullable = false)
-    private Status status = Status.PENDING;
+    private TransactionStatus transactionStatus = TransactionStatus.PENDING;
 
     @NotNull
     @CreatedDate
@@ -67,6 +72,17 @@ public class Transaction {
     // 카카오페이: tid
     @Column(name = "PG_PAYMENT_KEY")
     private String pgPaymentKey;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "PPNO")
+    private PendingPayment pendingPayment;
+
+    public void setPendingPayment(PendingPayment pendingPayment) {
+        this.pendingPayment = pendingPayment;
+        if (pendingPayment != null && pendingPayment.getTransaction() != this) {
+            pendingPayment.setTransaction(this);
+        }
+    }
 
     @PrePersist
     public void generateUuid() {
