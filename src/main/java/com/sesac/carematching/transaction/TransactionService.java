@@ -2,10 +2,7 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
-import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
-import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
-import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
-import com.sesac.carematching.transaction.dto.TransactionGetDTO;
+import com.sesac.carematching.transaction.dto.*;
 import com.sesac.carematching.transaction.payment.PaymentGatewayRouter;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PaymentService;
@@ -62,9 +59,25 @@ public class TransactionService {
         transaction.setUno(user);
         transaction.setPrice(caregiver.getSalary());
         transaction.setTransactionStatus(TransactionStatus.PENDING);
-        transaction.setPaymentProvider(paymentGatewayRouter.getActiveProvider());
 
         return transactionRepository.save(transaction);
+    }
+
+    @Transactional
+    public SelectPgResponseDTO selectPg(String orderId, Integer userId) {
+        Transaction transaction = transactionRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
+
+        if (!transaction.getUno().getId().equals(userId)) {
+            throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
+        }
+
+        transaction.setPaymentProvider(paymentGatewayRouter.getActiveProvider());
+        transactionRepository.save(transaction);
+
+        SelectPgResponseDTO selectPgResponseDTO = new SelectPgResponseDTO();
+        selectPgResponseDTO.setPg(transaction.getPaymentProvider());
+        return selectPgResponseDTO;
     }
 
     @Transactional(readOnly = true)

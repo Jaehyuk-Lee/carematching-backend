@@ -32,6 +32,13 @@ public class TransactionController {
         return ResponseEntity.ok(transaction.getOrderId());
     }
 
+    @Operation(summary = "PG사 선택", description = "거래에 사용할 PG사를 선택해줍니다.")
+    @PostMapping("/select-pg/{orderId}")
+    public ResponseEntity<?> selectPg(@PathVariable String orderId, HttpServletRequest request) {
+        Integer userId = tokenAuth.extractUserIdFromToken(request);
+        return ResponseEntity.ok().body(transactionService.selectPg(orderId, userId));
+    }
+
     @Operation(summary = "거래 단건 조회", description = "거래 ID로 거래 정보를 조회합니다.")
     @GetMapping("/{orderId}")
     public ResponseEntity<TransactionGetDTO> getTransactionById(@PathVariable String orderId, HttpServletRequest request) {

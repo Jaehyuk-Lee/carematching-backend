@@ -61,9 +61,8 @@ public class Transaction {
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "PAYMENT_PROVIDER", nullable = false)
+    @Column(name = "PAYMENT_PROVIDER")
     private PaymentProvider paymentProvider;
 
     // PG사에서 발급한 고유 거래 ID
