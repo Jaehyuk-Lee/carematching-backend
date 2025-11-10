@@ -77,6 +77,13 @@ public class Transaction {
     @JoinColumn(name = "PPNO")
     private PendingPayment pendingPayment;
 
+    public void setPendingPayment(PendingPayment pendingPayment) {
+        this.pendingPayment = pendingPayment;
+        if (pendingPayment != null && pendingPayment.getTransaction() != this) {
+            pendingPayment.setTransaction(this);
+        }
+    }
+
     @PrePersist
     public void generateUuid() {
         if (this.orderId == null) {
