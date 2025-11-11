@@ -14,6 +14,7 @@ import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -50,10 +51,10 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction makeTransaction(String username, String caregiverUsername) {
+    public Transaction makeTransaction(Integer userId, String caregiverUsername) {
         Transaction transaction = new Transaction();
         Caregiver caregiver = caregiverService.findByUserId(userService.getUserInfo(caregiverUsername).getId());
-        User user = userService.getUserInfo(username);
+        User user = userService.findById(userId);
 
         transaction.setCno(caregiver);
         transaction.setOrderName(caregiver.getRealName());
@@ -65,12 +66,8 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public TransactionGetDTO getTransaction(String orderId, String username) {
-        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
-
-        if (!transaction.getUno().getUsername().equals(username)) {
-            throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
-        }
+    public TransactionGetDTO getTransaction(String orderId, Integer userId) {
+        Transaction transaction = getValidTransaction(orderId, userId);
 
         if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
             throw new IllegalStateException("결제 대기 중인 주문이 아닙니다.");
@@ -94,12 +91,7 @@ public class TransactionService {
 
     @Transactional
     public SelectPgResponseDTO selectPg(String orderId, Integer userId) {
-        Transaction transaction = transactionRepository.findByOrderId(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
-
-        if (!transaction.getUno().getId().equals(userId)) {
-            throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
-        }
+        Transaction transaction = getValidTransaction(orderId, userId);
 
         transaction.setPaymentProvider(paymentGatewayRouter.getActiveProvider());
         transactionRepository.save(transaction);
@@ -111,12 +103,7 @@ public class TransactionService {
 
     @Transactional
     public PaymentReadyResponseDTO readyKakaoPayment(String orderId, Integer userId) {
-        Transaction transaction = transactionRepository.findByOrderId(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
-
-        if (!transaction.getUno().getId().equals(userId)) {
-            throw new IllegalCallerException("해당 결제는 다른 사용자의 결제 요청입니다.");
-        }
+        Transaction transaction = getValidTransaction(orderId, userId);
 
         PaymentReadyRequestDTO paymentReadyRequestDTO = new PaymentReadyRequestDTO();
         paymentReadyRequestDTO.setOrderId(transaction.getOrderId());
@@ -132,15 +119,16 @@ public class TransactionService {
         throw new RuntimeException("Ready가 지원되지 않는 PG사: " + pg);
     }
 
-    public String getPaymentKey(String orderId) {
-        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
+    @Transactional(readOnly = true)
+    public String getPaymentKey(String orderId, Integer userId) {
+        Transaction transaction = getValidTransaction(orderId, userId);
         return transaction.getPgPaymentKey();
     }
 
     @Transactional
     public TransactionConfirmDTO confirmTransaction(TransactionConfirmDTO transactionConfirmDTO, Integer userId, String paymentKey) {
         String orderId = transactionConfirmDTO.getOrderId();
-        Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
+        Transaction transaction = getValidTransaction(orderId, userId);
         PaymentProvider pg = transaction.getPaymentProvider();
 
         if (!isConfirmableTransaction(transaction)) {
@@ -196,6 +184,16 @@ public class TransactionService {
         result.setOrderId(transaction.getOrderId());
         result.setPrice(transaction.getPrice());
         return result;
+    }
+
+    private Transaction getValidTransaction(String orderId, Integer userId) {
+        Transaction transaction = transactionRepository.findByOrderId(orderId)
+            .orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
+
+        if (!transaction.getUno().getId().equals(userId)) {
+            throw new AccessDeniedException("해당 결제는 다른 사용자의 결제 요청입니다.");
+        }
+        return transaction;
     }
 
     private boolean isConfirmableTransaction(Transaction transaction) {
