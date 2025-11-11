@@ -56,7 +56,8 @@ public class TransactionController {
 
     @Operation(summary = "paymentKey(tid) 조회", description = "orderId를 기반으로 paymentKey(tid)를 응답합니다.")
     @GetMapping("/kakao/getPaymentKey/{orderId}")
-    public ResponseEntity<String> getPaymentKey(@PathVariable String orderId) {
+    public ResponseEntity<String> getPaymentKey(@PathVariable String orderId, HttpServletRequest request) {
+        Integer userId = tokenAuth.extractUserIdFromToken(request);
         return ResponseEntity.ok().body(transactionService.getPaymentKey(orderId));
     }
 
