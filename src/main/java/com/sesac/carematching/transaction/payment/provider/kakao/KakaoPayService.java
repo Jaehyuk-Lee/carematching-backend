@@ -42,6 +42,10 @@ public class KakaoPayService extends AbstractPaymentService {
     @Value("${kakao.secret}")
     private String kakao_secret;
 
+    // 카카오페이 API 리다이렉트용 프론트엔드 도메인
+    @Value("${kakao.frontend-domain}")
+    private String kakao_frontend_domain;
+
     public KakaoPayService(TransactionRepository transactionRepository, PaymentClient paymentClient) {
         super(transactionRepository);
         this.paymentClient = paymentClient;
@@ -63,9 +67,9 @@ public class KakaoPayService extends AbstractPaymentService {
         requestData.put("quantity", request.getQuantity());
         requestData.put("total_amount", request.getTotalAmount());
         requestData.put("tax_free_amount", 0); // taxFreeAmount는 필요 없으므로 0으로 설정
-        requestData.put("approval_url", "http://localhost:3000/payment/kakao-success?orderId=" + request.getOrderId());
-        requestData.put("cancel_url", "http://localhost:3000/");
-        requestData.put("fail_url", "http://localhost:3000/payment/kakao-fail?orderId=" + request.getOrderId());
+        requestData.put("approval_url", kakao_frontend_domain + "/payment/kakao-success?orderId=" + request.getOrderId());
+        requestData.put("cancel_url", kakao_frontend_domain + "/");
+        requestData.put("fail_url", kakao_frontend_domain + "/payment/kakao-fail?orderId=" + request.getOrderId());
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "SECRET_KEY " + kakao_secret);
