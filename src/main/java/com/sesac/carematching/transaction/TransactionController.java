@@ -41,9 +41,9 @@ public class TransactionController {
 
     @Operation(summary = "카카오페이 결제 준비", description = "카카오페이 결제를 준비하고, 리다이렉트 URL을 반환합니다.")
     @PostMapping("/kakao/ready/{orderId}")
-    public ResponseEntity<PaymentReadyResponseDTO> readyKakaoPayment(@PathVariable String orderId, HttpServletRequest request) {
+    public ResponseEntity<PaymentReadyResponseDTO> readyKakaoPay(@PathVariable String orderId, HttpServletRequest request) {
         Integer userId = tokenAuth.extractUserIdFromToken(request);
-        PaymentReadyResponseDTO responseDTO = transactionService.readyKakaoPayment(orderId, userId);
+        PaymentReadyResponseDTO responseDTO = transactionService.readyKakaoPay(orderId, userId);
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -56,9 +56,9 @@ public class TransactionController {
 
     @Operation(summary = "paymentKey(tid) 조회", description = "orderId를 기반으로 paymentKey(tid)를 응답합니다.")
     @GetMapping("/kakao/getPaymentKey/{orderId}")
-    public ResponseEntity<String> getPaymentKey(@PathVariable String orderId, HttpServletRequest request) {
+    public ResponseEntity<String> getPaymentKeyForKakao(@PathVariable String orderId, HttpServletRequest request) {
         Integer userId = tokenAuth.extractUserIdFromToken(request);
-        return ResponseEntity.ok().body(transactionService.getPaymentKey(orderId, userId));
+        return ResponseEntity.ok().body(transactionService.getPaymentKeyForKakao(orderId, userId));
     }
 
     @Operation(summary = "결제 성공 처리", description = "결제 성공 시 거래를 완료 처리합니다.")

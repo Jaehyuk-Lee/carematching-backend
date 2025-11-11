@@ -102,7 +102,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public PaymentReadyResponseDTO readyKakaoPayment(String orderId, Integer userId) {
+    public PaymentReadyResponseDTO readyKakaoPay(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
 
         PaymentReadyRequestDTO paymentReadyRequestDTO = new PaymentReadyRequestDTO();
@@ -120,7 +120,7 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public String getPaymentKey(String orderId, Integer userId) {
+    public String getPaymentKeyForKakao(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
         return transaction.getPgPaymentKey();
     }
