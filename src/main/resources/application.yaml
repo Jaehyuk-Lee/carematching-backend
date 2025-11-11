@@ -92,7 +92,7 @@ kakao:
 resilience4j:
   circuitbreaker:
     instances:
-      tossPayments_Confirm:
+      TossPayments_Confirm:
         registerHealthIndicator: true
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
