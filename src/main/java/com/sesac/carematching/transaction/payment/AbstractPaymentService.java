@@ -51,7 +51,7 @@ public abstract class AbstractPaymentService implements PaymentService{
         Transaction transaction = transactionRepository.findByOrderId(paymentConfirmRequestDTO.getOrderId())
                 .orElseThrow(() -> new IllegalStateException("Fallback: 존재하지 않는 주문 ID에 대한 승인 요청입니다. orderId=" + paymentConfirmRequestDTO.getOrderId()));
 
-        transaction.setTransactionStatus(TransactionStatus.PENDING_RETRY);
+        transaction.changeTransactionStatus(TransactionStatus.PENDING_RETRY);
         transaction.setPaymentProvider(provider);
         transaction.setPgPaymentKey(paymentConfirmRequestDTO.getPaymentKey());
 

@@ -60,7 +60,7 @@ public class TransactionService {
         transaction.setOrderName(caregiver.getRealName());
         transaction.setUno(user);
         transaction.setPrice(caregiver.getSalary());
-        transaction.setTransactionStatus(TransactionStatus.PENDING);
+        transaction.changeTransactionStatus(TransactionStatus.PENDING);
 
         return transactionRepository.save(transaction);
     }
@@ -141,7 +141,7 @@ public class TransactionService {
         if (pg == PaymentProvider.TOSS) {
             // 토스페이먼츠는 자체적으로 결제 가격 확인 과정 추가
             if (!transactionConfirmDTO.getPrice().equals(transaction.getPrice())) {
-                transaction.setTransactionStatus(TransactionStatus.FAILED);
+                transaction.changeTransactionStatus(TransactionStatus.FAILED);
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
             }
             request = PaymentConfirmRequestDTO.builder()
@@ -177,7 +177,7 @@ public class TransactionService {
 
         transaction.setPgPaymentKey(transactionDetailDTO.getPaymentKey());
         transaction.setOrderName(transaction.getOrderName());
-        transaction.setTransactionStatus(TransactionStatus.SUCCESS);
+        transaction.changeTransactionStatus(TransactionStatus.SUCCESS);
         transactionRepository.save(transaction);
 
         TransactionConfirmDTO result = new TransactionConfirmDTO();
