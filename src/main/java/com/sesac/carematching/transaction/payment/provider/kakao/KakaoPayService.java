@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -52,6 +53,7 @@ public class KakaoPayService extends AbstractPaymentService {
     }
 
     @Override
+    @Transactional
     @CircuitBreaker(name = "KakaoPay_Ready", fallbackMethod = "fallbackForReady")
     public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
         // 카카오페이API 준비 문서: https://developers.kakaopay.com/docs/payment/online/single-payment#payment-ready
@@ -114,6 +116,7 @@ public class KakaoPayService extends AbstractPaymentService {
     }
 
     @Override
+    @Transactional
     @CircuitBreaker(name = "KakaoPay_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
         // 카카오페이API 승인 문서: https://developers.kakaopay.com/docs/payment/online/single-payment#payment-approve-request

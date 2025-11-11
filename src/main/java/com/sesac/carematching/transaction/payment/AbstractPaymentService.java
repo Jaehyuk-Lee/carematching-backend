@@ -11,6 +11,7 @@ import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
@@ -45,6 +46,7 @@ public abstract class AbstractPaymentService implements PaymentService{
      * 기본적으로 Transaction 엔티티의 TransactionStatus를 PENDING_RETRY로 변경
      * 각 PG사에 알맞게 PendingPayment에 추가 저장 가능 (필요시 customizePendingPayment 구현)
      */
+    @Transactional
     protected TransactionDetailDTO fallbackForConfirm(PaymentConfirmRequestDTO paymentConfirmRequestDTO, Throwable t) {
         PaymentProvider provider = getPaymentProvider();
 

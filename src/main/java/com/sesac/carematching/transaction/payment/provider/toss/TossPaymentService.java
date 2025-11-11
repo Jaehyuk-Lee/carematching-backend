@@ -21,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.util.Base64;
@@ -45,6 +46,7 @@ public class TossPaymentService extends AbstractPaymentService {
     }
 
     @Override
+    @Transactional
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
         String url = "https://api.tosspayments.com/v1/payments/confirm";
