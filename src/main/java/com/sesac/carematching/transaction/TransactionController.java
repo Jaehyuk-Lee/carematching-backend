@@ -28,7 +28,7 @@ public class TransactionController {
     public ResponseEntity<String> addTransaction(@RequestBody TransactionAddDTO transactionAddDTO, HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
         String caregiverUsername = transactionAddDTO.getReceiverUsername();
-        Transaction transaction = transactionService.saveTransaction(username, caregiverUsername);
+        Transaction transaction = transactionService.makeTransaction(username, caregiverUsername);
         return ResponseEntity.ok(transaction.getOrderId());
     }
 
@@ -36,7 +36,7 @@ public class TransactionController {
     @GetMapping("/{orderId}")
     public ResponseEntity<TransactionGetDTO> getTransactionById(@PathVariable String orderId, HttpServletRequest request) {
         String username = tokenAuth.extractUsernameFromToken(request);
-        return ResponseEntity.ok(transactionService.getValidTransaction(orderId, username));
+        return ResponseEntity.ok(transactionService.getTransaction(orderId, username));
     }
 
     @Operation(summary = "카카오페이 결제 준비", description = "카카오페이 결제를 준비하고, 리다이렉트 URL을 반환합니다.")

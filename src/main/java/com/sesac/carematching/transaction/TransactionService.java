@@ -50,7 +50,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction saveTransaction(String username, String caregiverUsername) {
+    public Transaction makeTransaction(String username, String caregiverUsername) {
         Transaction transaction = new Transaction();
         Caregiver caregiver = caregiverService.findByUserId(userService.getUserInfo(caregiverUsername).getId());
         User user = userService.getUserInfo(username);
@@ -65,7 +65,7 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public TransactionGetDTO getValidTransaction(String orderId, String username) {
+    public TransactionGetDTO getTransaction(String orderId, String username) {
         Transaction transaction = transactionRepository.findByOrderId(orderId).orElseThrow(() -> new EntityNotFoundException("결제 정보를 찾을 수 없습니다."));
 
         if (!transaction.getUno().getUsername().equals(username)) {
