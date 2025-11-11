@@ -87,7 +87,7 @@ public class KakaoPayService extends AbstractPaymentService {
             String createdAtString = json.get("created_at").asText(); // '2025-11-10T16:10:21' 형식을 응답받음
             Instant createdAt = LocalDateTime
                 .parse(createdAtString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("Asia/Seoul"))
                 .toInstant();
 
             // Transaction에 tid(pgPaymentKey) 저장
