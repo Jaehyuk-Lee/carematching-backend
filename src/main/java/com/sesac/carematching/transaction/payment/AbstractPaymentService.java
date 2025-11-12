@@ -47,26 +47,26 @@ public abstract class AbstractPaymentService implements PaymentService{
      * 각 PG사에 알맞게 PendingPayment에 추가 저장 가능 (필요시 customizePendingPayment 구현)
      */
     @Transactional
-    protected TransactionDetailDTO fallbackForConfirm(PaymentConfirmRequestDTO paymentConfirmRequestDTO, Throwable t) {
+    protected TransactionDetailDTO fallbackForConfirm(PaymentConfirmRequestDTO request) {
         PaymentProvider provider = getPaymentProvider();
 
-        Transaction transaction = transactionRepository.findByOrderId(paymentConfirmRequestDTO.getOrderId())
-                .orElseThrow(() -> new IllegalStateException("Fallback: 존재하지 않는 주문 ID에 대한 승인 요청입니다. orderId=" + paymentConfirmRequestDTO.getOrderId()));
+        Transaction transaction = transactionRepository.findByOrderId(request.getOrderId())
+                .orElseThrow(() -> new IllegalStateException("Fallback: 존재하지 않는 주문 ID에 대한 승인 요청입니다. orderId=" + request.getOrderId()));
 
         transaction.changeTransactionStatus(TransactionStatus.PENDING_RETRY);
         transaction.setPaymentProvider(provider);
-        transaction.setPgPaymentKey(paymentConfirmRequestDTO.getPaymentKey());
+        transaction.setPgPaymentKey(request.getPaymentKey());
 
         PendingPayment pending = new PendingPayment();
 
         // 각 PG사에 알맞게 PendingPayment에 추가 저장 (필요시 customizePendingPayment 구현)
-        customizePendingPayment(pending, paymentConfirmRequestDTO);
+        customizePendingPayment(pending, request);
 
         transaction.setPendingPayment(pending);
         transactionRepository.save(transaction);
 
-        log.warn("{} confirm fallback: 결제 재시도 상태로 전환. orderId={}, reason={}",
-            provider, paymentConfirmRequestDTO.getOrderId(), t.getMessage());
+        log.warn("{} confirm fallback: 결제 재시도 상태로 전환. orderId={}",
+            provider, request.getOrderId());
 
         throw new ResponseStatusException(
             HttpStatus.ACCEPTED,
