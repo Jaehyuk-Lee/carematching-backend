@@ -174,9 +174,8 @@ public class TransactionService {
             throw new RuntimeException("결제 승인에 실패했습니다.");
 
         transaction.setPgPaymentKey(transactionDetailDTO.getPaymentKey());
-        transaction.setOrderName(transaction.getOrderName());
+        transaction.setOrderName(transactionDetailDTO.getOrderName());
         transaction.changeTransactionStatus(TransactionStatus.SUCCESS);
-        transactionRepository.save(transaction);
 
         TransactionConfirmDTO result = new TransactionConfirmDTO();
         result.setOrderId(transaction.getOrderId());
