@@ -100,7 +100,9 @@ public class TransactionService {
         paymentReadyRequestDTO.setQuantity(1);
 
         PaymentProvider pg = transaction.getPaymentProvider();
-        if (pg == PaymentProvider.KAKAO) {
+        if (pg == null) {
+            throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
+        } else if (pg == PaymentProvider.KAKAO) {
             PaymentService service = paymentServiceFactory.getService(pg);
             return service.readyPayment(paymentReadyRequestDTO);
         }
@@ -139,7 +141,10 @@ public class TransactionService {
         PaymentConfirmRequestDTO request;
         TransactionDetailDTO transactionDetailDTO;
         PaymentService paymentService = paymentServiceFactory.getService(pg);
-        if (pg == PaymentProvider.TOSS) {
+
+        if (pg == null) {
+            throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
+        } else if (pg == PaymentProvider.TOSS) {
             // 토스페이먼츠는 자체적으로 결제 가격 확인 과정 추가
             if (!transactionConfirmDTO.getPrice().equals(transaction.getPrice())) {
                 transaction.changeTransactionStatus(TransactionStatus.FAILED);
