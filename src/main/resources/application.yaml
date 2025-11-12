@@ -3,6 +3,8 @@ server:
   http2:
     enabled: true
 
+frontend-domain: ${FRONTEND_DOMAIN:http://localhost:3000}
+
 spring:
   profiles:
     active: dev
@@ -87,7 +89,6 @@ toss:
 kakao:
   cid: ${KAKAO_CID}
   secret: ${KAKAO_SECRET}
-  frontend-domain: ${FRONTEND_DOMAIN:http://localhost:3000}
 
 resilience4j:
   circuitbreaker:
