@@ -16,18 +16,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     /**
-     * TossPaymentsException 처리
-     * HTTP 응답 코드는 TOSS_PAYMENTS의 다양한 에러 응답에 대응하기 전까지는 BAD_REQUEST로 통일
-     */
-    @ExceptionHandler(TossPaymentsException.class)
-    public ResponseEntity<?> handleTossPaymentsException(TossPaymentsException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("status", "error");
-        errorResponse.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
-
-    /**
      * 토큰 인증 실패 시 401 Unauthorized 응답 반환
      */
     @ExceptionHandler(TokenAuthException.class)

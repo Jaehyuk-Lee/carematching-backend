@@ -9,14 +9,9 @@ import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.EnumMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -74,8 +69,15 @@ public class TransactionService {
     public SelectPgResponseDTO selectPg(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
 
+        if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
+            throw new IllegalStateException("결제 대기 상태에서만 PG를 선택할 수 있습니다.");
+        }
+
+        if (paymentGatewayRouter.getActiveProvider() == null) {
+            throw new IllegalStateException("현재 모든 외부 결제 시스템이 장애 상태입니다.");
+        }
+
         transaction.setPaymentProvider(paymentGatewayRouter.getActiveProvider());
-        transactionRepository.save(transaction);
 
         SelectPgResponseDTO selectPgResponseDTO = new SelectPgResponseDTO();
         selectPgResponseDTO.setPg(transaction.getPaymentProvider());
@@ -85,6 +87,10 @@ public class TransactionService {
     @Transactional
     public PaymentReadyResponseDTO readyKakaoPay(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
+
+        if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
+            throw new IllegalStateException("결제 대기 중인 주문만 결제 준비를 호출할 수 있습니다.");
+        }
 
         PaymentReadyRequestDTO paymentReadyRequestDTO = new PaymentReadyRequestDTO();
         paymentReadyRequestDTO.setOrderId(transaction.getOrderId());
@@ -98,12 +104,24 @@ public class TransactionService {
             PaymentService service = paymentServiceFactory.getService(pg);
             return service.readyPayment(paymentReadyRequestDTO);
         }
-        throw new RuntimeException("Ready가 지원되지 않는 PG사: " + pg);
+        throw new UnsupportedOperationException("Ready가 지원되지 않는 PG사: " + pg);
     }
 
     @Transactional(readOnly = true)
     public String getPaymentKeyForKakao(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
+
+        if (transaction.getPaymentProvider() != PaymentProvider.KAKAO){
+            throw new IllegalStateException("카카오페이 결제에 대해서만 요청이 가능합니다.");
+        }
+        if (transaction.getTransactionStatus() == TransactionStatus.PENDING_RETRY) {
+            throw new IllegalStateException("결제가 이미 처리 대기 중입니다.");
+        } else if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
+            throw new IllegalStateException("결제가 이미 처리되었습니다.");
+        }
+        if (transaction.getPgPaymentKey() == null) {
+            throw new IllegalStateException("카카오페이 결제가 준비되지 않았습니다. 결제를 다시 시도해주세요.");
+        }
         return transaction.getPgPaymentKey();
     }
 
@@ -114,7 +132,7 @@ public class TransactionService {
         PaymentProvider pg = transaction.getPaymentProvider();
 
         if (!isConfirmableTransaction(transaction)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 한 번 승인된 거래입니다.");
+            throw new IllegalStateException("이미 한 번 승인된 거래입니다.");
         }
 
         // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
@@ -125,21 +143,18 @@ public class TransactionService {
             // 토스페이먼츠는 자체적으로 결제 가격 확인 과정 추가
             if (!transactionConfirmDTO.getPrice().equals(transaction.getPrice())) {
                 transaction.changeTransactionStatus(TransactionStatus.FAILED);
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
+                throw new IllegalStateException("잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
             }
             request = PaymentConfirmRequestDTO.builder()
                 .orderId(orderId)
                 .amount(transaction.getPrice())
                 .paymentKey(paymentKey)
                 .build();
-            transactionDetailDTO = paymentServices.get(pg).confirmPayment(request);
         } else if (pg == PaymentProvider.KAKAO) {
+            // 카카오는 추가 정보 필요
             String pgToken = transactionConfirmDTO.getPgToken();
             if (pgToken == null) {
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "KakaoPay 결제시 pgToken은 필수값입니다. pgToken이 비어 있습니다"
-                );
+                throw new IllegalArgumentException("KakaoPay 결제시 pgToken은 필수값입니다.");
             }
             request = PaymentConfirmRequestDTO.builder()
                 .orderId(orderId)
@@ -148,9 +163,8 @@ public class TransactionService {
                 .partnerUserId(userId.toString()) // 카카오: userId 추가 필요
                 .pgToken(pgToken) // 카카오: pgToken 추가 필요
                 .build();
-            transactionDetailDTO = paymentServices.get(pg).confirmPayment(request);
         } else {
-            throw new RuntimeException("confirm이 지원되지 않는 PG사: " + pg);
+            throw new UnsupportedOperationException("confirm이 지원되지 않는 PG사: " + pg);
         }
 
         transactionDetailDTO = paymentService.confirmPayment(request);
