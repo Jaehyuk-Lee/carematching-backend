@@ -117,7 +117,9 @@ public class KakaoPayService extends AbstractPaymentService {
     }
 
     private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request) {
-        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "카카오페이 Ready API 서버 장애. 다른 PG사를 이용해주세요.");
+        PaymentReadyResponseDTO paymentReadyResponseDTO = new PaymentReadyResponseDTO();
+        paymentReadyResponseDTO.setFallback(true);
+        return paymentReadyResponseDTO;
     }
 
     @Override

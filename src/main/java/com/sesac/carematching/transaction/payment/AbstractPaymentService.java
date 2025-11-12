@@ -10,9 +10,7 @@ import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -60,10 +58,9 @@ public abstract class AbstractPaymentService implements PaymentService{
         log.warn("{} confirm fallback: 결제 재시도 상태로 전환. orderId={}",
             provider, request.getOrderId());
 
-        throw new ResponseStatusException(
-            HttpStatus.ACCEPTED,
-            String.format("%s API 결제 승인 서버의 일시적인 장애로 인해 결제 승인 처리 대기 중입니다.", provider)
-        );
+        TransactionDetailDTO transactionDetailDTO = new TransactionDetailDTO();
+        transactionDetailDTO.setFallback(true);
+        return transactionDetailDTO;
     }
 
     /**

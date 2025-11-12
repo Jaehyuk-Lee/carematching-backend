@@ -13,4 +13,5 @@ public class TransactionDetailDTO {
     // TossPayments API 기준으로 통일
     // KakaoPay에서는 status 값을 전달해주지 않지만, 200 응답이 올 경우 DONE으로 설정
     private PgStatus pgStatus;
+    private boolean isFallback;
 }

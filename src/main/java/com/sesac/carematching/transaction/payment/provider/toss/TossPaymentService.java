@@ -82,8 +82,9 @@ public class TossPaymentService extends AbstractPaymentService {
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
             throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            log.error("API 서버에서 응답한 JSON 객체를 파싱하지 못했습니다.");
+            throw new RuntimeException("API 서버에서 응답한 JSON 객체를 파싱하지 못했습니다.");
         }
     }
 
