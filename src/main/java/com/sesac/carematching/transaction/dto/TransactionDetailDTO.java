@@ -2,10 +2,11 @@ package com.sesac.carematching.transaction.dto;
 
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
+import com.sesac.carematching.util.fallback.Fallbackable;
 import lombok.Data;
 
 @Data
-public class TransactionDetailDTO {
+public class TransactionDetailDTO implements Fallbackable {
     private PaymentProvider paymentProvider;
     private String paymentKey;
     private String orderId;

@@ -13,6 +13,7 @@ import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.client.PaymentClient;
+import com.sesac.carematching.util.fallback.FallbackMessage;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +53,7 @@ public class TossPaymentService extends AbstractPaymentService {
 
     @Override
     @Transactional
+    @FallbackMessage(code=202, message="현재 토스페이먼츠 장애 발생으로 결제 승인 처리가 지연되고 있습니다. 10분 내로 결제 처리가 진행됩니다. 이 페이지를 벗어나셔도 괜찮습니다.")
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
         // 토스페미언츠 API 승인 문서: https://docs.tosspayments.com/reference#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8

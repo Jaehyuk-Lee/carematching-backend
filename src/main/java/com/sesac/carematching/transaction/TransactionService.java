@@ -102,11 +102,7 @@ public class TransactionService {
         PaymentProvider pg = transaction.getPaymentProvider();
         if (pg == PaymentProvider.KAKAO) {
             PaymentService service = paymentServiceFactory.getService(pg);
-            PaymentReadyResponseDTO paymentReadyResponseDTO = service.readyPayment(paymentReadyRequestDTO);
-            if(paymentReadyResponseDTO.isFallback()) {
-                throw new RuntimeException("현재 PG사 장애 발생: " + pg + " 결제 시스템 이용 불가. 결제를 재시도 해주세요.");
-            }
-            return paymentReadyResponseDTO;
+            return service.readyPayment(paymentReadyRequestDTO);
         }
         throw new UnsupportedOperationException("Ready가 지원되지 않는 PG사: " + pg);
     }
@@ -172,9 +168,6 @@ public class TransactionService {
         }
 
         transactionDetailDTO = paymentService.confirmPayment(request);
-        if(transactionDetailDTO.isFallback()) {
-            throw new RuntimeException("현재 PG사 장애 발생: 결제 승인 재시도 대기 중입니다.");
-        }
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
         // KakaoPay 응답도 승인 성공시 자체적으로 Status를 DONE으로 설정하였음
         if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)

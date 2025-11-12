@@ -1,5 +1,6 @@
 package com.sesac.carematching.transaction.dto;
 
+import com.sesac.carematching.util.fallback.Fallbackable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,7 @@ import java.time.Instant;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentReadyResponseDTO {
+public class PaymentReadyResponseDTO implements Fallbackable {
     private String nextRedirectPcUrl;
     private String tid;
     private Instant createdAt;

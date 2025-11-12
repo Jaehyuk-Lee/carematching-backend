@@ -15,6 +15,7 @@ import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.client.PaymentClient;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
+import com.sesac.carematching.util.fallback.FallbackMessage;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +23,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -59,6 +59,7 @@ public class KakaoPayService extends AbstractPaymentService {
 
     @Override
     @Transactional
+    @FallbackMessage(code=503, message="현재 PG사 장애 발생으로 결제 준비에 실패했습니다. 잠시 후 다시 시도해주세요.")
     @CircuitBreaker(name = "KakaoPay_Ready", fallbackMethod = "fallbackForReady")
     public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
         // 카카오페이API 준비 문서: https://developers.kakaopay.com/docs/payment/online/single-payment#payment-ready
@@ -124,6 +125,7 @@ public class KakaoPayService extends AbstractPaymentService {
 
     @Override
     @Transactional
+    @FallbackMessage(code=202, message="현재 카카오페이 장애 발생으로 결제 승인 처리가 지연되고 있습니다. 15분 내로 결제 처리가 진행됩니다. 이 페이지를 벗어나셔도 괜찮습니다.")
     @CircuitBreaker(name = "KakaoPay_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
         // 카카오페이API 승인 문서: https://developers.kakaopay.com/docs/payment/online/single-payment#payment-approve-request
