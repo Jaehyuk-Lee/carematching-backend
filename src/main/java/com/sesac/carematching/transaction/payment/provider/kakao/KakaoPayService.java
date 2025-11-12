@@ -53,6 +53,11 @@ public class KakaoPayService extends AbstractPaymentService {
     }
 
     @Override
+    public PaymentProvider getPaymentProvider() {
+        return PaymentProvider.KAKAO;
+    }
+
+    @Override
     @Transactional
     @CircuitBreaker(name = "KakaoPay_Ready", fallbackMethod = "fallbackForReady")
     public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
@@ -152,11 +157,6 @@ public class KakaoPayService extends AbstractPaymentService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    protected PaymentProvider getPaymentProvider() {
-        return PaymentProvider.KAKAO;
     }
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {

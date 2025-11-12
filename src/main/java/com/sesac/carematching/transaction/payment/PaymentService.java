@@ -9,6 +9,15 @@ import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
  * 결제 제공자(예: TossPayments, 다른 PG)들을 추상화한 서비스 인터페이스.
  */
 public interface PaymentService {
+
+    /**
+     * 현재 클래스의 PaymentProvider 정보를 제공합니다.
+     * 자식 클래스에서 필수적으로 구현해야 합니다.
+     *
+     * @return PaymentProvider 현재 클래스가 구현한 PG사 enum
+     */
+    PaymentProvider getPaymentProvider();
+
     /**
      * 외부 PG에 결제 준비를 요청합니다.
      *

@@ -41,6 +41,11 @@ public class TossPaymentService extends AbstractPaymentService {
     }
 
     @Override
+    public PaymentProvider getPaymentProvider() {
+        return PaymentProvider.TOSS;
+    }
+
+    @Override
     public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
         throw new UnsupportedOperationException("Payment Ready is not supported on Toss Payments");
     }
@@ -80,11 +85,6 @@ public class TossPaymentService extends AbstractPaymentService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    protected PaymentProvider getPaymentProvider() {
-        return PaymentProvider.TOSS;
     }
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {

@@ -34,14 +34,6 @@ public abstract class AbstractPaymentService implements PaymentService{
     }
 
     /**
-     * 현재 클래스의 PaymentProvider 정보를 제공합니다.
-     * 자식 클래스에서 필수적으로 구현해야 합니다.
-     *
-     * @return PaymentProvider 현재 클래스가 구현한 PG사 enum
-     */
-    protected abstract PaymentProvider getPaymentProvider();
-
-    /**
      * confirmPayment 서킷브레이커 OPEN시 실행할 공통 fallback 메서드
      * 기본적으로 Transaction 엔티티의 TransactionStatus를 PENDING_RETRY로 변경
      * 각 PG사에 알맞게 PendingPayment에 추가 저장 가능 (필요시 customizePendingPayment 구현)

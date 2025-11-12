@@ -3,15 +3,11 @@ package com.sesac.carematching.transaction;
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
 import com.sesac.carematching.transaction.dto.*;
-import com.sesac.carematching.transaction.payment.PaymentGatewayRouter;
-import com.sesac.carematching.transaction.payment.PaymentProvider;
-import com.sesac.carematching.transaction.payment.PaymentService;
-import com.sesac.carematching.transaction.payment.PgStatus;
-import com.sesac.carematching.transaction.payment.provider.kakao.KakaoPayService;
-import com.sesac.carematching.transaction.payment.provider.toss.TossPaymentService;
+import com.sesac.carematching.transaction.payment.*;
 import com.sesac.carematching.user.User;
 import com.sesac.carematching.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,6 +20,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TransactionService {
     // 결제 가능 시간 (분)
     private final static long MAX_PAYMENT_MINUTE = 30;
@@ -31,24 +28,8 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CaregiverService caregiverService;
     private final UserService userService;
-    private final Map<PaymentProvider, PaymentService> paymentServices = new EnumMap<>(PaymentProvider.class);
+    private final PaymentServiceFactory paymentServiceFactory;
     private final PaymentGatewayRouter paymentGatewayRouter;
-
-    public TransactionService(TransactionRepository transactionRepository,
-                              CaregiverService caregiverService,
-                              UserService userService,
-                              TossPaymentService tossPaymentService,
-                              KakaoPayService kakaoPayService,
-                              PaymentGatewayRouter paymentGatewayRouter) {
-
-        this.transactionRepository = transactionRepository;
-        this.caregiverService = caregiverService;
-        this.userService = userService;
-        this.paymentGatewayRouter = paymentGatewayRouter;
-
-        this.paymentServices.put(PaymentProvider.TOSS, tossPaymentService);
-        this.paymentServices.put(PaymentProvider.KAKAO, kakaoPayService);
-    }
 
     @Transactional
     public Transaction makeTransaction(Integer userId, String caregiverUsername) {
@@ -114,7 +95,8 @@ public class TransactionService {
 
         PaymentProvider pg = transaction.getPaymentProvider();
         if (pg == PaymentProvider.KAKAO) {
-            return paymentServices.get(pg).readyPayment(paymentReadyRequestDTO);
+            PaymentService service = paymentServiceFactory.getService(pg);
+            return service.readyPayment(paymentReadyRequestDTO);
         }
         throw new RuntimeException("Ready가 지원되지 않는 PG사: " + pg);
     }
@@ -138,6 +120,7 @@ public class TransactionService {
         // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
         PaymentConfirmRequestDTO request;
         TransactionDetailDTO transactionDetailDTO;
+        PaymentService paymentService = paymentServiceFactory.getService(pg);
         if (pg == PaymentProvider.TOSS) {
             // 토스페이먼츠는 자체적으로 결제 가격 확인 과정 추가
             if (!transactionConfirmDTO.getPrice().equals(transaction.getPrice())) {
@@ -170,6 +153,7 @@ public class TransactionService {
             throw new RuntimeException("confirm이 지원되지 않는 PG사: " + pg);
         }
 
+        transactionDetailDTO = paymentService.confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
         // KakaoPay 응답도 승인 성공시 자체적으로 Status를 DONE으로 설정하였음
         if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)
