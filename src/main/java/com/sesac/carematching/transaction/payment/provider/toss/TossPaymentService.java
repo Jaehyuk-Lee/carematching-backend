@@ -49,6 +49,7 @@ public class TossPaymentService extends AbstractPaymentService {
     @Transactional
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
+        // 토스페미언츠 API 승인 문서: https://docs.tosspayments.com/reference#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -87,6 +88,7 @@ public class TossPaymentService extends AbstractPaymentService {
     }
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
+        // 토스페미언츠 API 응답 문서: https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4
         JsonNode json = objectMapper.readTree(responseBody);
         JsonNode paymentKeyNode = json.get("paymentKey");
         JsonNode statusNode = json.get("status");
