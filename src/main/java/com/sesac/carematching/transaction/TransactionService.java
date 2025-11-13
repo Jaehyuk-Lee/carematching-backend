@@ -84,9 +84,14 @@ public class TransactionService {
     @Transactional
     public PaymentReadyResponseDTO readyKakaoPay(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
+        PaymentProvider pg = transaction.getPaymentProvider();
 
         if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
             throw new IllegalStateException("결제 대기 중인 주문만 결제 준비를 호출할 수 있습니다.");
+        }
+
+        if (pg == null) {
+            throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
         }
 
         PaymentReadyRequestDTO paymentReadyRequestDTO = new PaymentReadyRequestDTO();
@@ -96,10 +101,7 @@ public class TransactionService {
         paymentReadyRequestDTO.setTotalAmount(transaction.getPrice());
         paymentReadyRequestDTO.setQuantity(1);
 
-        PaymentProvider pg = transaction.getPaymentProvider();
-        if (pg == null) {
-            throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
-        } else if (pg == PaymentProvider.KAKAO) {
+        if (pg == PaymentProvider.KAKAO) {
             PaymentService service = paymentServiceFactory.getService(pg);
             return service.readyPayment(paymentReadyRequestDTO);
         }
