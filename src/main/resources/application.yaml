@@ -3,6 +3,8 @@ server:
   http2:
     enabled: true
 
+frontend-domain: ${FRONTEND_DOMAIN:http://localhost:3000}
+
 spring:
   profiles:
     active: dev
@@ -91,7 +93,21 @@ kakao:
 resilience4j:
   circuitbreaker:
     instances:
-      tossPaymentsConfirm:
+      TossPayments_Confirm:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
+      KakaoPay_Ready:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
+      KakaoPay_Confirm:
         registerHealthIndicator: true
         slidingWindowSize: 10
         minimumNumberOfCalls: 5

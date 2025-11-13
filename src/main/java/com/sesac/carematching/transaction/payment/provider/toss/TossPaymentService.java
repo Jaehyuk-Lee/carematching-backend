@@ -6,11 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sesac.carematching.transaction.TransactionRepository;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.client.PaymentClient;
+import com.sesac.carematching.util.fallback.FallbackMessage;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.util.Base64;
@@ -38,8 +42,21 @@ public class TossPaymentService extends AbstractPaymentService {
     }
 
     @Override
+    public PaymentProvider getPaymentProvider() {
+        return PaymentProvider.TOSS;
+    }
+
+    @Override
+    public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
+        throw new UnsupportedOperationException("Payment Ready is not supported on Toss Payments");
+    }
+
+    @Override
+    @Transactional
+    @FallbackMessage(code=202, message="현재 토스페이먼츠 장애 발생으로 결제 승인 처리가 지연되고 있습니다. 10분 내로 결제 처리가 진행됩니다. 이 페이지를 벗어나셔도 괜찮습니다.")
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
+        // 토스페미언츠 API 승인 문서: https://docs.tosspayments.com/reference#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -67,17 +84,14 @@ public class TossPaymentService extends AbstractPaymentService {
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
             throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
+            log.error("API 서버에서 응답한 JSON 객체를 파싱하지 못했습니다.");
             throw new RuntimeException(e);
         }
     }
 
-    @Override
-    protected PaymentProvider getPaymentProvider() {
-        return PaymentProvider.TOSS;
-    }
-
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
+        // 토스페미언츠 API 응답 문서: https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4
         JsonNode json = objectMapper.readTree(responseBody);
         JsonNode paymentKeyNode = json.get("paymentKey");
         JsonNode statusNode = json.get("status");

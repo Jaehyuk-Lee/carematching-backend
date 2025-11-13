@@ -40,7 +40,7 @@ public class PendingPaymentAsyncProcessor {
         PendingPayment pendingPayment = transaction.getPendingPayment();
         if (pendingPayment == null) {
             log.error("재시도 대상 트랜잭션에 PendingPayment 정보가 없습니다. orderId: {}", transaction.getOrderId());
-            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            transaction.changeTransactionStatus(TransactionStatus.FAILED);
             transactionRepository.save(transaction);
             return;
         }
@@ -62,13 +62,13 @@ public class PendingPaymentAsyncProcessor {
             TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
 
             if (transactionDetailDTO.getPgStatus() == PgStatus.DONE) {
-                transaction.setTransactionStatus(TransactionStatus.SUCCESS);
+                transaction.changeTransactionStatus(TransactionStatus.SUCCESS);
                 // PG사로부터 받은 최종 paymentKey로 업데이트
                 transaction.setPgPaymentKey(transactionDetailDTO.getPaymentKey());
                 pendingPayment.setFailReason(null);
                 log.info("{} PendingPayment confirm 성공: orderId={}", nowPg, transaction.getOrderId());
             } else {
-                transaction.setTransactionStatus(TransactionStatus.FAILED);
+                transaction.changeTransactionStatus(TransactionStatus.FAILED);
                 pendingPayment.setFailReason("결제 상태가 DONE이 아님 (confirm 실패): " + transactionDetailDTO.getPgStatus());
                 log.warn("PendingPayment confirm 재시도 실패: orderId={}, pgStatus={}", transaction.getOrderId(), transactionDetailDTO.getPgStatus());
             }
@@ -78,7 +78,7 @@ public class PendingPaymentAsyncProcessor {
                     transaction.getOrderId(), transaction.getTransactionStatus());
                 return;
             }
-            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            transaction.changeTransactionStatus(TransactionStatus.FAILED);
             pendingPayment.setFailReason(e.getMessage());
             log.warn("PendingPayment confirm 재시도 중 예외 발생: orderId={}, reason={}", transaction.getOrderId(), e.getMessage());
         }

@@ -4,27 +4,36 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sesac.carematching.transaction.Transaction;
 import com.sesac.carematching.transaction.TransactionRepository;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.client.PaymentClient;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
+import com.sesac.carematching.util.fallback.FallbackMessage;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
 public class KakaoPayService extends AbstractPaymentService {
+    private static final String KAKAO_BASE_URL = "https://open-api.kakaopay.com";
     private final PaymentClient paymentClient;
 
     // 카카오페이 API CID
@@ -35,16 +44,105 @@ public class KakaoPayService extends AbstractPaymentService {
     @Value("${kakao.secret}")
     private String kakao_secret;
 
+    // 카카오페이 API 리다이렉트용 프론트엔드 도메인
+    @Value("${frontend-domain}")
+    private String frontend_domain;
+
     public KakaoPayService(TransactionRepository transactionRepository, PaymentClient paymentClient) {
         super(transactionRepository);
         this.paymentClient = paymentClient;
     }
 
     @Override
+    public PaymentProvider getPaymentProvider() {
+        return PaymentProvider.KAKAO;
+    }
+
+    @Override
+    @Transactional
+    @FallbackMessage(code=503, message="현재 PG사 장애 발생으로 결제 준비에 실패했습니다. 잠시 후 다시 시도해주세요.")
+    @CircuitBreaker(name = "KakaoPay_Ready", fallbackMethod = "fallbackForReady")
+    public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
+        // 카카오페이API 준비 문서: https://developers.kakaopay.com/docs/payment/online/single-payment#payment-ready
+        String url = KAKAO_BASE_URL + "/online/v1/payment/ready";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 요청 데이터 생성
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("cid", kakao_cid);
+        requestData.put("partner_order_id", request.getOrderId());
+        requestData.put("partner_user_id", request.getUserId());
+        requestData.put("item_name", request.getItemName());
+        requestData.put("quantity", request.getQuantity());
+        requestData.put("total_amount", request.getTotalAmount());
+        requestData.put("tax_free_amount", 0); // taxFreeAmount는 필요 없으므로 0으로 설정
+        requestData.put("approval_url", frontend_domain + "/payment/kakao-success?orderId=" + request.getOrderId());
+        requestData.put("cancel_url", frontend_domain + "/");
+        requestData.put("fail_url", frontend_domain + "/payment/kakao-fail?orderId=" + request.getOrderId());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "SECRET_KEY " + kakao_secret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            ResponseEntity<String> response = paymentClient.send(url, entity);
+            JsonNode json = objectMapper.readTree(response.getBody());
+
+            JsonNode tidNode = json.get("tid");
+            JsonNode nextRedirectPcUrlNode = json.get("next_redirect_pc_url");
+            JsonNode createdAtNode = json.get("created_at");
+
+            if (tidNode == null || nextRedirectPcUrlNode == null || createdAtNode == null) {
+                throw new RuntimeException("KakaoPay ready 응답에 필수 필드가 누락되었습니다");
+            }
+
+            String tid = tidNode.asText();
+            String nextRedirectPcUrl = nextRedirectPcUrlNode.asText();
+            String createdAtString = createdAtNode.asText();
+            Instant createdAt = LocalDateTime
+                .parse(createdAtString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                .atZone(ZoneId.of("Asia/Seoul"))
+                .toInstant();
+
+            if (tid == null || tid.isEmpty() || nextRedirectPcUrl == null || nextRedirectPcUrl.isEmpty() || createdAtString.isEmpty()) {
+                throw new RuntimeException("KakaoPay ready 응답에 필수 필드가 누락되었습니다");
+            }
+
+            // Transaction에 tid(pgPaymentKey) 저장
+            Transaction transaction = transactionRepository.findByOrderId(request.getOrderId())
+                .orElseThrow(() -> new EntityNotFoundException("주문 정보를 찾을 수 없습니다: orderId=" + request.getOrderId()));
+            transaction.setPgPaymentKey(tid);
+            transactionRepository.save(transaction);
+
+            return new PaymentReadyResponseDTO(nextRedirectPcUrl, tid, createdAt);
+
+        } catch (RestClientResponseException e) {
+            throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request) {
+        PaymentReadyResponseDTO paymentReadyResponseDTO = new PaymentReadyResponseDTO();
+        paymentReadyResponseDTO.setFallback(true);
+        return paymentReadyResponseDTO;
+    }
+
+    @Override
+    @Transactional
+    @FallbackMessage(code=202, message="현재 카카오페이 장애 발생으로 결제 승인 처리가 지연되고 있습니다. 15분 내로 결제 처리가 진행됩니다. 이 페이지를 벗어나셔도 괜찮습니다.")
     @CircuitBreaker(name = "KakaoPay_Confirm", fallbackMethod = "fallbackForConfirm")
     public TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request) {
         // 카카오페이API 승인 문서: https://developers.kakaopay.com/docs/payment/online/single-payment#payment-approve-request
-        String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
+        String url = KAKAO_BASE_URL + "/online/v1/payment/approve";
         ObjectMapper objectMapper = new ObjectMapper();
 
         // 요청 데이터 생성
@@ -54,7 +152,7 @@ public class KakaoPayService extends AbstractPaymentService {
         requestData.put("total_amount", request.getAmount());
         requestData.put("tid", request.getPaymentKey());
         requestData.put("partner_user_id", request.getPartnerUserId());
-        requestData.put("pg_Token", request.getPgToken());
+        requestData.put("pg_token", request.getPgToken());
 
         HttpHeaders headers = new HttpHeaders();
         // KakaoPay 인증 헤더 구조 - Authorization: SECRET_KEY ${SECRET_KEY}
@@ -76,11 +174,6 @@ public class KakaoPayService extends AbstractPaymentService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    protected PaymentProvider getPaymentProvider() {
-        return PaymentProvider.KAKAO;
     }
 
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {

@@ -1,12 +1,14 @@
 package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
+import com.sesac.carematching.transaction.exception.IllegalTransactionStateException;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import com.sesac.carematching.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -54,6 +56,7 @@ public class Transaction {
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "STATUS", nullable = false)
+    @Setter(AccessLevel.NONE)
     private TransactionStatus transactionStatus = TransactionStatus.PENDING;
 
     @NotNull
@@ -61,9 +64,8 @@ public class Transaction {
     @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "PAYMENT_PROVIDER", nullable = false)
+    @Column(name = "PAYMENT_PROVIDER")
     private PaymentProvider paymentProvider;
 
     // PG사에서 발급한 고유 거래 ID
@@ -82,6 +84,24 @@ public class Transaction {
         if (pendingPayment != null && pendingPayment.getTransaction() != this) {
             pendingPayment.setTransaction(this);
         }
+    }
+
+    /**
+     * 트랜잭션의 상태를 변경합니다.
+     * 이 메서드는 정의된 상태 전이 규칙(State Machine)을 따릅니다.
+     * @param nextState 변경하려는 다음 상태
+     * @throws IllegalTransactionStateException 규칙에 어긋나는 상태 변경 시
+     */
+    public void changeTransactionStatus(TransactionStatus nextState) {
+        if (!this.transactionStatus.canTransitionTo(nextState)) {
+            throw new IllegalTransactionStateException(
+                "잘못된 상태 변경입니다: " + this.transactionStatus + " -> " + nextState +
+                    " (OrderId: " + this.orderId + ")"
+            );
+        }
+
+        // 규칙 통과 시 상태 변경
+        this.transactionStatus = nextState;
     }
 
     @PrePersist
