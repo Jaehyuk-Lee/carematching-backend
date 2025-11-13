@@ -1,5 +1,6 @@
 package com.sesac.carematching.transaction.payment.pendingPayment;
 
+import com.sesac.carematching.transaction.payment.PaymentGatewayRouter;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import io.github.resilience4j.circuitbreaker.event.CircuitBreakerOnStateTransitionEvent;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CircuitBreakerEventListener {
     private final PendingPaymentRetryService pendingPaymentRetryService;
+    private final PaymentGatewayRouter paymentGatewayRouter;
 
     @Async
     @EventListener
@@ -29,9 +31,21 @@ public class CircuitBreakerEventListener {
             if ("TossPayments_Confirm".equals(name)) {
                 log.info("TOSS 회로 복구 감지 - TOSS pending 결제 재시도 시작");
                 pendingPaymentRetryService.retryPendingPaymentsForProvider(PaymentProvider.TOSS);
+                paymentGatewayRouter.addAvailableProvider(PaymentProvider.TOSS);
             } else if ("KakaoPay_Confirm".equals(name)) {
                 log.info("KAKAO 회로 복구 감지 - KAKAO pending 결제 재시도 시작");
                 pendingPaymentRetryService.retryPendingPaymentsForProvider(PaymentProvider.KAKAO);
+                paymentGatewayRouter.addAvailableProvider(PaymentProvider.KAKAO);
+            }
+        }
+
+        if (event.getStateTransition().toString().endsWith("OPEN")) {
+            if ("TossPayments_Confirm".equals(name)) {
+                log.info("TOSS 회로 장애 감지 - TOSS 이용 제외");
+                paymentGatewayRouter.removeAvailableProvider(PaymentProvider.TOSS);
+            } else if ("KakaoPay_Confirm".equals(name)) {
+                log.info("KAKAO 회로 장애 감지 - KAKAO 이용 제외");
+                paymentGatewayRouter.removeAvailableProvider(PaymentProvider.KAKAO);
             }
         }
     }
