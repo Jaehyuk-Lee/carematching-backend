@@ -17,6 +17,7 @@ import com.sesac.carematching.transaction.payment.client.PaymentClient;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import com.sesac.carematching.util.fallback.FallbackMessage;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -94,17 +95,29 @@ public class KakaoPayService extends AbstractPaymentService {
             ResponseEntity<String> response = paymentClient.send(url, entity);
             JsonNode json = objectMapper.readTree(response.getBody());
 
-            String tid = json.get("tid").asText();
-            String nextRedirectPcUrl = json.get("next_redirect_pc_url").asText();
-            String createdAtString = json.get("created_at").asText(); // '2025-11-10T16:10:21' 형식을 응답받음
+            JsonNode tidNode = json.get("tid");
+            JsonNode nextRedirectPcUrlNode = json.get("next_redirect_pc_url");
+            JsonNode createdAtNode = json.get("created_at");
+
+            if (tidNode == null || nextRedirectPcUrlNode == null || createdAtNode == null) {
+                throw new RuntimeException("KakaoPay ready 응답에 필수 필드가 누락되었습니다");
+            }
+
+            String tid = tidNode.asText();
+            String nextRedirectPcUrl = nextRedirectPcUrlNode.asText();
+            String createdAtString = createdAtNode.asText();
             Instant createdAt = LocalDateTime
                 .parse(createdAtString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 .atZone(ZoneId.of("Asia/Seoul"))
                 .toInstant();
 
+            if (tid == null || tid.isEmpty() || nextRedirectPcUrl == null || nextRedirectPcUrl.isEmpty() || createdAtString.isEmpty()) {
+                throw new RuntimeException("KakaoPay ready 응답에 필수 필드가 누락되었습니다");
+            }
+
             // Transaction에 tid(pgPaymentKey) 저장
             Transaction transaction = transactionRepository.findByOrderId(request.getOrderId())
-                .orElseThrow(() -> new RuntimeException("주문 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("주문 정보를 찾을 수 없습니다: orderId=" + request.getOrderId()));
             transaction.setPgPaymentKey(tid);
             transactionRepository.save(transaction);
 
