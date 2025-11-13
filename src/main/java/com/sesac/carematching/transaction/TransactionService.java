@@ -28,10 +28,16 @@ public class TransactionService {
 
     @Transactional
     public Transaction makeTransaction(Integer userId, String caregiverUsername) {
-        Transaction transaction = new Transaction();
         Caregiver caregiver = caregiverService.findByUserId(userService.getUserInfo(caregiverUsername).getId());
         User user = userService.findById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
+        }
+        if (caregiver == null) {
+            throw new IllegalArgumentException("존재하지 않는 요양사입니다.");
+        }
 
+        Transaction transaction = new Transaction();
         transaction.setCno(caregiver);
         transaction.setOrderName(caregiver.getRealName());
         transaction.setUno(user);
@@ -47,15 +53,6 @@ public class TransactionService {
 
         if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
             throw new IllegalStateException("결제 대기 중인 주문이 아닙니다.");
-        }
-
-        // 결제 가능 시간 확인
-        long minutesDifference = java.time.Duration.between(
-            transaction.getCreatedAt(),
-            java.time.Instant.now()
-        ).toMinutes();
-        if (minutesDifference > MAX_PAYMENT_MINUTE) {
-            throw new IllegalStateException("결제 가능 시간이 만료되었습니다. 새로운 결제를 시도해주세요.");
         }
 
         TransactionGetDTO transactionGetDTO = new TransactionGetDTO();
@@ -137,14 +134,16 @@ public class TransactionService {
             throw new IllegalStateException("이미 한 번 승인된 거래입니다.");
         }
 
+        if (pg == null) {
+            throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
+        }
+
         // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
         PaymentConfirmRequestDTO request;
         TransactionDetailDTO transactionDetailDTO;
         PaymentService paymentService = paymentServiceFactory.getService(pg);
 
-        if (pg == null) {
-            throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
-        } else if (pg == PaymentProvider.TOSS) {
+        if (pg == PaymentProvider.TOSS) {
             // 토스페이먼츠는 자체적으로 결제 가격 확인 과정 추가
             if (!transactionConfirmDTO.getPrice().equals(transaction.getPrice())) {
                 transaction.changeTransactionStatus(TransactionStatus.FAILED);
@@ -195,6 +194,16 @@ public class TransactionService {
         if (!transaction.getUno().getId().equals(userId)) {
             throw new AccessDeniedException("해당 결제는 다른 사용자의 결제 요청입니다.");
         }
+
+        // 결제 가능 시간 확인
+        long minutesDifference = java.time.Duration.between(
+            transaction.getCreatedAt(),
+            java.time.Instant.now()
+        ).toMinutes();
+        if (minutesDifference > MAX_PAYMENT_MINUTE) {
+            throw new IllegalStateException("결제 가능 시간이 만료되었습니다. 새로운 결제를 시도해주세요.");
+        }
+
         return transaction;
     }
 

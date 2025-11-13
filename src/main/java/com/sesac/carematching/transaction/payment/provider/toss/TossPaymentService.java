@@ -86,7 +86,7 @@ public class TossPaymentService extends AbstractPaymentService {
             throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
         } catch (JsonProcessingException e) {
             log.error("API 서버에서 응답한 JSON 객체를 파싱하지 못했습니다.");
-            throw new RuntimeException("API 서버에서 응답한 JSON 객체를 파싱하지 못했습니다.");
+            throw new RuntimeException(e);
         }
     }
 

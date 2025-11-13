@@ -44,10 +44,8 @@ public class FallbackCheckAspect {
 
                 // @FallbackMessage 어노테이션이 붙어 있다면 커스터마이징 적용
                 FallbackMessage fallbackMessage = method.getAnnotation(FallbackMessage.class);
-                if (fallbackMessage != null && fallbackMessage.message() != null) {
-                    message = fallbackMessage.message();
-                }
                 if (fallbackMessage != null) {
+                    message = fallbackMessage.message();
                     code = fallbackMessage.code();
                 }
 

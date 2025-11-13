@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.sesac.carematching.transaction")
 public class TransactionExceptionHandler {
     /**
      * TossPaymentsException 처리
@@ -18,7 +18,8 @@ public class TransactionExceptionHandler {
     @ExceptionHandler(TossPaymentsException.class)
     public ResponseEntity<?> handleTossPaymentsException(TossPaymentsException ex) {
         Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("status", ex.getCode());
+        errorResponse.put("status", "error");
+        errorResponse.put("code", ex.getCode());
         errorResponse.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }

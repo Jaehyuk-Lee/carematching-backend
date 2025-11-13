@@ -26,8 +26,6 @@ public abstract class AbstractPaymentService implements PaymentService{
         } catch (JsonProcessingException e) {
             log.warn("{} 파싱 실패: {}", valueType.getSimpleName(), errorJson, e);
             throw new RuntimeException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(valueType.getSimpleName() + " 파싱 실패: " + errorJson);
         }
     }
 
