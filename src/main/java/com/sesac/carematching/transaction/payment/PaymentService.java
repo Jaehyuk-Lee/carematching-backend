@@ -12,7 +12,6 @@ public interface PaymentService {
 
     /**
      * 현재 클래스의 PaymentProvider 정보를 제공합니다.
-     * 자식 클래스에서 필수적으로 구현해야 합니다.
      *
      * @return PaymentProvider 현재 클래스가 구현한 PG사 enum
      */
