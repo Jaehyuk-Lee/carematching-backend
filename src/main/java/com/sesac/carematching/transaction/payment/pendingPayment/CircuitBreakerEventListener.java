@@ -16,12 +16,40 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class CircuitBreakerEventListener {
+public class CircuitBreakerEventListener implements ApplicationRunner {
     private final PendingPaymentRetryService pendingPaymentRetryService;
     private final PaymentGatewayRouter paymentGatewayRouter;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
 
-    @Async
-    @EventListener
+    /**
+     * 서킷 브레이커 이름 -> PaymentProvider 매핑
+     * "어떤 서킷"이 "어떤 PG사"에 속하는지 정의합니다.
+     */
+    private static final Map<String, PaymentProvider> CIRCUIT_TO_PROVIDER_MAP = Map.of(
+        "TossPayments_Confirm", PaymentProvider.TOSS,
+        "KakaoPay_Confirm", PaymentProvider.KAKAO,
+        "KakaoPay_Ready", PaymentProvider.KAKAO
+    );
+
+    /**
+     * PaymentProvider -> 해당 PG사에 속한 모든 서킷 브레이커 이름 리스트 매핑
+     * "어떤 PG사"가 "어떤 서킷들"로 구성되는지 정의합니다.
+     */
+    private static final Map<PaymentProvider, List<String>> PROVIDER_TO_CIRCUITS_MAP = Map.of(
+        PaymentProvider.TOSS, List.of("TossPayments_Confirm"),
+        PaymentProvider.KAKAO, List.of("KakaoPay_Confirm", "KakaoPay_Ready")
+    );
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        // CircuitBreakerRegistry에 등록된 모든 CircuitBreaker에 대해 이벤트 리스너 등록
+        circuitBreakerRegistry.getAllCircuitBreakers().forEach(circuitBreaker -> {
+            circuitBreaker.getEventPublisher()
+                .onStateTransition(this::onStateTransition);
+            log.info("CircuitBreaker 이벤트 리스너 등록 완료: {}", circuitBreaker.getName());
+        });
+    }
+
     public void onStateTransition(CircuitBreakerOnStateTransitionEvent event) {
         String name = event.getCircuitBreakerName();
         log.info("CircuitBreaker state transition: {} -> {}", name, event.getStateTransition());
