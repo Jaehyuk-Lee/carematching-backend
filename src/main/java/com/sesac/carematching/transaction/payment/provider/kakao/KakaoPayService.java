@@ -123,8 +123,15 @@ public class KakaoPayService extends AbstractPaymentService {
 
             return new PaymentReadyResponseDTO(nextRedirectPcUrl, tid, createdAt);
 
-        } catch (RestClientResponseException e) {
-            throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+        } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
+            if (e.getStatusCode().is4xxClientError()) {
+                // 4xx는 KakaoPay의 비즈니스 오류. KakaoPayException 파싱 (ignoreExceptions 대상)
+                log.warn("KakaoPay API 4xx 응답: {}", e.getResponseBodyAsString());
+                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            }
+            // 5xx는 PG사 서버 장애. 서킷이 집계하도록 원본 예외(e)를 그대로 다시 던짐
+            log.error("KakaoPay API 5xx 장애 발생: {}", e.getResponseBodyAsString());
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -170,7 +177,14 @@ public class KakaoPayService extends AbstractPaymentService {
             ResponseEntity<String> response = paymentClient.send(url, entity);
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
-            throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            if (e.getStatusCode().is4xxClientError()) {
+                // 4xx는 KakaoPay의 비즈니스 오류. KakaoPayException 파싱 (ignoreExceptions 대상)
+                log.warn("KakaoPay API 4xx 응답: {}", e.getResponseBodyAsString());
+                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            }
+            // 5xx는 PG사 서버 장애. 서킷이 집계하도록 원본 예외(e)를 그대로 다시 던짐
+            log.error("KakaoPay API 5xx 장애 발생: {}", e.getResponseBodyAsString());
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

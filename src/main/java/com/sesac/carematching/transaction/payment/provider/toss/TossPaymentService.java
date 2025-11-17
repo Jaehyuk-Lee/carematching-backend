@@ -83,7 +83,14 @@ public class TossPaymentService extends AbstractPaymentService {
             ResponseEntity<String> response = paymentClient.send(url, entity);
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
-            throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
+            if (e.getStatusCode().is4xxClientError()) {
+                // 4xx는 Toss의 비즈니스 오류. TossPaymentsException으로 파싱 (ignoreExceptions 대상)
+                log.warn("Toss API 4xx 응답: {}", e.getResponseBodyAsString());
+                throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
+            }
+            // 5xx는 PG사 서버 장애. 서킷이 집계하도록 원본 예외(e)를 그대로 다시 던짐
+            log.error("Toss API 5xx 장애 발생: {}", e.getResponseBodyAsString());
+            throw e;
         } catch (JsonProcessingException e) {
             log.error("API 서버에서 응답한 JSON 객체를 파싱하지 못했습니다.");
             throw new RuntimeException(e);
