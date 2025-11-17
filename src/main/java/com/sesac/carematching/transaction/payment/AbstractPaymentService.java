@@ -17,9 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public abstract class AbstractPaymentService implements PaymentService{
     protected final TransactionRepository transactionRepository;
 
-    @Override
-    public abstract TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request);
-
     protected <T extends RuntimeException> T parsePaymentError(String errorJson, Class<T> valueType) {
         try {
             return new ObjectMapper().readValue(errorJson, valueType);
@@ -35,7 +32,7 @@ public abstract class AbstractPaymentService implements PaymentService{
      * 각 PG사에 알맞게 PendingPayment에 추가 저장 가능 (필요시 customizePendingPayment 구현)
      */
     @Transactional
-    protected TransactionDetailDTO fallbackForConfirm(PaymentConfirmRequestDTO request) {
+    protected TransactionDetailDTO fallbackForConfirm(PaymentConfirmRequestDTO request, Throwable t) {
         PaymentProvider provider = getPaymentProvider();
 
         Transaction transaction = transactionRepository.findByOrderId(request.getOrderId())

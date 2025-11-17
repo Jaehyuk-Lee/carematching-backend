@@ -130,7 +130,7 @@ public class KakaoPayService extends AbstractPaymentService {
         }
     }
 
-    private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request) {
+    private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request, Throwable t) {
         PaymentReadyResponseDTO paymentReadyResponseDTO = new PaymentReadyResponseDTO();
         paymentReadyResponseDTO.setFallback(true);
         return paymentReadyResponseDTO;
