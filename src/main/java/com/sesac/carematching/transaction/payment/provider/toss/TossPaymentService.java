@@ -97,6 +97,41 @@ public class TossPaymentService extends AbstractPaymentService {
         }
     }
 
+    /**
+     * 헬스체크 전용 메서드 (DB 접근 없음, Fallback 없음)
+     */
+    @CircuitBreaker(name = "TossPayments_Confirm")
+    public void healthCheckConfirm(PaymentConfirmRequestDTO request) {
+        String url = "https://api.tosspayments.com/v1/payments/confirm";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("orderId", request.getOrderId());
+        requestData.put("amount", request.getAmount());
+        requestData.put("paymentKey", request.getPaymentKey());
+
+        HttpHeaders headers = new HttpHeaders();
+        String encodedAuth = Base64.getEncoder().encodeToString((tossSecret + ":").getBytes());
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            paymentClient.send(url, entity);
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().is4xxClientError()) {
+                throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
+            }
+            throw e;
+        }
+    }
+
     private TransactionDetailDTO paymentDone(String responseBody, ObjectMapper objectMapper) throws JsonProcessingException {
         // 토스페미언츠 API 응답 문서: https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4
         JsonNode json = objectMapper.readTree(responseBody);

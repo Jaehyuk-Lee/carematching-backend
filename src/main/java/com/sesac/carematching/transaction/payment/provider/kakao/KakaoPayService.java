@@ -137,6 +137,47 @@ public class KakaoPayService extends AbstractPaymentService {
         }
     }
 
+    /**
+     * 헬스체크 전용 메서드 (DB 접근 없음, Fallback 없음)
+     */
+    @CircuitBreaker(name = "KakaoPay_Ready")
+    public void healthCheckReady(PaymentReadyRequestDTO request) {
+        String url = KAKAO_BASE_URL + "/online/v1/payment/ready";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("cid", kakao_cid);
+        requestData.put("partner_order_id", request.getOrderId());
+        requestData.put("partner_user_id", request.getUserId());
+        requestData.put("item_name", request.getItemName());
+        requestData.put("quantity", request.getQuantity());
+        requestData.put("total_amount", request.getTotalAmount());
+        requestData.put("tax_free_amount", 0);
+        requestData.put("approval_url", frontend_domain + "/payment/kakao-success?orderId=" + request.getOrderId());
+        requestData.put("cancel_url", frontend_domain + "/");
+        requestData.put("fail_url", frontend_domain + "/payment/kakao-fail?orderId=" + request.getOrderId());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "SECRET_KEY " + kakao_secret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            paymentClient.send(url, entity);
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().is4xxClientError()) {
+                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            }
+            throw e;
+        }
+    }
+
     private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request, Throwable t) {
         PaymentReadyResponseDTO paymentReadyResponseDTO = new PaymentReadyResponseDTO();
         paymentReadyResponseDTO.setFallback(true);
@@ -187,6 +228,43 @@ public class KakaoPayService extends AbstractPaymentService {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 헬스체크 전용 메서드 (DB 접근 없음, Fallback 없음)
+     */
+    @CircuitBreaker(name = "KakaoPay_Confirm")
+    public void healthCheckConfirm(PaymentConfirmRequestDTO request) {
+        String url = KAKAO_BASE_URL + "/online/v1/payment/approve";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("cid", kakao_cid);
+        requestData.put("partner_order_id", request.getOrderId());
+        requestData.put("total_amount", request.getAmount());
+        requestData.put("tid", request.getPaymentKey());
+        requestData.put("partner_user_id", request.getPartnerUserId());
+        requestData.put("pg_token", request.getPgToken());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "SECRET_KEY " + kakao_secret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            paymentClient.send(url, entity);
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().is4xxClientError()) {
+                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            }
+            throw e;
         }
     }
 

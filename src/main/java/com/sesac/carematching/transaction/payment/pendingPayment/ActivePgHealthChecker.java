@@ -48,7 +48,7 @@ public class ActivePgHealthChecker {
                     .build();
 
                 // 이 호출이 @CircuitBreaker(name="TossPayments_Confirm")에 의해 가로채짐
-                tossService.confirmPayment(dummyRequest);
+                tossService.healthCheckConfirm(dummyRequest);
 
                 // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환했고
                 // ignoreExceptions 설정 덕분에 서킷이 CLOSED로 전환되었음을 의미.
@@ -86,7 +86,7 @@ public class ActivePgHealthChecker {
                 dummyRequest.setTotalAmount(100);
 
                 // 이 호출이 @CircuitBreaker(name="KakaoPay_Ready")에 의해 가로채짐
-                kakaoService.readyPayment(dummyRequest);
+                kakaoService.healthCheckReady(dummyRequest);
 
             } catch (KakaoPayException e) {
                 // 4xx 오류. 서킷 CLOSED로 전환됨.
@@ -98,7 +98,38 @@ public class ActivePgHealthChecker {
         }
     }
 
-    // (필요시 KakaoPay_Confirm도 위와 동일하게 구현)
+    /**
+     * 1분마다 실행
+     */
+    @Scheduled(fixedDelayString = "PT1M")
+    public void checkKakaoConfirm() {
+        String circuitName = "KakaoPay_Confirm";
+        if (isCircuitNotClosed(circuitName)) {
+            log.info("[ActiveCheck] KAKAO Confirm 회로({}) 복구 테스트 시작...", circuitName);
+            try {
+                KakaoPayService kakaoService = (KakaoPayService) paymentServiceFactory.getService(PaymentProvider.KAKAO);
+
+                // 가짜(dummy) 데이터로 confirm API 호출
+                PaymentConfirmRequestDTO dummyRequest = PaymentConfirmRequestDTO.builder()
+                    .orderId("health-check-" + UUID.randomUUID())
+                    .amount(100)
+                    .paymentKey("dummy-tid")
+                    .partnerUserId("health-check-user")
+                    .pgToken("dummy-pg-token")
+                    .build();
+
+                // 이 호출이 @CircuitBreaker(name="KakaoPay_Confirm")에 의해 가로채짐
+                kakaoService.healthCheckConfirm(dummyRequest);
+
+            } catch (KakaoPayException e) {
+                // 4xx 오류. 서킷 CLOSED로 전환됨.
+                log.info("[ActiveCheck] KAKAO Confirm 회로 복구 확인 (4xx): {}", e.getMessage());
+            } catch (Exception e) {
+                // 5xx, Timeout 등. 서킷 OPEN으로 전환됨.
+                log.warn("[ActiveCheck] KAKAO Confirm 회로 복구 테스트 실패 (5xx/Timeout): {}", e.getMessage());
+            }
+        }
+    }
 
     private boolean isCircuitNotClosed(String circuitName) {
         try {
