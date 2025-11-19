@@ -46,7 +46,7 @@ public class CircuitBreakerEventListener implements ApplicationRunner {
     );
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
         // CircuitBreakerRegistry에 등록된 모든 CircuitBreaker에 대해 이벤트 리스너 등록
         circuitBreakerRegistry.getAllCircuitBreakers().forEach(circuitBreaker -> {
             circuitBreaker.getEventPublisher()
