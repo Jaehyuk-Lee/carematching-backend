@@ -43,7 +43,7 @@ public class TransactionController {
     @PostMapping("/kakao/ready/{orderId}")
     public ResponseEntity<PaymentReadyResponseDTO> readyKakaoPay(@PathVariable String orderId, HttpServletRequest request) {
         Integer userId = tokenAuth.extractUserIdFromToken(request);
-        PaymentReadyResponseDTO responseDTO = transactionService.readyKakaoPay(orderId, userId);
+        PaymentReadyResponseDTO responseDTO = transactionService.readyPayment(orderId, userId);
         return ResponseEntity.ok(responseDTO);
     }
 

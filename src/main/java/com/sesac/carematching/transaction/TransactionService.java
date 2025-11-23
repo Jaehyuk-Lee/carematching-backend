@@ -82,7 +82,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public PaymentReadyResponseDTO readyKakaoPay(String orderId, Integer userId) {
+    public PaymentReadyResponseDTO readyPayment(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
         PaymentProvider pg = transaction.getPaymentProvider();
 
