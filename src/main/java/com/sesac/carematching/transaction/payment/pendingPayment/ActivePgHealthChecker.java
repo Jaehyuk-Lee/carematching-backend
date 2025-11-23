@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * DB 상태와 관계없이 '능동적으로' PG사 API를 호출하여
- * HALF-OPEN 상태의 서킷을 테스트하고 복구를 시도하는 스케줄러.
+ * DB 상태와 관계없이 능동적으로 PG사 API를 호출하여
+ * HALF-OPEN 상태의 서킷을 테스트하고 복구를 시도하는 스케줄러
  */
 @Slf4j
 @Component
@@ -50,18 +50,12 @@ public class ActivePgHealthChecker {
                 // 이 호출이 @CircuitBreaker(name="TossPayments_Confirm")에 의해 가로채짐
                 tossService.healthCheckConfirm(dummyRequest);
 
-                // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환했고
-                // ignoreExceptions 설정 덕분에 서킷이 CLOSED로 전환되었음을 의미.
-                log.info("[ActiveCheck] TOSS Confirm 회로가 4xx 응답을 반환. CLOSED로 간주.");
+                // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환
+                log.info("[ActiveCheck] {} 회로가 4xx 응답을 반환. CLOSED로 간주.", circuitName);
 
-            } catch (TossPaymentsException e) {
-                // 4xx 오류(TossPaymentsException)는 우리가 ignoreExceptions에 등록했기 때문에
-                // 서킷을 CLOSED로 전환시킴. 따라서 이 예외는 정상으로 간주하고 무시.
-                log.info("[ActiveCheck] TOSS Confirm 회로 복구 확인 (4xx): {}", e.getMessage());
             } catch (Exception e) {
-                // 5xx, Timeout 등 'ignore'되지 않은 다른 모든 예외.
-                // 이 예외들은 서킷이 다시 OPEN 상태로 돌아가게 만듦. (정상 동작)
-                log.warn("[ActiveCheck] TOSS Confirm 회로 복구 테스트 실패 (5xx/Timeout): {}", e.getMessage());
+                // 5xx, Timeout 등. 서킷 OPEN으로 전환됨.
+                log.warn("[ActiveCheck] {} 회로 복구 테스트 실패 (5xx/Timeout): {}", circuitName, e.getMessage());
             }
         }
     }
@@ -88,12 +82,12 @@ public class ActivePgHealthChecker {
                 // 이 호출이 @CircuitBreaker(name="KakaoPay_Ready")에 의해 가로채짐
                 kakaoService.healthCheckReady(dummyRequest);
 
-            } catch (KakaoPayException e) {
-                // 4xx 오류. 서킷 CLOSED로 전환됨.
-                log.info("[ActiveCheck] KAKAO Ready 회로 복구 확인 (4xx): {}", e.getMessage());
+                // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환
+                log.info("[ActiveCheck] {} 회로가 4xx 응답을 반환. CLOSED로 간주.", circuitName);
+
             } catch (Exception e) {
                 // 5xx, Timeout 등. 서킷 OPEN으로 전환됨.
-                log.warn("[ActiveCheck] KAKAO Ready 회로 복구 테스트 실패 (5xx/Timeout): {}", e.getMessage());
+                log.warn("[ActiveCheck] {} 회로 복구 테스트 실패 (5xx/Timeout): {}", circuitName, e.getMessage());
             }
         }
     }
@@ -121,12 +115,12 @@ public class ActivePgHealthChecker {
                 // 이 호출이 @CircuitBreaker(name="KakaoPay_Confirm")에 의해 가로채짐
                 kakaoService.healthCheckConfirm(dummyRequest);
 
-            } catch (KakaoPayException e) {
-                // 4xx 오류. 서킷 CLOSED로 전환됨.
-                log.info("[ActiveCheck] KAKAO Confirm 회로 복구 확인 (4xx): {}", e.getMessage());
+                // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환
+                log.info("[ActiveCheck] {} 회로가 4xx 응답을 반환. CLOSED로 간주.", circuitName);
+
             } catch (Exception e) {
                 // 5xx, Timeout 등. 서킷 OPEN으로 전환됨.
-                log.warn("[ActiveCheck] KAKAO Confirm 회로 복구 테스트 실패 (5xx/Timeout): {}", e.getMessage());
+                log.warn("[ActiveCheck] {} 회로 복구 테스트 실패 (5xx/Timeout): {}", circuitName, e.getMessage());
             }
         }
     }
