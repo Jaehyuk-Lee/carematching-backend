@@ -100,6 +100,8 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 60s
         permittedNumberOfCallsInHalfOpenState: 3
+        ignoreExceptions:
+          - com.sesac.carematching.transaction.payment.provider.toss.TossPaymentsException
       KakaoPay_Ready:
         registerHealthIndicator: true
         slidingWindowSize: 10
@@ -107,6 +109,8 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 60s
         permittedNumberOfCallsInHalfOpenState: 3
+        ignoreExceptions:
+          - com.sesac.carematching.transaction.payment.provider.kakao.KakaoPayException
       KakaoPay_Confirm:
         registerHealthIndicator: true
         slidingWindowSize: 10
@@ -114,6 +118,8 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 60s
         permittedNumberOfCallsInHalfOpenState: 3
+        ignoreExceptions:
+          - com.sesac.carematching.transaction.payment.provider.kakao.KakaoPayException
 
 mongodb:
   host: ${MONGODB_HOST:localhost}

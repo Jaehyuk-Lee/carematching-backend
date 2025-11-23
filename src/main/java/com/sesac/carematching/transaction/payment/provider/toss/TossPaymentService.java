@@ -52,6 +52,11 @@ public class TossPaymentService extends AbstractPaymentService {
     }
 
     @Override
+    public void healthCheckReady(PaymentReadyRequestDTO request) {
+        throw new UnsupportedOperationException("Payment Ready is not supported on Toss Payments");
+    }
+
+    @Override
     @Transactional
     @FallbackMessage(code=202, message="현재 토스페이먼츠 장애 발생으로 결제 승인 처리가 지연되고 있습니다. 10분 내로 결제 처리가 진행됩니다. 이 페이지를 벗어나셔도 괜찮습니다.")
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")
@@ -83,10 +88,53 @@ public class TossPaymentService extends AbstractPaymentService {
             ResponseEntity<String> response = paymentClient.send(url, entity);
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
-            throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
+            if (e.getStatusCode().is4xxClientError()) {
+                // 4xx는 Toss의 비즈니스 오류. TossPaymentsException으로 파싱 (ignoreExceptions 대상)
+                log.warn("Toss API 4xx 응답: {}", e.getResponseBodyAsString());
+                throw parsePaymentError(e.getResponseBodyAsString(), TossPaymentsException.class);
+            }
+            // 5xx는 PG사 서버 장애. 서킷이 집계하도록 원본 예외(e)를 그대로 다시 던짐
+            log.error("Toss API 5xx 장애 발생: {}", e.getResponseBodyAsString());
+            throw e;
         } catch (JsonProcessingException e) {
             log.error("API 서버에서 응답한 JSON 객체를 파싱하지 못했습니다.");
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 헬스체크 전용 메서드 (DB 접근 없음, Fallback 없음)
+     */
+    @CircuitBreaker(name = "TossPayments_Confirm")
+    public void healthCheckConfirm(PaymentConfirmRequestDTO request) {
+        String url = "https://api.tosspayments.com/v1/payments/confirm";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("orderId", request.getOrderId());
+        requestData.put("amount", request.getAmount());
+        requestData.put("paymentKey", request.getPaymentKey());
+
+        HttpHeaders headers = new HttpHeaders();
+        String encodedAuth = Base64.getEncoder().encodeToString((tossSecret + ":").getBytes());
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            paymentClient.send(url, entity);
+        } catch (RestClientResponseException e) {
+            // 4xx 에러는 외부 API 서버가 정상적으로 살아있다는 의미이므로 예외를 던지지 않음
+            if (e.getStatusCode().is4xxClientError()) {
+                return;
+            }
+            throw e;
         }
     }
 

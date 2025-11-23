@@ -123,14 +123,63 @@ public class KakaoPayService extends AbstractPaymentService {
 
             return new PaymentReadyResponseDTO(nextRedirectPcUrl, tid, createdAt);
 
-        } catch (RestClientResponseException e) {
-            throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+        } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
+            if (e.getStatusCode().is4xxClientError()) {
+                // 4xx는 KakaoPay의 비즈니스 오류. KakaoPayException 파싱 (ignoreExceptions 대상)
+                log.warn("KakaoPay API 4xx 응답: {}", e.getResponseBodyAsString());
+                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            }
+            // 5xx는 PG사 서버 장애. 서킷이 집계하도록 원본 예외(e)를 그대로 다시 던짐
+            log.error("KakaoPay API 5xx 장애 발생: {}", e.getResponseBodyAsString());
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request) {
+    /**
+     * 헬스체크 전용 메서드 (DB 접근 없음, Fallback 없음)
+     */
+    @CircuitBreaker(name = "KakaoPay_Ready")
+    public void healthCheckReady(PaymentReadyRequestDTO request) {
+        String url = KAKAO_BASE_URL + "/online/v1/payment/ready";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("cid", kakao_cid);
+        requestData.put("partner_order_id", request.getOrderId());
+        requestData.put("partner_user_id", request.getUserId());
+        requestData.put("item_name", request.getItemName());
+        requestData.put("quantity", request.getQuantity());
+        requestData.put("total_amount", request.getTotalAmount());
+        requestData.put("tax_free_amount", 0);
+        requestData.put("approval_url", frontend_domain + "/payment/kakao-success?orderId=" + request.getOrderId());
+        requestData.put("cancel_url", frontend_domain + "/");
+        requestData.put("fail_url", frontend_domain + "/payment/kakao-fail?orderId=" + request.getOrderId());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "SECRET_KEY " + kakao_secret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            paymentClient.send(url, entity);
+        } catch (RestClientResponseException e) {
+            // 4xx 에러는 외부 API 서버가 정상적으로 살아있다는 의미이므로 예외를 던지지 않음
+            if (e.getStatusCode().is4xxClientError()) {
+                return;
+            }
+            throw e;
+        }
+    }
+
+    private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request, Throwable t) {
         PaymentReadyResponseDTO paymentReadyResponseDTO = new PaymentReadyResponseDTO();
         paymentReadyResponseDTO.setFallback(true);
         return paymentReadyResponseDTO;
@@ -170,9 +219,54 @@ public class KakaoPayService extends AbstractPaymentService {
             ResponseEntity<String> response = paymentClient.send(url, entity);
             return paymentDone(response.getBody(), objectMapper);
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
-            throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            if (e.getStatusCode().is4xxClientError()) {
+                // 4xx는 KakaoPay의 비즈니스 오류. KakaoPayException 파싱 (ignoreExceptions 대상)
+                log.warn("KakaoPay API 4xx 응답: {}", e.getResponseBodyAsString());
+                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+            }
+            // 5xx는 PG사 서버 장애. 서킷이 집계하도록 원본 예외(e)를 그대로 다시 던짐
+            log.error("KakaoPay API 5xx 장애 발생: {}", e.getResponseBodyAsString());
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 헬스체크 전용 메서드 (DB 접근 없음, Fallback 없음)
+     */
+    @CircuitBreaker(name = "KakaoPay_Confirm")
+    public void healthCheckConfirm(PaymentConfirmRequestDTO request) {
+        String url = KAKAO_BASE_URL + "/online/v1/payment/approve";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode requestData = objectMapper.createObjectNode();
+        requestData.put("cid", kakao_cid);
+        requestData.put("partner_order_id", request.getOrderId());
+        requestData.put("total_amount", request.getAmount());
+        requestData.put("tid", request.getPaymentKey());
+        requestData.put("partner_user_id", request.getPartnerUserId());
+        requestData.put("pg_token", request.getPgToken());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "SECRET_KEY " + kakao_secret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity;
+        try {
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(requestData), headers);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            paymentClient.send(url, entity);
+        } catch (RestClientResponseException e) {
+            // 4xx 에러는 외부 API 서버가 정상적으로 살아있다는 의미이므로 예외를 던지지 않음
+            if (e.getStatusCode().is4xxClientError()) {
+                return;
+            }
+            throw e;
         }
     }
 

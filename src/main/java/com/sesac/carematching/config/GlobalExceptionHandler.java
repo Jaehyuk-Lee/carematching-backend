@@ -2,9 +2,9 @@ package com.sesac.carematching.config;
 
 import com.sesac.carematching.chat.RoomBuildException;
 import com.sesac.carematching.exception.VersionException;
-import com.sesac.carematching.transaction.payment.provider.toss.TossPaymentsException;
 import com.sesac.carematching.user.AdminAuthException;
 import com.sesac.carematching.util.TokenAuthException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -72,5 +72,14 @@ public class GlobalExceptionHandler {
         errorResponse.put("message", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.UPGRADE_REQUIRED).body(errorResponse);
+    }
+
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ResponseEntity<Map<String, String>> handleCallNotPermittedException(CallNotPermittedException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("status", "error");
+        errorResponse.put("message", "일시적인 장애로 결제에 실패했습니다. 결제를 처음부터 다시 진행해 주세요.");
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
     }
 }

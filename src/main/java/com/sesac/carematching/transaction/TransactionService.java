@@ -82,7 +82,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public PaymentReadyResponseDTO readyKakaoPay(String orderId, Integer userId) {
+    public PaymentReadyResponseDTO readyPayment(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
         PaymentProvider pg = transaction.getPaymentProvider();
 
@@ -101,24 +101,20 @@ public class TransactionService {
         paymentReadyRequestDTO.setTotalAmount(transaction.getPrice());
         paymentReadyRequestDTO.setQuantity(1);
 
-        if (pg == PaymentProvider.KAKAO) {
-            PaymentService service = paymentServiceFactory.getService(pg);
-            return service.readyPayment(paymentReadyRequestDTO);
-        }
-        throw new UnsupportedOperationException("Ready가 지원되지 않는 PG사: " + pg);
+        PaymentService service = paymentServiceFactory.getService(pg);
+        return service.readyPayment(paymentReadyRequestDTO);
     }
 
     @Transactional(readOnly = true)
     public String getPaymentKeyForKakao(String orderId, Integer userId) {
         Transaction transaction = getValidTransaction(orderId, userId);
 
-        if (transaction.getPaymentProvider() != PaymentProvider.KAKAO){
-            throw new IllegalStateException("카카오페이 결제에 대해서만 요청이 가능합니다.");
-        }
         if (transaction.getTransactionStatus() == TransactionStatus.PENDING_RETRY) {
             throw new IllegalStateException("결제가 이미 처리 대기 중입니다.");
         } else if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
             throw new IllegalStateException("결제가 이미 처리되었습니다.");
+        } else if (transaction.getPaymentProvider() != PaymentProvider.KAKAO) {
+            throw new IllegalStateException("카카오페이 결제에 대해서만 수행이 가능합니다.");
         }
         if (transaction.getPgPaymentKey() == null) {
             throw new IllegalStateException("카카오페이 결제가 준비되지 않았습니다. 결제를 다시 시도해주세요.");
