@@ -52,6 +52,11 @@ public class TossPaymentService extends AbstractPaymentService {
     }
 
     @Override
+    public void healthCheckReady(PaymentReadyRequestDTO request) {
+        throw new UnsupportedOperationException("Payment Ready is not supported on Toss Payments");
+    }
+
+    @Override
     @Transactional
     @FallbackMessage(code=202, message="현재 토스페이먼츠 장애 발생으로 결제 승인 처리가 지연되고 있습니다. 10분 내로 결제 처리가 진행됩니다. 이 페이지를 벗어나셔도 괜찮습니다.")
     @CircuitBreaker(name = "TossPayments_Confirm", fallbackMethod = "fallbackForConfirm")

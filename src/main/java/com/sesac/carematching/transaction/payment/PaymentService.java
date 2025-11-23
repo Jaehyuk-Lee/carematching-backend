@@ -26,10 +26,25 @@ public interface PaymentService {
     PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request);
 
     /**
+     * 외부 PG사 결제 준비 엔드포인트에 대해 헬스체크를 수행합니다.
+     *
+     * @param request 결제 준비 정보
+     */
+    void healthCheckReady(PaymentReadyRequestDTO request);
+
+    /**
      * 외부 PG에 결제 검증을 요청합니다.
      *
      * @param request   주문 승인 정보
      * @return 결제 상세 정보 (status가 DONE이면 승인 완료)
      */
     TransactionDetailDTO confirmPayment(PaymentConfirmRequestDTO request);
+
+    /**
+     * 외부 PG사 결제 검증 엔드포인트에 대해 헬스체크를 수행합니다.
+     *
+     * @param request 주문 승인 정보
+     */
+    void healthCheckConfirm(PaymentConfirmRequestDTO request);
+
 }

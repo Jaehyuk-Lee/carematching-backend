@@ -3,11 +3,8 @@ package com.sesac.carematching.transaction.payment.pendingPayment;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.PaymentReadyRequestDTO;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
+import com.sesac.carematching.transaction.payment.PaymentService;
 import com.sesac.carematching.transaction.payment.PaymentServiceFactory;
-import com.sesac.carematching.transaction.payment.provider.kakao.KakaoPayException;
-import com.sesac.carematching.transaction.payment.provider.kakao.KakaoPayService;
-import com.sesac.carematching.transaction.payment.provider.toss.TossPaymentService;
-import com.sesac.carematching.transaction.payment.provider.toss.TossPaymentsException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -34,30 +31,15 @@ public class ActivePgHealthChecker {
      */
     @Scheduled(fixedDelayString = "PT1M")
     public void checkTossConfirm() {
-        String circuitName = "TossPayments_Confirm";
-        if (isCircuitNotClosed(circuitName)) {
-            log.info("[ActiveCheck] TOSS Confirm 회로({}) 복구 테스트 시작...", circuitName);
-            try {
-                TossPaymentService tossService = (TossPaymentService) paymentServiceFactory.getService(PaymentProvider.TOSS);
-
-                // 가짜(dummy) 데이터로 confirm API 호출
-                PaymentConfirmRequestDTO dummyRequest = PaymentConfirmRequestDTO.builder()
+        performHealthCheck("TossPayments_Confirm", () -> {
+            PaymentService paymentService = paymentServiceFactory.getService(PaymentProvider.TOSS);
+            PaymentConfirmRequestDTO dummyRequest = PaymentConfirmRequestDTO.builder()
                     .orderId("health-check-" + UUID.randomUUID())
                     .amount(100) // 실제 금액과 무관
                     .paymentKey("dummy-payment-key-for-health-check")
                     .build();
-
-                // 이 호출이 @CircuitBreaker(name="TossPayments_Confirm")에 의해 가로채짐
-                tossService.healthCheckConfirm(dummyRequest);
-
-                // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환
-                log.info("[ActiveCheck] {} 회로가 4xx 응답을 반환. CLOSED로 간주.", circuitName);
-
-            } catch (Exception e) {
-                // 5xx, Timeout 등. 서킷 OPEN으로 전환됨.
-                log.warn("[ActiveCheck] {} 회로 복구 테스트 실패 (5xx/Timeout): {}", circuitName, e.getMessage());
-            }
-        }
+            paymentService.healthCheckConfirm(dummyRequest);
+        });
     }
 
     /**
@@ -65,31 +47,16 @@ public class ActivePgHealthChecker {
      */
     @Scheduled(fixedDelayString = "PT1M")
     public void checkKakaoReady() {
-        String circuitName = "KakaoPay_Ready";
-        if (isCircuitNotClosed(circuitName)) {
-            log.info("[ActiveCheck] KAKAO Ready 회로({}) 복구 테스트 시작...", circuitName);
-            try {
-                KakaoPayService kakaoService = (KakaoPayService) paymentServiceFactory.getService(PaymentProvider.KAKAO);
-
-                // 가짜(dummy) 데이터로 ready API 호출
-                PaymentReadyRequestDTO dummyRequest = new PaymentReadyRequestDTO();
-                dummyRequest.setOrderId("health-check-" + UUID.randomUUID());
-                dummyRequest.setUserId("health-check-user");
-                dummyRequest.setItemName("Health Check");
-                dummyRequest.setQuantity(1);
-                dummyRequest.setTotalAmount(100);
-
-                // 이 호출이 @CircuitBreaker(name="KakaoPay_Ready")에 의해 가로채짐
-                kakaoService.healthCheckReady(dummyRequest);
-
-                // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환
-                log.info("[ActiveCheck] {} 회로가 4xx 응답을 반환. CLOSED로 간주.", circuitName);
-
-            } catch (Exception e) {
-                // 5xx, Timeout 등. 서킷 OPEN으로 전환됨.
-                log.warn("[ActiveCheck] {} 회로 복구 테스트 실패 (5xx/Timeout): {}", circuitName, e.getMessage());
-            }
-        }
+        performHealthCheck("KakaoPay_Ready", () -> {
+            PaymentService paymentService = paymentServiceFactory.getService(PaymentProvider.KAKAO);
+            PaymentReadyRequestDTO dummyRequest = new PaymentReadyRequestDTO();
+            dummyRequest.setOrderId("health-check-" + UUID.randomUUID());
+            dummyRequest.setUserId("health-check-user");
+            dummyRequest.setItemName("Health Check");
+            dummyRequest.setQuantity(1);
+            dummyRequest.setTotalAmount(100);
+            paymentService.healthCheckReady(dummyRequest);
+        });
     }
 
     /**
@@ -97,27 +64,26 @@ public class ActivePgHealthChecker {
      */
     @Scheduled(fixedDelayString = "PT1M")
     public void checkKakaoConfirm() {
-        String circuitName = "KakaoPay_Confirm";
-        if (isCircuitNotClosed(circuitName)) {
-            log.info("[ActiveCheck] KAKAO Confirm 회로({}) 복구 테스트 시작...", circuitName);
-            try {
-                KakaoPayService kakaoService = (KakaoPayService) paymentServiceFactory.getService(PaymentProvider.KAKAO);
-
-                // 가짜(dummy) 데이터로 confirm API 호출
-                PaymentConfirmRequestDTO dummyRequest = PaymentConfirmRequestDTO.builder()
+        performHealthCheck("KakaoPay_Confirm", () -> {
+            PaymentService paymentService = paymentServiceFactory.getService(PaymentProvider.KAKAO);
+            PaymentConfirmRequestDTO dummyRequest = PaymentConfirmRequestDTO.builder()
                     .orderId("health-check-" + UUID.randomUUID())
                     .amount(100)
                     .paymentKey("dummy-tid")
                     .partnerUserId("health-check-user")
                     .pgToken("dummy-pg-token")
                     .build();
+            paymentService.healthCheckConfirm(dummyRequest);
+        });
+    }
 
-                // 이 호출이 @CircuitBreaker(name="KakaoPay_Confirm")에 의해 가로채짐
-                kakaoService.healthCheckConfirm(dummyRequest);
-
+    private void performHealthCheck(String circuitName, Runnable healthCheckAction) {
+        if (isCircuitNotClosed(circuitName)) {
+            log.info("[ActiveCheck] {} 회로({}) 복구 테스트 시작...", circuitName.split("_")[0], circuitName);
+            try {
+                healthCheckAction.run();
                 // (참고) 여기까지 코드가 도달했다면, PG가 4xx 오류를 반환
                 log.info("[ActiveCheck] {} 회로가 4xx 응답을 반환. CLOSED로 간주.", circuitName);
-
             } catch (Exception e) {
                 // 5xx, Timeout 등. 서킷 OPEN으로 전환됨.
                 log.warn("[ActiveCheck] {} 회로 복구 테스트 실패 (5xx/Timeout): {}", circuitName, e.getMessage());
