@@ -113,6 +113,8 @@ public class TransactionService {
             throw new IllegalStateException("결제가 이미 처리 대기 중입니다.");
         } else if (transaction.getTransactionStatus() != TransactionStatus.PENDING) {
             throw new IllegalStateException("결제가 이미 처리되었습니다.");
+        } else if (transaction.getPaymentProvider() != PaymentProvider.KAKAO) {
+            throw new IllegalStateException("카카오페이 결제에 대해서만 수행이 가능합니다.");
         }
         if (transaction.getPgPaymentKey() == null) {
             throw new IllegalStateException("카카오페이 결제가 준비되지 않았습니다. 결제를 다시 시도해주세요.");
