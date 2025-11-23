@@ -7,6 +7,7 @@ import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 
 /**
  * 결제 제공자(예: TossPayments, 다른 PG)들을 추상화한 서비스 인터페이스.
+ * 각 PG사에서 지원하지 메서드가 존재할 경우, 구체 클래스에서 UOE를 던져야 함.
  */
 public interface PaymentService {
 
