@@ -171,8 +171,9 @@ public class KakaoPayService extends AbstractPaymentService {
         try {
             paymentClient.send(url, entity);
         } catch (RestClientResponseException e) {
+            // 4xx 에러는 외부 API 서버가 정상적으로 살아있다는 의미이므로 예외를 던지지 않음
             if (e.getStatusCode().is4xxClientError()) {
-                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+                return;
             }
             throw e;
         }
@@ -261,8 +262,9 @@ public class KakaoPayService extends AbstractPaymentService {
         try {
             paymentClient.send(url, entity);
         } catch (RestClientResponseException e) {
+            // 4xx 에러는 외부 API 서버가 정상적으로 살아있다는 의미이므로 예외를 던지지 않음
             if (e.getStatusCode().is4xxClientError()) {
-                throw parsePaymentError(e.getResponseBodyAsString(), KakaoPayException.class);
+                return;
             }
             throw e;
         }
