@@ -46,11 +46,13 @@ public class PendingPaymentAsyncProcessor {
         }
 
         PaymentProvider nowPg = transaction.getPaymentProvider();
-        PaymentConfirmRequestDTO request = PaymentConfirmRequestDTO.builder()
-                .orderId(transaction.getOrderId())
-                .amount(transaction.getPrice())
-                .paymentKey(transaction.getPgPaymentKey()) // 초기 결제 시도 시 저장된 paymentKey 사용
-                .build();
+        PaymentConfirmRequestDTO request = new PaymentConfirmRequestDTO(
+            transaction.getOrderId(),
+            transaction.getPrice(),
+            transaction.getPgPaymentKey(), // 초기 결제 시도 시 저장된 paymentKey 사용
+            null,
+            null
+        );
 
         if (nowPg == PaymentProvider.KAKAO) {
             request.setPgToken(pendingPayment.getPgToken());

@@ -121,7 +121,7 @@ public class KakaoPayService extends AbstractPaymentService {
             transaction.setPgPaymentKey(tid);
             transactionRepository.save(transaction);
 
-            return new PaymentReadyResponseDTO(nextRedirectPcUrl, tid, createdAt);
+            return new PaymentReadyResponseDTO(nextRedirectPcUrl, tid, createdAt, false);
 
         } catch (RestClientResponseException e) { // RestTemplate 응답 상태 코드가 2xx, 3xx 아니면 터짐
             if (e.getStatusCode().is4xxClientError()) {
@@ -180,9 +180,7 @@ public class KakaoPayService extends AbstractPaymentService {
     }
 
     private PaymentReadyResponseDTO fallbackForReady(PaymentReadyRequestDTO request, Throwable t) {
-        PaymentReadyResponseDTO paymentReadyResponseDTO = new PaymentReadyResponseDTO();
-        paymentReadyResponseDTO.setFallback(true);
-        return paymentReadyResponseDTO;
+        return new PaymentReadyResponseDTO(null, null, null, true);
     }
 
     @Override

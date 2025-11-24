@@ -55,11 +55,11 @@ public class TransactionService {
             throw new IllegalStateException("결제 대기 중인 주문이 아닙니다.");
         }
 
-        TransactionGetDTO transactionGetDTO = new TransactionGetDTO();
-        transactionGetDTO.setCaregiverName(transaction.getCno().getRealName());
-        transactionGetDTO.setUserName(transaction.getUno().getUsername());
-        transactionGetDTO.setPrice(transaction.getPrice());
-        return transactionGetDTO;
+        return new TransactionGetDTO(
+            transaction.getCno().getRealName(),
+            transaction.getUno().getUsername(),
+            transaction.getPrice()
+        );
     }
 
     @Transactional
@@ -76,9 +76,7 @@ public class TransactionService {
 
         transaction.setPaymentProvider(paymentGatewayRouter.getActiveProvider());
 
-        SelectPgResponseDTO selectPgResponseDTO = new SelectPgResponseDTO();
-        selectPgResponseDTO.setPg(transaction.getPaymentProvider());
-        return selectPgResponseDTO;
+        return new SelectPgResponseDTO(transaction.getPaymentProvider());
     }
 
     @Transactional
@@ -94,12 +92,13 @@ public class TransactionService {
             throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
         }
 
-        PaymentReadyRequestDTO paymentReadyRequestDTO = new PaymentReadyRequestDTO();
-        paymentReadyRequestDTO.setOrderId(transaction.getOrderId());
-        paymentReadyRequestDTO.setUserId(userId.toString());
-        paymentReadyRequestDTO.setItemName(transaction.getOrderName());
-        paymentReadyRequestDTO.setTotalAmount(transaction.getPrice());
-        paymentReadyRequestDTO.setQuantity(1);
+        PaymentReadyRequestDTO paymentReadyRequestDTO = new PaymentReadyRequestDTO(
+            transaction.getOrderId(),
+            userId.toString(),
+            transaction.getOrderName(),
+            transaction.getPrice(),
+            1
+        );
 
         PaymentService service = paymentServiceFactory.getService(pg);
         return service.readyPayment(paymentReadyRequestDTO);
@@ -147,24 +146,26 @@ public class TransactionService {
                 transaction.changeTransactionStatus(TransactionStatus.FAILED);
                 throw new IllegalStateException("잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
             }
-            request = PaymentConfirmRequestDTO.builder()
-                .orderId(orderId)
-                .amount(transaction.getPrice())
-                .paymentKey(paymentKey)
-                .build();
+            request = new PaymentConfirmRequestDTO(
+                orderId,
+                transaction.getPrice(),
+                paymentKey,
+                null,
+                null
+            );
         } else if (pg == PaymentProvider.KAKAO) {
             // 카카오는 추가 정보 필요
             String pgToken = transactionConfirmDTO.getPgToken();
             if (pgToken == null) {
                 throw new IllegalArgumentException("KakaoPay 결제시 pgToken은 필수값입니다.");
             }
-            request = PaymentConfirmRequestDTO.builder()
-                .orderId(orderId)
-                .amount(transaction.getPrice())
-                .paymentKey(paymentKey)
-                .partnerUserId(userId.toString()) // 카카오: userId 추가 필요
-                .pgToken(pgToken) // 카카오: pgToken 추가 필요
-                .build();
+            request = new PaymentConfirmRequestDTO(
+                orderId,
+                transaction.getPrice(),
+                paymentKey,
+                pgToken, // 카카오: pgToken 추가 필요
+                userId.toString() // 카카오: userId 추가 필요
+            );
         } else {
             throw new UnsupportedOperationException("confirm이 지원되지 않는 PG사: " + pg);
         }
@@ -179,10 +180,11 @@ public class TransactionService {
         transaction.setOrderName(transactionDetailDTO.getOrderName());
         transaction.changeTransactionStatus(TransactionStatus.SUCCESS);
 
-        TransactionConfirmDTO result = new TransactionConfirmDTO();
-        result.setOrderId(transaction.getOrderId());
-        result.setPrice(transaction.getPrice());
-        return result;
+        return new TransactionConfirmDTO(
+            transaction.getOrderId(),
+            transaction.getPrice(),
+            null
+        );
     }
 
     private Transaction getValidTransaction(String orderId, Integer userId) {
