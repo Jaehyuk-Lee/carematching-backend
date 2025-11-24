@@ -33,11 +33,13 @@ public class ActivePgHealthChecker {
     public void checkTossConfirm() {
         performHealthCheck("TossPayments_Confirm", () -> {
             PaymentService paymentService = paymentServiceFactory.getService(PaymentProvider.TOSS);
-            PaymentConfirmRequestDTO dummyRequest = PaymentConfirmRequestDTO.builder()
-                    .orderId("health-check-" + UUID.randomUUID())
-                    .amount(100) // 실제 금액과 무관
-                    .paymentKey("dummy-payment-key-for-health-check")
-                    .build();
+            PaymentConfirmRequestDTO dummyRequest = new PaymentConfirmRequestDTO(
+                "health-check-" + UUID.randomUUID(),
+                100,
+                "dummy-payment-key-for-health-check",
+                null,
+                null
+            );
             paymentService.healthCheckConfirm(dummyRequest);
         });
     }
@@ -49,12 +51,13 @@ public class ActivePgHealthChecker {
     public void checkKakaoReady() {
         performHealthCheck("KakaoPay_Ready", () -> {
             PaymentService paymentService = paymentServiceFactory.getService(PaymentProvider.KAKAO);
-            PaymentReadyRequestDTO dummyRequest = new PaymentReadyRequestDTO();
-            dummyRequest.setOrderId("health-check-" + UUID.randomUUID());
-            dummyRequest.setUserId("health-check-user");
-            dummyRequest.setItemName("Health Check");
-            dummyRequest.setQuantity(1);
-            dummyRequest.setTotalAmount(100);
+            PaymentReadyRequestDTO dummyRequest = new PaymentReadyRequestDTO(
+                "health-check-" + UUID.randomUUID(),
+                "health-check-user",
+                "Health Check",
+                1,
+                100
+                );
             paymentService.healthCheckReady(dummyRequest);
         });
     }
@@ -66,13 +69,13 @@ public class ActivePgHealthChecker {
     public void checkKakaoConfirm() {
         performHealthCheck("KakaoPay_Confirm", () -> {
             PaymentService paymentService = paymentServiceFactory.getService(PaymentProvider.KAKAO);
-            PaymentConfirmRequestDTO dummyRequest = PaymentConfirmRequestDTO.builder()
-                    .orderId("health-check-" + UUID.randomUUID())
-                    .amount(100)
-                    .paymentKey("dummy-tid")
-                    .partnerUserId("health-check-user")
-                    .pgToken("dummy-pg-token")
-                    .build();
+            PaymentConfirmRequestDTO dummyRequest = new PaymentConfirmRequestDTO(
+                "health-check-" + UUID.randomUUID(),
+                100,
+                "dummy-tid",
+                "health-check-user",
+                "dummy-pg-token"
+            );
             paymentService.healthCheckConfirm(dummyRequest);
         });
     }
