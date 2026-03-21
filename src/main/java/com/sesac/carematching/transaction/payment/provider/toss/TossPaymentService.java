@@ -49,7 +49,7 @@ public class TossPaymentService extends AbstractPaymentService {
 
     @Override
     public PaymentConfirmRequestDTO buildConfirmRequest(Transaction transaction, TransactionConfirmDTO clientInput, String paymentKey) {
-        if (!clientInput.getPrice().equals(transaction.getPrice())) {
+        if (clientInput.getPrice() == null || !clientInput.getPrice().equals(transaction.getPrice())) {
             transaction.changeTransactionStatus(TransactionStatus.FAILED);
             throw new IllegalStateException("잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
         }

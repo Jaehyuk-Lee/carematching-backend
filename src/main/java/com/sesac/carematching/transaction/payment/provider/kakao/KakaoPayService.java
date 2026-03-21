@@ -77,6 +77,10 @@ public class KakaoPayService extends AbstractPaymentService {
     @Override
     public PaymentConfirmRequestDTO buildRetryConfirmRequest(Transaction transaction) {
         PendingPayment pendingPayment = transaction.getPendingPayment();
+        if (pendingPayment == null) {
+            throw new IllegalStateException(
+                "KakaoPay 재시도에는 PendingPayment가 필요합니다. orderId=" + transaction.getOrderId());
+        }
         return PaymentConfirmRequestDTO.builder()
             .orderId(transaction.getOrderId())
             .amount(transaction.getPrice())
