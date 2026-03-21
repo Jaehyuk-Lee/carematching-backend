@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sesac.carematching.transaction.Transaction;
 import com.sesac.carematching.transaction.TransactionRepository;
+import com.sesac.carematching.transaction.TransactionStatus;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
-import com.sesac.carematching.transaction.dto.PaymentReadyRequestDTO;
-import com.sesac.carematching.transaction.dto.PaymentReadyResponseDTO;
+import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
@@ -47,13 +48,16 @@ public class TossPaymentService extends AbstractPaymentService {
     }
 
     @Override
-    public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
-        throw new UnsupportedOperationException("Payment Ready is not supported on Toss Payments");
-    }
-
-    @Override
-    public void healthCheckReady(PaymentReadyRequestDTO request) {
-        throw new UnsupportedOperationException("Payment Ready is not supported on Toss Payments");
+    public PaymentConfirmRequestDTO buildConfirmRequest(Transaction transaction, TransactionConfirmDTO clientInput, String paymentKey) {
+        if (!clientInput.getPrice().equals(transaction.getPrice())) {
+            transaction.changeTransactionStatus(TransactionStatus.FAILED);
+            throw new IllegalStateException("잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
+        }
+        return PaymentConfirmRequestDTO.builder()
+            .orderId(transaction.getOrderId())
+            .amount(transaction.getPrice())
+            .paymentKey(paymentKey)
+            .build();
     }
 
     @Override

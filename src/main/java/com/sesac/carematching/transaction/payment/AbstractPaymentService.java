@@ -6,6 +6,8 @@ import com.sesac.carematching.transaction.Transaction;
 import com.sesac.carematching.transaction.TransactionRepository;
 import com.sesac.carematching.transaction.TransactionStatus;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyRequestDTO;
+import com.sesac.carematching.transaction.dto.PaymentReadyResponseDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,37 @@ public abstract class AbstractPaymentService implements PaymentService{
             log.warn("{} 파싱 실패: {}", valueType.getSimpleName(), errorJson, e);
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 결제 준비 단계가 필요 없는 PG사를 위한 기본 구현입니다.
+     * 결제 준비가 필요한 PG사(예: KakaoPay)에서는 이 메서드를 오버라이드해야 합니다.
+     */
+    @Override
+    public PaymentReadyResponseDTO readyPayment(PaymentReadyRequestDTO request) {
+        return new PaymentReadyResponseDTO();
+    }
+
+    /**
+     * 결제 준비 헬스체크가 필요 없는 PG사를 위한 기본 구현입니다.
+     * 결제 준비 헬스체크가 필요한 PG사(예: KakaoPay)에서는 이 메서드를 오버라이드해야 합니다.
+     */
+    @Override
+    public void healthCheckReady(PaymentReadyRequestDTO request) {
+        // no-op
+    }
+
+    /**
+     * PendingPayment 재시도 시 공통 필드(orderId, amount, paymentKey)만으로 요청을 구성합니다.
+     * PG사별 추가 필드가 필요한 경우(예: KakaoPay의 pgToken) 오버라이드하세요.
+     */
+    @Override
+    public PaymentConfirmRequestDTO buildRetryConfirmRequest(Transaction transaction) {
+        return PaymentConfirmRequestDTO.builder()
+            .orderId(transaction.getOrderId())
+            .amount(transaction.getPrice())
+            .paymentKey(transaction.getPgPaymentKey())
+            .build();
     }
 
     /**

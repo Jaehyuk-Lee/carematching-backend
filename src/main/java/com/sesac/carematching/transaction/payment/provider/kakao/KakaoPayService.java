@@ -9,6 +9,7 @@ import com.sesac.carematching.transaction.TransactionRepository;
 import com.sesac.carematching.transaction.dto.PaymentConfirmRequestDTO;
 import com.sesac.carematching.transaction.dto.PaymentReadyRequestDTO;
 import com.sesac.carematching.transaction.dto.PaymentReadyResponseDTO;
+import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
 import com.sesac.carematching.transaction.dto.TransactionDetailDTO;
 import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
@@ -56,6 +57,33 @@ public class KakaoPayService extends AbstractPaymentService {
     @Override
     public PaymentProvider getPaymentProvider() {
         return PaymentProvider.KAKAO;
+    }
+
+    @Override
+    public PaymentConfirmRequestDTO buildConfirmRequest(Transaction transaction, TransactionConfirmDTO clientInput, String paymentKey) {
+        String pgToken = clientInput.getPgToken();
+        if (pgToken == null) {
+            throw new IllegalArgumentException("KakaoPay 결제시 pgToken은 필수값입니다.");
+        }
+        return PaymentConfirmRequestDTO.builder()
+            .orderId(transaction.getOrderId())
+            .amount(transaction.getPrice())
+            .paymentKey(paymentKey)
+            .partnerUserId(transaction.getUno().getId().toString())
+            .pgToken(pgToken)
+            .build();
+    }
+
+    @Override
+    public PaymentConfirmRequestDTO buildRetryConfirmRequest(Transaction transaction) {
+        PendingPayment pendingPayment = transaction.getPendingPayment();
+        return PaymentConfirmRequestDTO.builder()
+            .orderId(transaction.getOrderId())
+            .amount(transaction.getPrice())
+            .paymentKey(transaction.getPgPaymentKey())
+            .pgToken(pendingPayment.getPgToken())
+            .partnerUserId(pendingPayment.getPartnerUserId())
+            .build();
     }
 
     @Override
