@@ -46,19 +46,10 @@ public class PendingPaymentAsyncProcessor {
         }
 
         PaymentProvider nowPg = transaction.getPaymentProvider();
-        PaymentConfirmRequestDTO request = PaymentConfirmRequestDTO.builder()
-                .orderId(transaction.getOrderId())
-                .amount(transaction.getPrice())
-                .paymentKey(transaction.getPgPaymentKey()) // 초기 결제 시도 시 저장된 paymentKey 사용
-                .build();
-
-        if (nowPg == PaymentProvider.KAKAO) {
-            request.setPgToken(pendingPayment.getPgToken());
-            request.setPartnerUserId(pendingPayment.getPartnerUserId());
-        }
+        PaymentService paymentService = this.paymentServices.get(nowPg);
+        PaymentConfirmRequestDTO request = paymentService.buildRetryConfirmRequest(transaction);
 
         try {
-            PaymentService paymentService = this.paymentServices.get(nowPg);
             TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
 
             if (transactionDetailDTO.getPgStatus() == PgStatus.DONE) {

@@ -2,6 +2,8 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
+import com.sesac.carematching.transaction.exception.PaymentVerificationException;
+import com.sesac.carematching.transaction.exception.IllegalTransactionStateException;
 import com.sesac.carematching.transaction.dto.*;
 import com.sesac.carematching.transaction.payment.*;
 import com.sesac.carematching.user.User;
@@ -12,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 @Slf4j
 @Service
@@ -136,44 +139,14 @@ public class TransactionService {
             throw new IllegalStateException("결제 수단(PG사)이 선택되지 않았습니다. selectPg API를 먼저 호출해주세요.");
         }
 
-        // 현재 결제의 PG사에 알맞는 confirmRequestDTO 생성
-        PaymentConfirmRequestDTO request;
-        TransactionDetailDTO transactionDetailDTO;
         PaymentService paymentService = paymentServiceFactory.getService(pg);
-
-        if (pg == PaymentProvider.TOSS) {
-            // 토스페이먼츠는 자체적으로 결제 가격 확인 과정 추가
-            if (!transactionConfirmDTO.getPrice().equals(transaction.getPrice())) {
-                transaction.changeTransactionStatus(TransactionStatus.FAILED);
-                throw new IllegalStateException("잘못된 금액이 결제되었습니다. 다시 주문 해주세요.");
-            }
-            request = PaymentConfirmRequestDTO.builder()
-                .orderId(orderId)
-                .amount(transaction.getPrice())
-                .paymentKey(paymentKey)
-                .build();
-        } else if (pg == PaymentProvider.KAKAO) {
-            // 카카오는 추가 정보 필요
-            String pgToken = transactionConfirmDTO.getPgToken();
-            if (pgToken == null) {
-                throw new IllegalArgumentException("KakaoPay 결제시 pgToken은 필수값입니다.");
-            }
-            request = PaymentConfirmRequestDTO.builder()
-                .orderId(orderId)
-                .amount(transaction.getPrice())
-                .paymentKey(paymentKey)
-                .partnerUserId(userId.toString()) // 카카오: userId 추가 필요
-                .pgToken(pgToken) // 카카오: pgToken 추가 필요
-                .build();
-        } else {
-            throw new UnsupportedOperationException("confirm이 지원되지 않는 PG사: " + pg);
-        }
-
-        transactionDetailDTO = paymentService.confirmPayment(request);
+        PaymentConfirmRequestDTO request = paymentService.buildConfirmRequest(transaction, transactionConfirmDTO, paymentKey);
+        TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
         // KakaoPay 응답도 승인 성공시 자체적으로 Status를 DONE으로 설정하였음
-        if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)
-            throw new RuntimeException("결제 승인에 실패했습니다.");
+        if (transactionDetailDTO.getPgStatus() != PgStatus.DONE) {
+            throw new PaymentVerificationException("결제 승인에 실패했습니다. (상태: " + transactionDetailDTO.getPgStatus() + ")");
+        }
 
         transaction.setPgPaymentKey(transactionDetailDTO.getPaymentKey());
         transaction.setOrderName(transactionDetailDTO.getOrderName());
@@ -209,5 +182,21 @@ public class TransactionService {
         return transaction.getTransactionStatus() != TransactionStatus.SUCCESS &&
             transaction.getTransactionStatus() != TransactionStatus.CANCELED &&
             transaction.getTransactionStatus() != TransactionStatus.REFUNDED;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markAsFailed(String orderId) {
+        try {
+            transactionRepository.findByOrderId(orderId).ifPresent(transaction -> {
+                // 도메인 엔티티(Transaction) 내부의 상태 전이(FSM) 방어 로직을 전적으로 신뢰합니다.
+                transaction.changeTransactionStatus(TransactionStatus.FAILED);
+            });
+        } catch (IllegalTransactionStateException e) {
+            // 상태 전이 불가 예외가 발생한 경우(이미 처리 완료 등) 조용히 무시하고 로그만 남깁니다.
+            log.warn("[상태 변경 무시] orderId: {}, 사유: {}", orderId, e.getMessage());
+        } catch (Exception e) {
+            // DB 오류 등 예기치 못한 예외 발생 시 원래 예외를 덮지 않도록 로그만 남깁니다.
+            log.error("[FAILED 기록 실패] orderId: {}", orderId, e);
+        }
     }
 }
