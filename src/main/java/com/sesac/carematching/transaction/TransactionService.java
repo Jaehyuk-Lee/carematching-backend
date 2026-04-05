@@ -186,14 +186,17 @@ public class TransactionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markAsFailed(String orderId) {
-        transactionRepository.findByOrderId(orderId).ifPresent(transaction -> {
-            try {
+        try {
+            transactionRepository.findByOrderId(orderId).ifPresent(transaction -> {
                 // 도메인 엔티티(Transaction) 내부의 상태 전이(FSM) 방어 로직을 전적으로 신뢰합니다.
                 transaction.changeTransactionStatus(TransactionStatus.FAILED);
-            } catch (IllegalTransactionStateException e) {
-                // 상태 전이 불가 예외가 발생한 경우(이미 처리 완료 등) 조용히 무시하고 로그만 남깁니다.
-                log.warn("[상태 변경 무시] orderId: {}, 현재 상태: {}, 사유: {}", orderId, transaction.getTransactionStatus(), e.getMessage());
-            }
-        });
+            });
+        } catch (IllegalTransactionStateException e) {
+            // 상태 전이 불가 예외가 발생한 경우(이미 처리 완료 등) 조용히 무시하고 로그만 남깁니다.
+            log.warn("[상태 변경 무시] orderId: {}, 사유: {}", orderId, e.getMessage());
+        } catch (Exception e) {
+            // DB 오류 등 예기치 못한 예외 발생 시 원래 예외를 덮지 않도록 로그만 남깁니다.
+            log.error("[FAILED 기록 실패] orderId: {}", orderId, e);
+        }
     }
 }
