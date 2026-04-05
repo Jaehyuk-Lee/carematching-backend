@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class TransactionController {
 
     private final TransactionService transactionService;
+    private final TransactionConfirmFacade transactionConfirmFacade; // 결제 승인 흐름 제어용 파사드
     private final TokenAuth tokenAuth;
 
     @Operation(summary = "거래 생성", description = "돌봄이와 회원 간의 거래를 생성합니다.")
@@ -65,6 +66,6 @@ public class TransactionController {
     @PostMapping("/verify/{paymentKey}")
     public ResponseEntity<TransactionConfirmDTO> confirmPayment(@RequestBody TransactionConfirmDTO transactionConfirmDTO, @PathVariable String paymentKey, HttpServletRequest request) {
         Integer userId = tokenAuth.extractUserIdFromToken(request);
-        return ResponseEntity.ok().body(transactionService.confirmTransaction(transactionConfirmDTO, userId, paymentKey));
+        return ResponseEntity.ok().body(transactionConfirmFacade.confirmTransaction(transactionConfirmDTO, userId, paymentKey));
     }
 }

@@ -2,6 +2,8 @@ package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.caregiver.Caregiver;
 import com.sesac.carematching.caregiver.CaregiverService;
+import com.sesac.carematching.transaction.exception.PaymentVerificationException;
+import com.sesac.carematching.transaction.exception.IllegalTransactionStateException;
 import com.sesac.carematching.transaction.dto.*;
 import com.sesac.carematching.transaction.payment.*;
 import com.sesac.carematching.user.User;
@@ -12,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 @Slf4j
 @Service
@@ -141,8 +144,9 @@ public class TransactionService {
         TransactionDetailDTO transactionDetailDTO = paymentService.confirmPayment(request);
         // DONE: 인증된 결제수단으로 요청한 결제가 승인된 상태입니다. (https://docs.tosspayments.com/reference#payment-%EA%B0%9D%EC%B2%B4)
         // KakaoPay 응답도 승인 성공시 자체적으로 Status를 DONE으로 설정하였음
-        if (transactionDetailDTO.getPgStatus() != PgStatus.DONE)
-            throw new RuntimeException("결제 승인에 실패했습니다.");
+        if (transactionDetailDTO.getPgStatus() != PgStatus.DONE) {
+            throw new PaymentVerificationException("결제 승인에 실패했습니다. (상태: " + transactionDetailDTO.getPgStatus() + ")");
+        }
 
         transaction.setPgPaymentKey(transactionDetailDTO.getPaymentKey());
         transaction.setOrderName(transactionDetailDTO.getOrderName());
@@ -178,5 +182,18 @@ public class TransactionService {
         return transaction.getTransactionStatus() != TransactionStatus.SUCCESS &&
             transaction.getTransactionStatus() != TransactionStatus.CANCELED &&
             transaction.getTransactionStatus() != TransactionStatus.REFUNDED;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markAsFailed(String orderId) {
+        transactionRepository.findByOrderId(orderId).ifPresent(transaction -> {
+            try {
+                // 도메인 엔티티(Transaction) 내부의 상태 전이(FSM) 방어 로직을 전적으로 신뢰합니다.
+                transaction.changeTransactionStatus(TransactionStatus.FAILED);
+            } catch (IllegalTransactionStateException e) {
+                // 상태 전이 불가 예외가 발생한 경우(이미 처리 완료 등) 조용히 무시하고 로그만 남깁니다.
+                log.warn("[상태 변경 무시] orderId: {}, 현재 상태: {}, 사유: {}", orderId, transaction.getTransactionStatus(), e.getMessage());
+            }
+        });
     }
 }
