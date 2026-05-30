@@ -16,6 +16,7 @@ import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.client.PaymentClient;
 import com.sesac.carematching.transaction.payment.pendingPayment.PendingPayment;
+import com.sesac.carematching.transaction.payment.pendingPayment.PendingPaymentRecorder;
 import com.sesac.carematching.util.fallback.FallbackMessage;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.persistence.EntityNotFoundException;
@@ -49,8 +50,9 @@ public class KakaoPayService extends AbstractPaymentService {
     @Value("${frontend-domain}")
     private String frontend_domain;
 
-    public KakaoPayService(TransactionRepository transactionRepository, PaymentClient paymentClient) {
-        super(transactionRepository);
+    public KakaoPayService(TransactionRepository transactionRepository, PaymentClient paymentClient,
+                           PendingPaymentRecorder pendingPaymentRecorder) {
+        super(transactionRepository, pendingPaymentRecorder);
         this.paymentClient = paymentClient;
     }
 

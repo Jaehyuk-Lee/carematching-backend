@@ -1,6 +1,7 @@
 package com.sesac.carematching.transaction;
 
 import com.sesac.carematching.transaction.dto.TransactionConfirmDTO;
+import com.sesac.carematching.util.fallback.ApiFallbackException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,10 @@ public class TransactionConfirmFacade {
         try {
             // 내부적으로 트랜잭션이 시작되고 정상 완료 시 커밋됨
             return transactionService.confirmTransaction(transactionConfirmDTO, userId, paymentKey);
+        } catch (ApiFallbackException e) {
+            // PG 장애 fallback: PendingPaymentRecorder가 이미 PENDING_RETRY로 재시도 예약을
+            // 별도 트랜잭션(REQUIRES_NEW)에 커밋했으므로 FAILED로 덮어쓰면 안 됨
+            throw e;
         } catch (IllegalStateException e) {
             // 사전 검증 실패(이미 승인된 거래, PG 미선택 등)는 결제 시도 전이므로 FAILED 처리하지 않음
             throw e;

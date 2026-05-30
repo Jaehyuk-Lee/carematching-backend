@@ -14,6 +14,7 @@ import com.sesac.carematching.transaction.payment.AbstractPaymentService;
 import com.sesac.carematching.transaction.payment.PaymentProvider;
 import com.sesac.carematching.transaction.payment.PgStatus;
 import com.sesac.carematching.transaction.payment.client.PaymentClient;
+import com.sesac.carematching.transaction.payment.pendingPayment.PendingPaymentRecorder;
 import com.sesac.carematching.util.fallback.FallbackMessage;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,9 @@ public class TossPaymentService extends AbstractPaymentService {
     @Value("${toss.secret}")
     private String tossSecret;
 
-    public TossPaymentService(TransactionRepository transactionRepository, PaymentClient paymentClient) {
-        super(transactionRepository);
+    public TossPaymentService(TransactionRepository transactionRepository, PaymentClient paymentClient,
+                              PendingPaymentRecorder pendingPaymentRecorder) {
+        super(transactionRepository, pendingPaymentRecorder);
         this.paymentClient = paymentClient;
     }
 
