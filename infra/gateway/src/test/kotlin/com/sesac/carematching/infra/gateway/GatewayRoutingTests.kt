@@ -59,7 +59,9 @@ class GatewayRoutingTests {
         @JvmStatic
         @AfterAll
         fun stopWireMock() {
-            wireMockServer.stop()
+            if (::wireMockServer.isInitialized) {
+                wireMockServer.stop()
+            }
         }
     }
 }
